@@ -1,0 +1,17 @@
+{
+  "name": "@aegis/cre-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "setup": "bunx cre-setup"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.0",
+    "viem": "^2.41.2",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "1.2.21"
+  }
+}

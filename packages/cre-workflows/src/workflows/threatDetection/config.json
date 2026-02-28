@@ -1,0 +1,17 @@
+{
+  "schedule": "0 */1 * * * *",
+  "agentApiUrl": "http://localhost:8000",
+  "evms": [
+    {
+      "chainSelectorName": "ethereum-testnet-sepolia-base-1",
+      "circuitBreakerAddress": "0x0000000000000000000000000000000000000000",
+      "threatReportAddress": "0x0000000000000000000000000000000000000000",
+      "sentinelRegistryAddress": "0x0000000000000000000000000000000000000000",
+      "mockProtocolAddress": "0x0000000000000000000000000000000000000000",
+      "gasLimit": "500000",
+      "chainlinkFeeds": {
+        "ethUsd": "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1"
+      }
+    }
+  ]
+}
