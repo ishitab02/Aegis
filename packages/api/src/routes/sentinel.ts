@@ -28,13 +28,18 @@ sentinel.get("/:id", async (c) => {
 sentinel.post("/detect", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const protocolAddress = body.protocol_address || config.protocolToMonitor;
-  const protocolName = body.protocol_name || "MockProtocol";
 
   if (!protocolAddress) {
     return c.json({ error: "protocol_address is required" }, 400);
   }
 
-  const result = await runDetection(protocolAddress, protocolName);
+  const result = await runDetection({
+    protocol_address: protocolAddress,
+    protocol_name: body.protocol_name || "MockProtocol",
+    simulate_tvl_drop_percent: body.simulate_tvl_drop_percent,
+    simulate_price_deviation_percent: body.simulate_price_deviation_percent,
+    simulate_short_voting_period: body.simulate_short_voting_period,
+  });
   return c.json(result);
 });
 

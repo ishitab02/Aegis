@@ -20,16 +20,18 @@ async function agentFetch(path: string, init?: RequestInit): Promise<Response> {
 
 // ---- Detection ----
 
-export async function runDetection(
-  protocolAddress: string,
-  protocolName = "MockProtocol"
-) {
+export interface DetectionParams {
+  protocol_address: string;
+  protocol_name?: string;
+  simulate_tvl_drop_percent?: number;
+  simulate_price_deviation_percent?: number;
+  simulate_short_voting_period?: boolean;
+}
+
+export async function runDetection(params: DetectionParams) {
   const res = await agentFetch("/api/v1/detect", {
     method: "POST",
-    body: JSON.stringify({
-      protocol_address: protocolAddress,
-      protocol_name: protocolName,
-    }),
+    body: JSON.stringify(params),
   });
   return res.json();
 }

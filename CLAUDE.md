@@ -29,6 +29,7 @@ This document is the complete reference for Claude Code (or any AI coding assist
 19. [Coding Standards](#19-coding-standards)
 20. [Known Issues & TODOs](#20-known-issues--todos)
 21. [Resources & References](#21-resources--references)
+22. [Production Roadmap](#22-production-roadmap)
 
 ---
 
@@ -2385,6 +2386,198 @@ chore(deps): update ethers to v6.10.0
 
 ---
 
+## 22. PRODUCTION ROADMAP
+
+### Current State (Hackathon MVP)
+
+| Component | Status | Reality |
+|-----------|--------|---------|
+| Smart Contracts | Deployed | On testnet only, not connected to real protocols |
+| AI Agents | Working | Simulation mode only, no real protocol data |
+| CRE Workflows | Written | Not deployed to Chainlink network |
+| Circuit Breaker | Code exists | Never actually pauses anything |
+| Forensics | Stub | Returns mock data, no real tracing |
+
+### What's Missing for Real-World Use
+
+#### 1. Real Protocol Integration (Critical)
+
+Currently the sentinels read simulated data. For real use:
+
+```
+Need to implement:
+├── Protocol adapters for each DeFi protocol
+│   ├── Aave adapter (read TVL, health factors, liquidations)
+│   ├── Uniswap adapter (read pool reserves, swap volumes)
+│   ├── Compound adapter (read supply/borrow rates)
+│   └── Generic ERC-4626 vault adapter
+├── Real-time event listeners (not just polling)
+└── Historical data storage for trend analysis
+```
+
+#### 2. Protocol Onboarding Flow
+
+How does a protocol actually use AEGIS?
+
+```
+Missing:
+├── Registration portal (protocol signs up, pays subscription)
+├── Integration SDK (protocol installs circuit breaker hook)
+├── Custom threshold configuration per protocol
+├── Dashboard for protocol admins
+└── Alert notification setup (email, Telegram, webhooks)
+```
+
+#### 3. Real Forensics Engine
+
+ChainSherlock currently returns mock data. Needs:
+
+```
+├── Archive node access (debug_traceTransaction)
+├── Transaction graph builder (trace fund flows)
+├── Known attacker address database
+├── Integration with Etherscan/Basescan APIs
+└── AI analysis with full context (not just stubs)
+```
+
+#### 4. Production Infrastructure
+
+```
+Missing:
+├── Database (PostgreSQL) — currently all in-memory
+├── Authentication — no API keys, anyone can call
+├── Rate limiting — could be DoS'd
+├── Multi-chain deployment — only Base Sepolia
+├── Redundant RPC providers — using public RPCs
+├── Monitoring & alerting (Datadog/Grafana)
+└── CI/CD pipeline
+```
+
+#### 5. Chainlink Services (Not Yet Integrated)
+
+| Service | Status | What's Needed |
+|---------|--------|---------------|
+| CRE | Code written | Deploy to Chainlink network |
+| CCIP | Not implemented | Cross-chain alert propagation |
+| VRF | Not implemented | Tie-breaker for split votes |
+| Automation | Concept only | Replace cron with Keepers |
+
+### Prioritized Roadmap
+
+#### Phase 1: Make It Real (2-4 weeks)
+
+1. **Connect to real DeFi protocols**
+   - Build Aave adapter (read actual TVL from their contracts)
+   - Build Uniswap v3 adapter (monitor pool reserves)
+   - Store historical TVL to detect actual drops
+
+2. **Deploy CRE workflows to Chainlink**
+   - Get CRE access from Chainlink team
+   - Deploy threatDetection workflow
+   - Wire up to trigger real CircuitBreaker
+
+3. **Add database persistence**
+   - PostgreSQL for alerts, reports, protocol configs
+   - Redis for caching real-time data
+
+#### Phase 2: Protocol Onboarding (2-3 weeks)
+
+4. **Build protocol registration system**
+   - Web portal for protocols to sign up
+   - x402 subscription payments
+   - Custom alert thresholds
+
+5. **Integration SDK**
+   - NPM package protocols install
+   - Hooks into their pause() function
+   - Automatic AEGIS authorization
+
+#### Phase 3: Production Ready (2-3 weeks)
+
+6. **Security hardening**
+   - API authentication
+   - Rate limiting
+   - Audit smart contracts
+
+7. **Multi-chain expansion**
+   - Deploy to Ethereum mainnet
+   - Deploy to Arbitrum, Optimism
+   - CCIP for cross-chain alerts
+
+### How Someone Would Actually Use AEGIS
+
+#### For a DeFi Protocol (Customer):
+
+```
+1. Go to aegis.xyz
+2. Connect wallet, pay subscription ($100/mo in USDC via x402)
+3. Register protocol address
+4. Configure thresholds:
+   - TVL drop alert: 10%
+   - Circuit breaker: 20%
+   - Price deviation: 3%
+5. Grant AEGIS permission to call pause() on your contracts
+6. Set up notifications (Telegram bot, webhook to PagerDuty)
+7. View dashboard showing real-time monitoring
+```
+
+#### For a Security Researcher:
+
+```
+1. Browse public threat feed at aegis.xyz/threats
+2. See live alerts across all monitored protocols
+3. Pay $1 per forensic report via x402
+4. Get detailed attack analysis for incidents
+```
+
+#### For Chainlink Integration:
+
+```
+1. CRE workflow runs every 30s
+2. Reads protocol state via EVM Read capability
+3. Calls AEGIS AI agents via HTTP capability
+4. If consensus = CRITICAL:
+   - Writes to CircuitBreaker via EVM Write
+   - Triggers protocol's pause()
+   - Sends CCIP message to other chains
+5. Stores signed report on-chain via ThreatReport contract
+```
+
+### Quick Wins (Can Implement Quickly)
+
+| Task | Effort | Impact |
+|------|--------|--------|
+| Add real Aave TVL reading | 2-4 hours | High — proves real-world capability |
+| Persist alerts to SQLite | 2-3 hours | Medium — enables history |
+| Add Telegram notifications | 2-3 hours | High — real alerting |
+| Deploy CRE workflow locally | 4-6 hours | High — full Chainlink loop |
+
+### Simulation Mode (Current)
+
+The current implementation supports simulation parameters for testing:
+
+```bash
+# Simulate a reentrancy attack (25% TVL drop + 6% price manipulation)
+curl -X POST http://localhost:3000/api/v1/sentinel/detect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "protocol_address": "0x1",
+    "simulate_tvl_drop_percent": 25,
+    "simulate_price_deviation_percent": 6,
+    "simulate_short_voting_period": false
+  }'
+```
+
+**Simulation Parameters:**
+
+| Parameter | Type | Effect |
+|-----------|------|--------|
+| `simulate_tvl_drop_percent` | float | Triggers Liquidity Sentinel (20%+ = CRITICAL) |
+| `simulate_price_deviation_percent` | float | Triggers Oracle Sentinel (5%+ = CRITICAL) |
+| `simulate_short_voting_period` | bool | Triggers Governance Sentinel (HIGH) |
+
+---
+
 ## QUICK REFERENCE CARD
 
 ```
@@ -2422,5 +2615,5 @@ TESTNET: Base Sepolia (84532)
 
 ---
 
-*Last Updated: February 28, 2026*
-*Version: 2.0.0 — All phases complete, contracts deployed*
+*Last Updated: March 1, 2026*
+*Version: 2.1.0 — Simulation mode added, production roadmap documented*

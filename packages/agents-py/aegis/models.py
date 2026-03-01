@@ -226,6 +226,10 @@ class HealthStatus(BaseModel):
 class DetectionRequest(BaseModel):
     protocol_address: str
     protocol_name: str = "MockProtocol"
+    # Simulation parameters (optional) - use these to test threat detection
+    simulate_tvl_drop_percent: Optional[float] = None  # e.g. 25.0 for 25% drop
+    simulate_price_deviation_percent: Optional[float] = None  # e.g. 6.0 for 6% deviation
+    simulate_short_voting_period: bool = False  # Trigger governance alert
 
 
 class DetectionResponse(BaseModel):

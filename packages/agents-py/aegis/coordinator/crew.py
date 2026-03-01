@@ -32,6 +32,10 @@ def run_detection_cycle(
     previous_tvl: int = 0,
     protocol_price: float | None = None,
     governance_proposal: GovernanceProposal | None = None,
+    # Simulation parameters
+    simulate_tvl_drop_percent: float | None = None,
+    simulate_price_deviation_percent: float | None = None,
+    simulate_short_voting_period: bool = False,
 ) -> DetectionResponse:
     """Run a full threat detection cycle across all 3 sentinels.
 
@@ -47,11 +51,27 @@ def run_detection_cycle(
 
     # --- 1. Liquidity Sentinel ---
     try:
-        current_tvl = get_protocol_tvl(w3, protocol_address)
+        # Use simulation if provided, otherwise try reading from chain
+        if simulate_tvl_drop_percent is not None:
+            # Simulate a TVL drop scenario
+            base_tvl = 1_000_000 * 10**18  # 1M ETH baseline
+            current_tvl = int(base_tvl * (1 - simulate_tvl_drop_percent / 100))
+            prev_tvl = base_tvl
+            logger.info("SIMULATION: TVL drop %.1f%% (from %d to %d)", simulate_tvl_drop_percent, prev_tvl, current_tvl)
+        else:
+            try:
+                current_tvl = get_protocol_tvl(w3, protocol_address)
+                prev_tvl = previous_tvl if previous_tvl > 0 else None
+            except Exception:
+                # Fallback: use mock data if chain read fails
+                current_tvl = 1_000_000 * 10**18
+                prev_tvl = None
+                logger.warning("Could not read TVL from chain, using mock data")
+
         liquidity_assessment = monitor_tvl(
             protocol_address=protocol_address,
             current_tvl=current_tvl,
-            previous_tvl=previous_tvl if previous_tvl > 0 else None,
+            previous_tvl=prev_tvl,
         )
         aggregator.submit_assessment(liquidity_assessment)
         assessments.append(liquidity_assessment)
@@ -66,8 +86,17 @@ def run_detection_cycle(
     # --- 2. Oracle Sentinel ---
     try:
         chainlink_data = get_eth_usd_price(w3)
-        # Use provided protocol price or default to Chainlink price (no deviation)
-        p_price = protocol_price if protocol_price is not None else chainlink_data.price
+
+        # Simulate price deviation if requested
+        if simulate_price_deviation_percent is not None:
+            p_price = chainlink_data.price * (1 + simulate_price_deviation_percent / 100)
+            logger.info("SIMULATION: Price deviation %.1f%% (Chainlink: $%.2f, Protocol: $%.2f)",
+                       simulate_price_deviation_percent, chainlink_data.price, p_price)
+        elif protocol_price is not None:
+            p_price = protocol_price
+        else:
+            p_price = chainlink_data.price
+
         oracle_assessment = monitor_price_feeds(
             protocol_price=p_price,
             chainlink_data=chainlink_data,
@@ -84,7 +113,19 @@ def run_detection_cycle(
 
     # --- 3. Governance Sentinel ---
     try:
-        if governance_proposal is not None:
+        if simulate_short_voting_period:
+            # Create a suspicious proposal with short voting period
+            simulated_proposal = GovernanceProposal(
+                proposal_id="sim-001",
+                proposer="0xAttacker",
+                targets=["0xProtocol"],
+                calldatas=["0x" + "a9059cbb" + "0" * 56],  # transfer signature
+                voting_period_blocks=50,  # Very short!
+                description="Emergency fund transfer",
+            )
+            logger.info("SIMULATION: Short voting period proposal (50 blocks)")
+            gov_assessment = analyze_proposal(simulated_proposal)
+        elif governance_proposal is not None:
             gov_assessment = analyze_proposal(governance_proposal)
         else:
             # No active proposal — default to NONE

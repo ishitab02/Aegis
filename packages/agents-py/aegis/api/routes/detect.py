@@ -29,6 +29,9 @@ async def trigger_detection(request: DetectionRequest) -> DetectionResponse:
             protocol_address=request.protocol_address,
             protocol_name=request.protocol_name,
             previous_tvl=_previous_tvl,
+            simulate_tvl_drop_percent=request.simulate_tvl_drop_percent,
+            simulate_price_deviation_percent=request.simulate_price_deviation_percent,
+            simulate_short_voting_period=request.simulate_short_voting_period,
         )
 
         # Store for next cycle — find the liquidity sentinel's TVL reading
