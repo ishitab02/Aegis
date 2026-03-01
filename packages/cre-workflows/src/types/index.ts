@@ -12,6 +12,15 @@ const evmConfigSchema = z.object({
   chainlinkFeeds: z.object({
     ethUsd: z.string().regex(/^0x[a-fA-F0-9]{40}$/u),
   }),
+  // CCIP (optional — only needed for ccipAlert workflow)
+  ccipRouter: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  ccipDestinationChainSelector: z.string().optional(),
+  ccipReceiverAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  linkToken: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  // VRF (optional — only needed for vrfTieBreaker workflow)
+  vrfCoordinator: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  vrfKeyHash: z.string().optional(),
+  vrfSubscriptionId: z.string().optional(),
 });
 
 export const configSchema = z.object({

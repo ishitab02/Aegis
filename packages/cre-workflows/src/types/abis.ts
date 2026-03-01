@@ -28,3 +28,24 @@ export const chainlinkAggregatorAbi = parseAbi([
   "function latestRoundData() external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
   "function decimals() external view returns (uint8)",
 ]);
+
+// ============ CCIP Router ABI ============
+
+export const ccipRouterAbi = parseAbi([
+  "function ccipSend(uint64 destinationChainSelector, (bytes receiver, bytes data, (address token, uint256 amount)[] tokenAmounts, address feeToken, bytes extraArgs) message) external payable returns (bytes32 messageId)",
+  "function getFee(uint64 destinationChainSelector, (bytes receiver, bytes data, (address token, uint256 amount)[] tokenAmounts, address feeToken, bytes extraArgs) message) external view returns (uint256 fee)",
+]);
+
+// ============ LINK Token ABI (for CCIP fee approval) ============
+
+export const linkTokenAbi = parseAbi([
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function balanceOf(address account) external view returns (uint256)",
+]);
+
+// ============ VRF Coordinator V2.5 ABI ============
+
+export const vrfCoordinatorAbi = parseAbi([
+  "function requestRandomWords(bytes32 keyHash, uint256 subId, uint16 requestConfirmations, uint32 callbackGasLimit, uint32 numWords, bytes extraArgs) external returns (uint256 requestId)",
+  "function getRequestStatus(uint256 requestId) external view returns (bool fulfilled, uint256[] randomWords)",
+]);

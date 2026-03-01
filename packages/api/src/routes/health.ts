@@ -10,8 +10,8 @@ health.get("/", async (c) => {
     getActiveSentinels(),
   ]);
 
-  const status =
-    agentHealth.status === "HEALTHY" ? "HEALTHY" : "DEGRADED";
+  const ah = agentHealth as Record<string, unknown>;
+  const status = ah.status === "HEALTHY" ? "HEALTHY" : "DEGRADED";
 
   return c.json({
     status,

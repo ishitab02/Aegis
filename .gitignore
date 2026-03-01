@@ -56,3 +56,8 @@ pnpm-debug.log*
 
 # Test
 .nyc_output/
+
+# SQLite database
+packages/api/data/*.db
+packages/api/data/*.db-shm
+packages/api/data/*.db-wal

@@ -4,9 +4,17 @@ This module runs the full detection cycle:
 1. Each sentinel analyzes its domain (liquidity, oracle, governance)
 2. Assessments are aggregated
 3. Consensus is reached via 2/3 majority rule
+
+Supports two modes:
+- Simulation mode: Use simulate_* parameters for testing threat detection
+- Real mode: Use protocol adapters to fetch real on-chain data
 """
 
+from __future__ import annotations
+
+import asyncio
 import logging
+from typing import TYPE_CHECKING
 
 from aegis.blockchain.chainlink_feeds import get_eth_usd_price
 from aegis.blockchain.contracts import get_protocol_tvl, is_protocol_paused
@@ -23,6 +31,9 @@ from aegis.sentinels.liquidity_sentinel import monitor_tvl
 from aegis.sentinels.oracle_sentinel import monitor_price_feeds
 from aegis.utils import now_seconds
 
+if TYPE_CHECKING:
+    from aegis.adapters.base import BaseProtocolAdapter
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,28 +47,73 @@ def run_detection_cycle(
     simulate_tvl_drop_percent: float | None = None,
     simulate_price_deviation_percent: float | None = None,
     simulate_short_voting_period: bool = False,
+    # Adapter parameter
+    adapter: "BaseProtocolAdapter | None" = None,
 ) -> DetectionResponse:
     """Run a full threat detection cycle across all 3 sentinels.
 
     This is the primary entry point called by the CRE workflow via
     POST /api/v1/detect.
 
-    Returns a DetectionResponse with all individual assessments and
-    the consensus result.
+    Args:
+        protocol_address: Address of the protocol to monitor
+        protocol_name: Human-readable protocol name
+        previous_tvl: Previous TVL for comparison (optional)
+        protocol_price: Protocol's internal price (optional)
+        governance_proposal: Active governance proposal (optional)
+        simulate_tvl_drop_percent: Simulate TVL drop (for testing)
+        simulate_price_deviation_percent: Simulate price deviation (for testing)
+        simulate_short_voting_period: Simulate short voting period (for testing)
+        adapter: Protocol adapter for fetching real on-chain data
+
+    Returns:
+        DetectionResponse with all individual assessments and consensus result.
+
+    Notes:
+        - If simulate_* parameters are provided, they take precedence
+        - If adapter is provided and no simulation, real data is fetched
+        - If neither simulation nor adapter, falls back to mock/chain data
     """
     w3 = get_web3()
     aggregator = SentinelAggregator()
     assessments: list[ThreatAssessment] = []
 
+    # Determine if we're in simulation mode or real mode
+    is_simulation = any([
+        simulate_tvl_drop_percent is not None,
+        simulate_price_deviation_percent is not None,
+        simulate_short_voting_period,
+    ])
+
+    # Auto-detect adapter if not provided and not in simulation mode
+    if adapter is None and not is_simulation:
+        try:
+            from aegis.adapters import get_adapter, ProtocolType
+            adapter = get_adapter(w3, protocol_address)
+            logger.info("Auto-detected adapter: %s", adapter.protocol_type)
+        except Exception as e:
+            logger.debug("Could not auto-detect adapter: %s", e)
+            adapter = None
+
     # --- 1. Liquidity Sentinel ---
     try:
-        # Use simulation if provided, otherwise try reading from chain
+        # Use simulation if provided
         if simulate_tvl_drop_percent is not None:
             # Simulate a TVL drop scenario
             base_tvl = 1_000_000 * 10**18  # 1M ETH baseline
             current_tvl = int(base_tvl * (1 - simulate_tvl_drop_percent / 100))
             prev_tvl = base_tvl
             logger.info("SIMULATION: TVL drop %.1f%% (from %d to %d)", simulate_tvl_drop_percent, prev_tvl, current_tvl)
+        elif adapter is not None:
+            # Use real adapter to fetch TVL
+            try:
+                current_tvl = adapter.get_tvl_sync()
+                prev_tvl = previous_tvl if previous_tvl > 0 else None
+                logger.info("ADAPTER: Fetched TVL %d from %s", current_tvl, adapter.protocol_type)
+            except Exception as e:
+                logger.warning("Adapter TVL fetch failed: %s, falling back", e)
+                current_tvl = 1_000_000 * 10**18
+                prev_tvl = None
         else:
             try:
                 current_tvl = get_protocol_tvl(w3, protocol_address)
