@@ -30,6 +30,7 @@ This document is the complete reference for Claude Code (or any AI coding assist
 20. [Known Issues & TODOs](#20-known-issues--todos)
 21. [Resources & References](#21-resources--references)
 22. [Production Roadmap](#22-production-roadmap)
+23. [Parallel Development Guide (4 Agents)](#23-parallel-development-guide-4-agents)
 
 ---
 
@@ -2578,6 +2579,421 @@ curl -X POST http://localhost:3000/api/v1/sentinel/detect \
 
 ---
 
+## 23. PARALLEL DEVELOPMENT GUIDE (4 AGENTS)
+
+> **FOR AI AGENTS**: If you are Claude Code or Codex, read this section to understand your assigned tasks and boundaries. Do NOT work outside your assigned directories.
+
+### Agent Assignment Overview
+
+| Agent | Role | Directory Ownership | Best At |
+|-------|------|---------------------|---------|
+| **Claude Code 1** | Detection Engine | `packages/agents-py/` | Complex Python, AI, adapters |
+| **Claude Code 2** | CRE & Contracts | `packages/cre-workflows/`, `packages/contracts/` | Architecture, Chainlink, Solidity |
+| **Codex 1** | Frontend | `packages/frontend/` | React components, UI |
+| **Codex 2** | API & Database | `packages/api/` | Routes, SQLite, middleware |
+
+---
+
+### AGENT 1: Claude Code — Detection Engine
+
+**READ THIS IF**: You are assigned to work on the Python backend / detection engine.
+
+**Your Directory**: `packages/agents-py/` (DO NOT touch other packages)
+
+#### Tasks (in order)
+
+**Task 1.1: Create Protocol Adapter Base Class**
+```
+File: packages/agents-py/aegis/adapters/base.py
+
+Create abstract base class for all protocol adapters:
+- Methods: get_tvl(), get_token_balances(), get_recent_events()
+- Include caching with TTL (60 seconds default)
+- Type hints with Protocol from typing
+```
+
+**Task 1.2: Build Aave V3 Adapter**
+```
+File: packages/agents-py/aegis/adapters/aave_v3.py
+
+Read TVL from Aave V3 Pool contract on Base:
+- Aave V3 Pool (Base): 0xA238Dd80C259a72e81d7e4664a9801593F98d1c5
+- Monitor: total supply, total borrows, utilization rate
+- Parse ReserveDataUpdated events
+- Use web3.py from aegis.blockchain.web3_client
+```
+
+**Task 1.3: Build Uniswap V3 Adapter**
+```
+File: packages/agents-py/aegis/adapters/uniswap_v3.py
+
+Read pool reserves from Uniswap V3:
+- Factory (Base): 0x33128a8fC17869897dcE68Ed026d694621f6FDfD
+- Monitor: TVL changes, large swaps (>$100k)
+- Parse Swap events
+```
+
+**Task 1.4: Update Detection Cycle**
+```
+File: packages/agents-py/aegis/coordinator/crew.py
+
+- Add `adapter` parameter to run_detection_cycle()
+- Use real adapter when simulate_* params are None
+- Keep simulation mode as fallback
+- Auto-detect adapter from protocol address
+```
+
+**Task 1.5: Add Adapter Registry**
+```
+File: packages/agents-py/aegis/adapters/__init__.py
+
+- Registry mapping protocol addresses to adapter classes
+- get_adapter(address) function
+- Auto-detect protocol type (Aave, Uniswap, etc.)
+```
+
+#### Testing
+After each file: `cd packages/agents-py && python -m pytest tests/ -v`
+
+#### Boundaries
+- ✅ You own: `packages/agents-py/`
+- ❌ Do NOT touch: `packages/api/`, `packages/frontend/`, `packages/cre-workflows/`, `packages/contracts/`
+
+---
+
+### AGENT 2: Claude Code — CRE & Smart Contracts
+
+**READ THIS IF**: You are assigned to Chainlink CRE workflows and smart contract integration.
+
+**Your Directories**: `packages/cre-workflows/`, `packages/contracts/` (DO NOT touch other packages)
+
+#### Tasks (in order)
+
+**Task 2.1: Complete CRE Threat Detection Workflow**
+```
+File: packages/cre-workflows/src/workflows/threatDetection/main.ts
+
+Implement full workflow using @chainlink/cre-sdk:
+- Trigger: Cron every 30 seconds
+- Step 1: HTTP fetch to http://localhost:8000/api/v1/detect
+- Step 2: EVM Read - check protocol state
+- Step 3: Data Feeds - get ETH/USD price
+- Step 4: If CRITICAL → EVM Write to CircuitBreaker.triggerBreaker()
+- Step 5: Return signed report
+```
+
+**Task 2.2: Add CCIP Cross-Chain Alerting**
+```
+File: packages/cre-workflows/src/workflows/ccipAlert/main.ts
+
+New workflow triggered by CircuitBreakerTriggered event:
+- Send CCIP message to Arbitrum Sepolia
+- Message: { threatId, protocol, threatLevel, timestamp }
+- Use CCIP Router for Base Sepolia
+```
+
+**Task 2.3: Create CircuitBreaker Integration Script**
+```
+File: packages/contracts/script/IntegrateProtocol.s.sol
+
+Foundry script to:
+- Register MockProtocol with CircuitBreaker
+- Grant CRE_WORKFLOW_ROLE to workflow address
+- Verify registration
+```
+
+**Task 2.4: Add VRF Tie-Breaker**
+```
+File: packages/cre-workflows/src/workflows/vrfTieBreaker/main.ts
+
+When consensus is split (e.g., CRITICAL, HIGH, NONE):
+- Request VRF randomness
+- Use random number to weight votes
+- Return final decision
+```
+
+**Task 2.5: Document CRE Setup**
+```
+File: packages/cre-workflows/README.md
+
+- How to deploy workflows
+- Environment variables needed
+- Testing with cre workflow simulate
+```
+
+#### Deployed Contracts Reference
+```
+SentinelRegistry:   0xd34FC1ee378F342EFb92C0D334362B9E577b489f
+CircuitBreaker:     0xa0eE49660252B353830ADe5de0Ca9385647F85b5
+ThreatReport:       0x3f01beefA5b7F5931B5545BbCFCF0a72c7131499
+MockProtocol:       0x11887863b89F1bE23A650909135ffaCFab666803
+```
+
+#### Boundaries
+- ✅ You own: `packages/cre-workflows/`, `packages/contracts/`
+- ❌ Do NOT touch: `packages/agents-py/`, `packages/api/`, `packages/frontend/`
+
+---
+
+### AGENT 3: Codex — Frontend Dashboard
+
+**READ THIS IF**: You are assigned to build React frontend components.
+
+**Your Directory**: `packages/frontend/` (DO NOT touch other packages)
+
+#### Tech Stack
+- React 18 + TypeScript
+- Vite
+- TailwindCSS
+- React Query
+- API: http://localhost:3000
+
+#### Tasks (in order)
+
+**Task 3.1: Alert History Component**
+```
+File: packages/frontend/src/components/alerts/AlertHistory.tsx
+
+- Display list of past alerts in a table
+- Columns: Timestamp, Protocol, Threat Level, Action, Consensus %
+- Color code: CRITICAL=#ef4444, HIGH=#f97316, MEDIUM=#eab308, NONE=#6b7280
+- Fetch from: GET /api/v1/alerts
+- Add pagination (20 per page)
+```
+
+**Task 3.2: Protocol Registration Form**
+```
+File: packages/frontend/src/components/protocol/RegisterProtocol.tsx
+
+Form fields:
+- Protocol Address (0x...)
+- Protocol Name
+- Alert Threshold % (default: 10)
+- Circuit Breaker Threshold % (default: 20)
+Submit to: POST /api/v1/protocols
+Show success/error toast
+```
+
+**Task 3.3: Live Threat Feed**
+```
+File: packages/frontend/src/components/dashboard/ThreatFeed.tsx
+
+- Real-time feed of incoming threats
+- Auto-refresh every 5 seconds using React Query
+- Show: time ago, protocol name, threat level badge, confidence
+- Fetch from: GET /api/v1/sentinel/aggregate
+```
+
+**Task 3.4: Circuit Breaker Status Card**
+```
+File: packages/frontend/src/components/protocol/CircuitBreakerCard.tsx
+
+- Shows protocol pause status
+- Display: status badge, paused_at, reason, cooldown timer
+- Red pulsing animation when paused
+- Fetch from: GET /api/v1/protocols/:address/status
+```
+
+**Task 3.5: Forensics Report Viewer**
+```
+File: packages/frontend/src/components/forensics/ReportViewer.tsx
+
+Sections:
+- Attack Summary (type, severity, estimated loss)
+- Transaction Flow (visual diagram if possible)
+- Fund Destinations (table)
+- Recommendations (bullet list)
+Fetch from: GET /api/v1/forensics/:id
+```
+
+**Task 3.6: Add Routing**
+```
+File: packages/frontend/src/App.tsx
+
+Add React Router with routes:
+- / (dashboard with ThreatFeed)
+- /alerts (AlertHistory)
+- /protocols (list + RegisterProtocol)
+- /forensics/:id (ReportViewer)
+```
+
+#### Styling Guidelines
+```css
+/* Use TailwindCSS only */
+Background: bg-gray-900
+Cards: bg-gray-800 rounded-lg p-4 shadow
+Text: text-white, text-gray-400 for secondary
+Buttons: bg-blue-600 hover:bg-blue-700 rounded px-4 py-2
+```
+
+#### Boundaries
+- ✅ You own: `packages/frontend/`
+- ❌ Do NOT touch: `packages/agents-py/`, `packages/api/`, `packages/cre-workflows/`, `packages/contracts/`
+
+---
+
+### AGENT 4: Codex — API Routes & Database
+
+**READ THIS IF**: You are assigned to build API routes, database, and notifications.
+
+**Your Directory**: `packages/api/` (DO NOT touch other packages)
+
+#### Tech Stack
+- Hono (web framework)
+- TypeScript
+- better-sqlite3 (SQLite)
+- node-telegram-bot-api
+
+#### Tasks (in order)
+
+**Task 4.1: Add SQLite Database**
+```
+File: packages/api/src/db/index.ts
+
+Initialize SQLite with tables:
+
+CREATE TABLE alerts (
+  id TEXT PRIMARY KEY,
+  protocol TEXT NOT NULL,
+  threat_level TEXT NOT NULL,
+  confidence REAL NOT NULL,
+  action TEXT NOT NULL,
+  consensus_data TEXT, -- JSON
+  created_at INTEGER DEFAULT (unixepoch())
+);
+
+CREATE TABLE protocols (
+  address TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  alert_threshold REAL DEFAULT 10,
+  breaker_threshold REAL DEFAULT 20,
+  active INTEGER DEFAULT 1,
+  registered_at INTEGER DEFAULT (unixepoch())
+);
+
+CREATE TABLE forensic_reports (
+  id TEXT PRIMARY KEY,
+  protocol TEXT NOT NULL,
+  tx_hash TEXT,
+  report TEXT, -- JSON
+  created_at INTEGER DEFAULT (unixepoch())
+);
+```
+
+**Task 4.2: Alert Routes**
+```
+File: packages/api/src/routes/alerts.ts
+
+GET  /api/v1/alerts          - List alerts (paginated: ?page=1&limit=20)
+GET  /api/v1/alerts/:id      - Get single alert
+POST /api/v1/alerts          - Create alert (internal, after detection)
+```
+
+**Task 4.3: Protocol Management Routes**
+```
+File: packages/api/src/routes/protocols.ts
+
+GET   /api/v1/protocols              - List all protocols
+GET   /api/v1/protocols/:address     - Get protocol details
+POST  /api/v1/protocols              - Register new protocol
+PATCH /api/v1/protocols/:address     - Update thresholds
+GET   /api/v1/protocols/:address/status - Get circuit breaker status
+```
+
+**Task 4.4: Telegram Notifications**
+```
+File: packages/api/src/services/telegram.ts
+
+import TelegramBot from 'node-telegram-bot-api';
+
+export async function sendAlert(alert: Alert) {
+  // Format: 🚨 CRITICAL ALERT
+  //         Protocol: {name}
+  //         Threat Level: {level}
+  //         Confidence: {confidence}%
+  //         Action: {action}
+  // Use env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+}
+```
+
+**Task 4.5: API Key Authentication**
+```
+File: packages/api/src/middleware/auth.ts
+
+- Check X-API-Key header
+- Skip auth for: GET /health, GET /api/v1/sentinel/aggregate (public)
+- Valid keys from env: API_KEYS=key1,key2,key3
+- Return 401 { error: "Invalid API key" } if missing/invalid
+```
+
+**Task 4.6: Wire Everything Up**
+```
+File: packages/api/src/index.ts
+
+- Import and mount new routes
+- Initialize database on startup
+- Call sendAlert() after successful detection with CRITICAL/HIGH
+```
+
+#### Environment Variables to Add
+```
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_CHAT_ID=your-chat-id
+API_KEYS=aegis-dev-key-1,aegis-dev-key-2
+DATABASE_PATH=./data/aegis.db
+```
+
+#### Boundaries
+- ✅ You own: `packages/api/`
+- ❌ Do NOT touch: `packages/agents-py/`, `packages/frontend/`, `packages/cre-workflows/`, `packages/contracts/`
+- ⚠️ Do NOT modify: `packages/api/src/services/agentProxy.ts` (already complete)
+
+---
+
+### Coordination Rules
+
+| Shared Resource | Owner | Rule |
+|-----------------|-------|------|
+| `packages/agents-py/aegis/models.py` | Agent 1 | Others request changes |
+| `packages/api/src/config.ts` | Agent 4 | Others read-only |
+| `.env` | Agent 4 | Add vars, notify others |
+| `CLAUDE.md` | None | Don't modify during work |
+
+### Communication Protocol
+
+If you need something from another agent's domain:
+1. **Don't modify their files**
+2. Add a comment in your code: `// TODO: Need Agent X to add Y`
+3. Continue with mock/placeholder
+4. Coordinate during integration phase
+
+### Parallel Timeline
+
+```
+Hour 1:
+  Agent 1: [Adapter base + Aave] ████████
+  Agent 2: [CRE threatDetection] ████████
+  Agent 3: [AlertHistory + ThreatFeed] ████████
+  Agent 4: [SQLite + schema] ████████
+
+Hour 2:
+  Agent 1: [Uniswap adapter] ████████
+  Agent 2: [CCIP alerts] ████████
+  Agent 3: [RegisterProtocol + CircuitBreakerCard] ████████
+  Agent 4: [alerts + protocols routes] ████████
+
+Hour 3:
+  Agent 1: [Integrate in crew.py] ████████
+  Agent 2: [VRF tie-breaker] ████████
+  Agent 3: [ForensicsViewer + routing] ████████
+  Agent 4: [Telegram + auth] ████████
+
+Hour 4:
+  ALL: [Integration, testing, merge conflicts]
+```
+
+---
+
 ## QUICK REFERENCE CARD
 
 ```
@@ -2616,4 +3032,4 @@ TESTNET: Base Sepolia (84532)
 ---
 
 *Last Updated: March 1, 2026*
-*Version: 2.1.0 — Simulation mode added, production roadmap documented*
+*Version: 2.2.0 — Parallel development guide for 4 agents added*
