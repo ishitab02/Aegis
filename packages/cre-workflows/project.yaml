@@ -1,0 +1,16 @@
+# ==========================================================================
+# AEGIS Protocol - CRE Project Settings
+# ==========================================================================
+# Defines RPC endpoints and DON settings per target.
+
+local-simulation:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org
+
+staging:
+  cre-cli:
+    don-family: "zone-a"
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org

@@ -1,0 +1,15 @@
+local-simulation:
+  user-workflow:
+    workflow-name: "aegis-health-check"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "../threatDetection/config.json"
+    secrets-path: "../../../secrets.yaml"
+
+staging:
+  user-workflow:
+    workflow-name: "aegis-health-check"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "../threatDetection/config.json"
+    secrets-path: "../../../secrets.yaml"
