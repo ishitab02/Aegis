@@ -1,0 +1,76 @@
+name: Deploy Contracts
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: "Target network"
+        required: true
+        default: "base-sepolia"
+        type: choice
+        options:
+          - base-sepolia
+          - ethereum-sepolia
+      dry_run:
+        description: "Dry run (simulate only)"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.network }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
+    defaults:
+      run:
+        working-directory: packages/contracts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Build contracts
+        run: forge build
+
+      - name: Run tests before deploy
+        run: forge test
+
+      - name: Set RPC URL
+        id: rpc
+        run: |
+          if [ "${{ inputs.network }}" = "base-sepolia" ]; then
+            echo "url=https://sepolia.base.org" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.network }}" = "ethereum-sepolia" ]; then
+            echo "url=https://rpc.sepolia.org" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Simulate deployment (dry run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          forge script script/Deploy.s.sol:DeployAegis \
+            --fork-url ${{ steps.rpc.outputs.url }} \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+
+      - name: Deploy contracts
+        if: ${{ !inputs.dry_run }}
+        run: |
+          forge script script/Deploy.s.sol:DeployAegis \
+            --fork-url ${{ steps.rpc.outputs.url }} \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
+            --broadcast --verify
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}

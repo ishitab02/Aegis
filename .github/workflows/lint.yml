@@ -1,0 +1,66 @@
+name: Lint & Format
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  prettier:
+    name: Prettier (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: npx prettier --check "packages/api/src/**/*.ts" "packages/cre-workflows/src/**/*.ts" "packages/frontend/src/**/*.{ts,tsx}"
+
+  solidity-fmt:
+    name: Forge fmt (Solidity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Check Solidity formatting
+        working-directory: packages/contracts
+        run: forge fmt --check
+
+  python-lint:
+    name: Ruff (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Check Python linting
+        working-directory: packages/agents-py
+        run: ruff check aegis/ tests/ --select E,F,I --ignore E501
