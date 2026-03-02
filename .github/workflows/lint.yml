@@ -33,13 +33,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Install Foundry dependencies
+        working-directory: packages/contracts
+        run: |
+          forge install foundry-rs/forge-std --no-commit
+          forge install OpenZeppelin/openzeppelin-contracts --no-commit
 
       - name: Check Solidity formatting
         working-directory: packages/contracts
