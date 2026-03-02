@@ -6,9 +6,8 @@ Ported from packages/agents/src/sentinels/LiquiditySentinel/actions/monitorTVL.t
 import logging
 
 from crewai import Agent
-from crewai.tools import tool
 
-from aegis.config import LIQUIDITY_THRESHOLDS, MOCK_PROTOCOL_ABI
+from aegis.config import LIQUIDITY_THRESHOLDS
 from aegis.models import (
     ActionRecommendation,
     SentinelType,

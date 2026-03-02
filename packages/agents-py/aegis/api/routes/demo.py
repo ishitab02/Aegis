@@ -5,12 +5,13 @@ designed for recording demo videos and live presentations.
 """
 
 import logging
-import time
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+# Import the forensics report store to add demo reports
+from aegis.api.routes.forensics import _reports as forensics_reports
 from aegis.models import (
     ActionRecommendation,
     AttackClassification,
@@ -26,9 +27,6 @@ from aegis.models import (
     ThreatLevel,
 )
 from aegis.utils import now_seconds
-
-# Import the forensics report store to add demo reports
-from aegis.api.routes.forensics import _reports as forensics_reports
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

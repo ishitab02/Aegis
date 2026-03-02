@@ -18,20 +18,15 @@ interface ISentinelRegistry {
     }
 
     event SentinelRegistered(
-        uint256 indexed tokenId,
-        SentinelType sentinelType,
-        address indexed operator,
-        string metadataUri
+        uint256 indexed tokenId, SentinelType sentinelType, address indexed operator, string metadataUri
     );
     event SentinelDeactivated(uint256 indexed tokenId);
     event SentinelReactivated(uint256 indexed tokenId);
     event SentinelHeartbeat(uint256 indexed tokenId, uint256 timestamp);
 
-    function registerSentinel(
-        SentinelType sentinelType,
-        address operator,
-        string calldata metadataUri
-    ) external returns (uint256 tokenId);
+    function registerSentinel(SentinelType sentinelType, address operator, string calldata metadataUri)
+        external
+        returns (uint256 tokenId);
 
     function heartbeat(uint256 tokenId) external;
 

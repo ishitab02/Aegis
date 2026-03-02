@@ -12,12 +12,16 @@
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
     "prettier": "^3.4.0",
+    "tsx": "^4.21.0",
+    "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   },
   "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0"
   }
 }

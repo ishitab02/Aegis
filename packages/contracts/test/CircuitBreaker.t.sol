@@ -34,9 +34,7 @@ contract CircuitBreakerTest is Test {
     }
 
     function test_RegisterProtocolRevertsIfAlreadyRegistered() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(CircuitBreaker.AlreadyRegistered.selector, address(mockProtocol))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CircuitBreaker.AlreadyRegistered.selector, address(mockProtocol)));
         breaker.registerProtocol(address(mockProtocol));
     }
 
@@ -45,10 +43,7 @@ contract CircuitBreakerTest is Test {
 
         vm.prank(creWorkflow);
         breaker.triggerBreaker(
-            address(mockProtocol),
-            threatId,
-            ICircuitBreaker.ThreatLevel.CRITICAL,
-            "Possible reentrancy attack"
+            address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.CRITICAL, "Possible reentrancy attack"
         );
 
         assertTrue(breaker.isPaused(address(mockProtocol)));
@@ -64,38 +59,21 @@ contract CircuitBreakerTest is Test {
 
         vm.prank(creWorkflow);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CircuitBreaker.ThreatLevelTooLow.selector, ICircuitBreaker.ThreatLevel.MEDIUM
-            )
+            abi.encodeWithSelector(CircuitBreaker.ThreatLevelTooLow.selector, ICircuitBreaker.ThreatLevel.MEDIUM)
         );
-        breaker.triggerBreaker(
-            address(mockProtocol),
-            threatId,
-            ICircuitBreaker.ThreatLevel.MEDIUM,
-            "Medium threat"
-        );
+        breaker.triggerBreaker(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.MEDIUM, "Medium threat");
     }
 
     function test_TriggerBreakerRevertsIfAlreadyPaused() public {
         bytes32 threatId = keccak256("threat-1");
 
         vm.prank(creWorkflow);
-        breaker.triggerBreaker(
-            address(mockProtocol),
-            threatId,
-            ICircuitBreaker.ThreatLevel.CRITICAL,
-            "First trigger"
-        );
+        breaker.triggerBreaker(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.CRITICAL, "First trigger");
 
         vm.prank(creWorkflow);
-        vm.expectRevert(
-            abi.encodeWithSelector(CircuitBreaker.AlreadyPaused.selector, address(mockProtocol))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CircuitBreaker.AlreadyPaused.selector, address(mockProtocol)));
         breaker.triggerBreaker(
-            address(mockProtocol),
-            keccak256("threat-2"),
-            ICircuitBreaker.ThreatLevel.CRITICAL,
-            "Second trigger"
+            address(mockProtocol), keccak256("threat-2"), ICircuitBreaker.ThreatLevel.CRITICAL, "Second trigger"
         );
     }
 
@@ -103,12 +81,7 @@ contract CircuitBreakerTest is Test {
         bytes32 threatId = keccak256("threat-1");
 
         vm.prank(creWorkflow);
-        breaker.triggerBreaker(
-            address(mockProtocol),
-            threatId,
-            ICircuitBreaker.ThreatLevel.CRITICAL,
-            "Attack detected"
-        );
+        breaker.triggerBreaker(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.CRITICAL, "Attack detected");
 
         assertTrue(breaker.isPaused(address(mockProtocol)));
 
@@ -125,19 +98,10 @@ contract CircuitBreakerTest is Test {
         bytes32 threatId = keccak256("threat-1");
 
         vm.prank(creWorkflow);
-        breaker.triggerBreaker(
-            address(mockProtocol),
-            threatId,
-            ICircuitBreaker.ThreatLevel.CRITICAL,
-            "Attack"
-        );
+        breaker.triggerBreaker(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.CRITICAL, "Attack");
 
         // Try to reset immediately
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CircuitBreaker.CooldownNotFinished.selector, block.timestamp + 1 hours
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CircuitBreaker.CooldownNotFinished.selector, block.timestamp + 1 hours));
         breaker.resetBreaker(address(mockProtocol));
     }
 
@@ -145,9 +109,7 @@ contract CircuitBreakerTest is Test {
         bytes32 threatId = keccak256("alert-1");
 
         vm.prank(creWorkflow);
-        breaker.recordAlert(
-            address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.HIGH
-        );
+        breaker.recordAlert(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.HIGH);
 
         assertEq(breaker.recentHighAlerts(address(mockProtocol)), 1);
         assertFalse(breaker.isPaused(address(mockProtocol)));
@@ -158,9 +120,7 @@ contract CircuitBreakerTest is Test {
         for (uint256 i = 0; i < 3; i++) {
             bytes32 threatId = keccak256(abi.encodePacked("alert-", i));
             vm.prank(creWorkflow);
-            breaker.recordAlert(
-                address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.HIGH
-            );
+            breaker.recordAlert(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.HIGH);
         }
 
         assertTrue(breaker.isPaused(address(mockProtocol)));
@@ -170,9 +130,7 @@ contract CircuitBreakerTest is Test {
     function test_AlertCountResetsAfterTimeout() public {
         bytes32 threatId1 = keccak256("alert-1");
         vm.prank(creWorkflow);
-        breaker.recordAlert(
-            address(mockProtocol), threatId1, ICircuitBreaker.ThreatLevel.HIGH
-        );
+        breaker.recordAlert(address(mockProtocol), threatId1, ICircuitBreaker.ThreatLevel.HIGH);
 
         assertEq(breaker.recentHighAlerts(address(mockProtocol)), 1);
 
@@ -181,9 +139,7 @@ contract CircuitBreakerTest is Test {
 
         bytes32 threatId2 = keccak256("alert-2");
         vm.prank(creWorkflow);
-        breaker.recordAlert(
-            address(mockProtocol), threatId2, ICircuitBreaker.ThreatLevel.HIGH
-        );
+        breaker.recordAlert(address(mockProtocol), threatId2, ICircuitBreaker.ThreatLevel.HIGH);
 
         // Count should have been reset, so now it's 1 again
         assertEq(breaker.recentHighAlerts(address(mockProtocol)), 1);
@@ -195,11 +151,6 @@ contract CircuitBreakerTest is Test {
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
         vm.expectRevert();
-        breaker.triggerBreaker(
-            address(mockProtocol),
-            threatId,
-            ICircuitBreaker.ThreatLevel.CRITICAL,
-            "Unauthorized"
-        );
+        breaker.triggerBreaker(address(mockProtocol), threatId, ICircuitBreaker.ThreatLevel.CRITICAL, "Unauthorized");
     }
 }

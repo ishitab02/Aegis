@@ -25,7 +25,7 @@ from aegis.models import PriceFeedData
 from aegis.utils import now_seconds
 
 if TYPE_CHECKING:
-    from web3.contract import Contract
+    pass
 
 logger = logging.getLogger(__name__)
 

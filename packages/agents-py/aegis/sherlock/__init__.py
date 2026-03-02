@@ -1,13 +1,17 @@
-from aegis.sherlock.chain_sherlock import get_chain_sherlock, trace_transaction, analyze_trace
+from aegis.sherlock.chain_sherlock import (
+    analyze_trace,
+    get_chain_sherlock,
+    trace_transaction,
+)
 from aegis.sherlock.prompts import FORENSIC_ANALYSIS_PROMPT, REPORT_GENERATION_PROMPT
 from aegis.sherlock.tracer import (
+    KNOWN_ADDRESSES,
+    KNOWN_ATTACKERS,
     AddressLabel,
     ArchiveNodeClient,
     ForensicTracer,
     GraphEdge,
     GraphNode,
-    KNOWN_ADDRESSES,
-    KNOWN_ATTACKERS,
     TraceResult,
     TransactionGraph,
     get_address_label,

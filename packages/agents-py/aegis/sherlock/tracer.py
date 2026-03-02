@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -21,8 +21,6 @@ from pydantic import BaseModel, Field
 from web3 import Web3
 
 from aegis.models import (
-    FundDestination,
-    FundDestinationType,
     InternalCall,
     TokenTransfer,
     TransactionTrace,
@@ -171,7 +169,6 @@ KNOWN_ATTACKERS: dict[str, str] = {
     "0x56D8B635A7C88Fd1104D23d632AF40c1C3Aac4e3": "Nomad Exploiter 2",
     "0xB5c8bF27ec2bC77ec9b6a8b1f9F8Aac57AB3A6Bc": "Nomad Exploiter 3",
     "0xB3764761E297D6f121e79C32A65829Cd1dDb4D32": "Ronin Exploiter (Mar 2022, $625M)",
-    "0x098B716B8Aaf21512996dC57EB0615e2383E2f96": "Ronin Exploiter EOA",
     # ============ DeFi Protocol Exploits ============
     "0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503": "Curve Exploiter (Jul 2023, $47M)",
     "0xdce5d6b41c32f578f875ef20a0E24cf16504A7d7": "Curve Exploiter 2",

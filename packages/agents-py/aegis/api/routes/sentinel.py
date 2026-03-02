@@ -4,7 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from aegis.models import SentinelType, ThreatAssessment, ThreatLevel
+from aegis.models import SentinelType, ThreatAssessment
 from aegis.utils import now_seconds
 
 logger = logging.getLogger(__name__)

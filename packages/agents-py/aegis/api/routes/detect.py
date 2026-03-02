@@ -4,9 +4,13 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
+from aegis.api.routes.sentinel import (
+    update_consensus,
+    update_protocol_info,
+    update_sentinel_assessment,
+)
 from aegis.coordinator.crew import run_detection_cycle
 from aegis.models import DetectionRequest, DetectionResponse
-from aegis.api.routes.sentinel import update_consensus, update_protocol_info, update_sentinel_assessment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

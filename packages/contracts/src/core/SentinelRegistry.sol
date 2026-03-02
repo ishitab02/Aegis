@@ -25,11 +25,11 @@ contract SentinelRegistry is ISentinelRegistry, ERC721URIStorage, Ownable {
     // ============ External Functions ============
 
     /// @inheritdoc ISentinelRegistry
-    function registerSentinel(
-        SentinelType sentinelType,
-        address operator,
-        string calldata metadataUri
-    ) external onlyOwner returns (uint256 tokenId) {
+    function registerSentinel(SentinelType sentinelType, address operator, string calldata metadataUri)
+        external
+        onlyOwner
+        returns (uint256 tokenId)
+    {
         tokenId = _nextTokenId++;
 
         _mint(operator, tokenId);

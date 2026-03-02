@@ -3,27 +3,24 @@
 These tests verify the tracer functionality using mocked Web3 responses.
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from aegis.sherlock.tracer import (
+    KNOWN_ADDRESSES,
+    KNOWN_ATTACKERS,
     AddressLabel,
     ArchiveNodeClient,
     ForensicTracer,
     GraphEdge,
     GraphNode,
-    KNOWN_ADDRESSES,
-    KNOWN_ATTACKERS,
-    TraceResult,
     TransactionGraph,
     get_address_label,
     get_forensic_tracer,
     identify_address,
     is_known_attacker,
 )
-
 
 # ============ Address Identification Tests ============
 
@@ -284,7 +281,7 @@ class TestTracerAnalysis:
         tracer = ForensicTracer(mock_web3)
 
         # Create a graph with a mixer destination
-        from aegis.models import TransactionTrace, InternalCall, TokenTransfer
+        from aegis.models import TokenTransfer, TransactionTrace
 
         trace = TransactionTrace(
             tx_hash="0xtest",
@@ -330,7 +327,7 @@ class TestTracerAnalysis:
 
         tracer = ForensicTracer(mock_web3)
 
-        from aegis.models import TransactionTrace, InternalCall
+        from aegis.models import InternalCall, TransactionTrace
 
         # Create trace with multiple calls to same address (reentrancy pattern)
         trace = TransactionTrace(

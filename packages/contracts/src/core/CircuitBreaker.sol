@@ -56,24 +56,18 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
         isRegistered[protocol] = true;
 
         protocolStates[protocol] = BreakerState({
-            paused: false,
-            threatLevel: ThreatLevel.NONE,
-            threatId: bytes32(0),
-            pausedAt: 0,
-            cooldownEnds: 0,
-            reason: ""
+            paused: false, threatLevel: ThreatLevel.NONE, threatId: bytes32(0), pausedAt: 0, cooldownEnds: 0, reason: ""
         });
 
         emit ProtocolRegistered(protocol);
     }
 
     /// @inheritdoc ICircuitBreaker
-    function triggerBreaker(
-        address protocol,
-        bytes32 threatId,
-        ThreatLevel threatLevel,
-        string calldata reason
-    ) external onlyRole(CRE_WORKFLOW_ROLE) nonReentrant {
+    function triggerBreaker(address protocol, bytes32 threatId, ThreatLevel threatLevel, string calldata reason)
+        external
+        onlyRole(CRE_WORKFLOW_ROLE)
+        nonReentrant
+    {
         if (!isRegistered[protocol]) revert NotRegistered(protocol);
         if (protocolStates[protocol].paused) revert AlreadyPaused(protocol);
         if (threatLevel < ThreatLevel.HIGH) revert ThreatLevelTooLow(threatLevel);
@@ -93,11 +87,10 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
     }
 
     /// @inheritdoc ICircuitBreaker
-    function recordAlert(
-        address protocol,
-        bytes32 threatId,
-        ThreatLevel threatLevel
-    ) external onlyRole(CRE_WORKFLOW_ROLE) {
+    function recordAlert(address protocol, bytes32 threatId, ThreatLevel threatLevel)
+        external
+        onlyRole(CRE_WORKFLOW_ROLE)
+    {
         if (!isRegistered[protocol]) revert NotRegistered(protocol);
 
         // Reset alert count if last alert was > 1 hour ago
@@ -181,9 +174,7 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
 
             _attemptProtocolPause(protocol);
 
-            emit CircuitBreakerTriggered(
-                protocol, threatId, ThreatLevel.HIGH, "Auto-paused: multiple HIGH alerts"
-            );
+            emit CircuitBreakerTriggered(protocol, threatId, ThreatLevel.HIGH, "Auto-paused: multiple HIGH alerts");
         }
     }
 

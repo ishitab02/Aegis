@@ -4,20 +4,17 @@ These tests verify the adapter base class and protocol-specific implementations.
 Most tests use mocked Web3 responses to avoid requiring network access.
 """
 
-import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from aegis.adapters.base import (
-    BaseProtocolAdapter,
     ProtocolEvent,
     ProtocolMetricsSnapshot,
     TokenBalance,
     TTLCache,
 )
-
 
 # ============ TTLCache Tests ============
 
@@ -288,7 +285,7 @@ class TestGetAdapterFactory:
         mock_web3.eth.chain_id = 8453
         mock_web3.to_checksum_address = lambda x: x
 
-        from aegis.adapters import get_adapter, ProtocolType, reset_registry
+        from aegis.adapters import ProtocolType, get_adapter, reset_registry
 
         reset_registry()
 
@@ -306,8 +303,9 @@ class TestCrewIntegration:
 
     def test_detection_cycle_with_adapter(self):
         """Test that detection cycle accepts adapter parameter."""
-        from aegis.coordinator.crew import run_detection_cycle
         from unittest.mock import MagicMock
+
+        from aegis.coordinator.crew import run_detection_cycle
 
         # Create a mock adapter
         mock_adapter = MagicMock()

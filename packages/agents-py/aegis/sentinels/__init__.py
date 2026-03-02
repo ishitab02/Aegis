@@ -1,3 +1,7 @@
+from aegis.sentinels.governance_sentinel import (
+    analyze_proposal,
+    get_governance_sentinel,
+)
 from aegis.sentinels.liquidity_sentinel import (
     get_liquidity_sentinel,
     monitor_tvl,
@@ -5,10 +9,6 @@ from aegis.sentinels.liquidity_sentinel import (
 from aegis.sentinels.oracle_sentinel import (
     get_oracle_sentinel,
     monitor_price_feeds,
-)
-from aegis.sentinels.governance_sentinel import (
-    get_governance_sentinel,
-    analyze_proposal,
 )
 
 __all__ = [

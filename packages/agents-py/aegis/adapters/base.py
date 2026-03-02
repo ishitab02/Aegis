@@ -9,14 +9,13 @@ from __future__ import annotations
 import asyncio
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from web3 import Web3
-    from web3.types import EventData
 
 
 # ============ Cache Implementation ============

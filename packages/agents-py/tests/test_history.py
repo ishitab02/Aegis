@@ -10,9 +10,9 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from aegis.adapters.history import (
+    SECONDS_PER_HOUR,
     AnomalyThresholds,
     AnomalyType,
-    HistoricalStats,
     HistoricalTVLTracker,
     RollingAverage,
     SQLiteTVLStore,
@@ -21,10 +21,7 @@ from aegis.adapters.history import (
     TVLSnapshot,
     get_tvl_tracker,
     reset_tvl_tracker,
-    SECONDS_PER_HOUR,
-    SECONDS_PER_DAY,
 )
-
 
 # ============ TVLSnapshot Tests ============
 

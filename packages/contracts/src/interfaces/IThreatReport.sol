@@ -20,12 +20,7 @@ interface IThreatReport {
         bytes signature;
     }
 
-    event ReportSubmitted(
-        bytes32 indexed reportId,
-        address indexed protocol,
-        uint8 threatLevel,
-        bool actionTaken
-    );
+    event ReportSubmitted(bytes32 indexed reportId, address indexed protocol, uint8 threatLevel, bool actionTaken);
 
     function submitReport(
         address protocol,
@@ -36,10 +31,7 @@ interface IThreatReport {
         SentinelVote[] calldata votes
     ) external returns (bytes32 reportId);
 
-    function getProtocolReports(address protocol, uint256 limit)
-        external
-        view
-        returns (bytes32[] memory);
+    function getProtocolReports(address protocol, uint256 limit) external view returns (bytes32[] memory);
 
     function getReportVotes(bytes32 reportId) external view returns (SentinelVote[] memory);
 }

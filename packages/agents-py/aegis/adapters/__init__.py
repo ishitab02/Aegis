@@ -24,22 +24,17 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from aegis.adapters.aave_v3 import (
+    AAVE_V3_ADDRESSES,
+    AaveV3Adapter,
+    get_aave_v3_adapter,
+)
 from aegis.adapters.base import (
     BaseProtocolAdapter,
     ProtocolEvent,
     ProtocolMetricsSnapshot,
     TokenBalance,
     TTLCache,
-)
-from aegis.adapters.aave_v3 import (
-    AAVE_V3_ADDRESSES,
-    AaveV3Adapter,
-    get_aave_v3_adapter,
-)
-from aegis.adapters.uniswap_v3 import (
-    UNISWAP_V3_ADDRESSES,
-    UniswapV3Adapter,
-    get_uniswap_v3_adapter,
 )
 from aegis.adapters.compound_v3 import (
     COMPOUND_V3_ADDRESSES,
@@ -64,6 +59,11 @@ from aegis.adapters.history import (
     TVLSnapshot,
     get_tvl_tracker,
     reset_tvl_tracker,
+)
+from aegis.adapters.uniswap_v3 import (
+    UNISWAP_V3_ADDRESSES,
+    UniswapV3Adapter,
+    get_uniswap_v3_adapter,
 )
 
 if TYPE_CHECKING:

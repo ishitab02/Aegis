@@ -59,12 +59,9 @@ contract ReputationTracker {
      * @param wasCorrect Whether the prediction was correct
      * @param feedbackUri IPFS URI to detailed feedback
      */
-    function submitFeedback(
-        uint256 sentinelId,
-        bytes32 reportId,
-        bool wasCorrect,
-        string calldata feedbackUri
-    ) external {
+    function submitFeedback(uint256 sentinelId, bytes32 reportId, bool wasCorrect, string calldata feedbackUri)
+        external
+    {
         if (!authorizedUpdaters[msg.sender]) revert NotAuthorized();
 
         ReputationScore storage rep = reputations[sentinelId];
