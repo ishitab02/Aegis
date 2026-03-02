@@ -21,6 +21,18 @@ type FeedItem = {
 
 const LEVEL_FILTERS: Array<ThreatLevel | "ALL"> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
+function getErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Failed to load threat feed.";
+  }
+
+  if (error.message.toLowerCase().includes("timed out")) {
+    return "Threat feed request timed out. Please retry.";
+  }
+
+  return error.message || "Failed to load threat feed.";
+}
+
 function normalizeThreat(level: unknown): ThreatLevel {
   if (typeof level !== "string") return "NONE";
   const upper = level.toUpperCase();
@@ -56,7 +68,8 @@ function extractFeedItems(payload: unknown): FeedItem[] {
     (typeof root.protocol === "string" && root.protocol) ||
     "Unknown Protocol";
   const fallbackAction =
-    (typeof (root.consensus as Record<string, unknown> | undefined)?.action_recommended === "string" &&
+    (typeof (root.consensus as Record<string, unknown> | undefined)?.action_recommended ===
+      "string" &&
       String((root.consensus as Record<string, unknown>).action_recommended)) ||
     "MONITOR";
 
@@ -68,7 +81,8 @@ function extractFeedItems(payload: unknown): FeedItem[] {
       return {
         id:
           (typeof assessment.id === "string" && assessment.id) ||
-          (typeof assessment.sentinel_id === "string" && `${assessment.sentinel_id}-${timestamp}`) ||
+          (typeof assessment.sentinel_id === "string" &&
+            `${assessment.sentinel_id}-${timestamp}`) ||
           `feed-${timestamp}-${index}`,
         protocolName:
           (typeof assessment.protocol_name === "string" && assessment.protocol_name) ||
@@ -89,6 +103,32 @@ function extractFeedItems(payload: unknown): FeedItem[] {
     .sort((a, b) => b.timestamp - a.timestamp);
 }
 
+/** Convert /alerts response items into feed items. */
+function extractAlertFeedItems(payload: unknown): FeedItem[] {
+  const root = ((payload as Record<string, unknown>) ?? {}) as Record<string, unknown>;
+  const items = Array.isArray(root.items) ? root.items : Array.isArray(root) ? root : [];
+
+  return items.map((entry: unknown, index: number) => {
+    const alert = ((entry ?? {}) as Record<string, unknown>) ?? {};
+    const timestamp = normalizeTimestamp(alert.created_at ?? alert.timestamp);
+
+    return {
+      id: (typeof alert.id === "string" && alert.id) || `alert-${timestamp}-${index}`,
+      protocolName:
+        (typeof alert.protocol_name === "string" && alert.protocol_name) ||
+        (typeof alert.protocol === "string" && alert.protocol) ||
+        "Unknown Protocol",
+      threatLevel: normalizeThreat(alert.threat_level),
+      details:
+        (typeof alert.details === "string" && alert.details) ||
+        `${normalizeThreat(alert.threat_level)} threat detected — ${(typeof alert.action === "string" && alert.action) || "ALERT"}`,
+      confidence: normalizeConfidence(alert.confidence),
+      action: (typeof alert.action === "string" && alert.action) || "ALERT",
+      timestamp,
+    };
+  });
+}
+
 interface ThreatFeedProps {
   compact?: boolean;
   className?: string;
@@ -106,13 +146,36 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
     queryFn: () => api.getSentinelAggregate() as Promise<unknown>,
     refetchInterval: paused ? false : 5_000,
   });
+  const errorMessage = getErrorMessage(error);
 
-  const items = useMemo(() => extractFeedItems(data), [data]);
+  // Also fetch recent alerts for historical feed items
+  const { data: alertsData } = useQuery({
+    queryKey: ["live-threat-feed-alerts"],
+    queryFn: () => api.getAlerts(1, 10) as Promise<unknown>,
+    refetchInterval: paused ? false : 15_000,
+  });
+
+  const items = useMemo(() => {
+    const liveItems = extractFeedItems(data);
+    const historyItems = extractAlertFeedItems(alertsData);
+    // Merge: live first, then history — deduplicate by timestamp+protocol
+    const seen = new Set(liveItems.map((i) => `${i.timestamp}-${i.protocolName}`));
+    const merged = [...liveItems];
+    for (const item of historyItems) {
+      const key = `${item.timestamp}-${item.protocolName}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(item);
+      }
+    }
+    return merged.sort((a, b) => b.timestamp - a.timestamp);
+  }, [data, alertsData]);
   const filteredItems = useMemo(
-    () => items
-      .filter((item) => filter === "ALL" ? true : item.threatLevel === filter)
-      .slice(0, visibleCount),
-    [filter, items, visibleCount]
+    () =>
+      items
+        .filter((item) => (filter === "ALL" ? true : item.threatLevel === filter))
+        .slice(0, visibleCount),
+    [filter, items, visibleCount],
   );
 
   // Track new items for highlight effect
@@ -129,7 +192,12 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
   }, [items]);
 
   return (
-    <section className={clsx("card overflow-hidden", className)}>
+    <section
+      className={clsx(
+        "overflow-hidden rounded-lg border border-border-subtle bg-bg-surface",
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle px-5 py-4">
         <div>
@@ -152,7 +220,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
             onClick={() => setPaused((s) => !s)}
             className={clsx(
               "btn-secondary gap-1.5",
-              paused && "border-threat-medium/50 text-threat-medium"
+              paused && "border-threat-medium/50 text-threat-medium",
             )}
           >
             {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
@@ -173,7 +241,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
               "flex-shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-all",
               filter === level
                 ? "border-accent bg-accent/10 text-accent"
-                : "border-border-subtle text-text-secondary hover:border-border-muted hover:text-text-primary"
+                : "border-border-subtle text-text-secondary hover:border-border-muted hover:text-text-primary",
             )}
           >
             {level === "ALL" ? "All" : level}
@@ -192,13 +260,14 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
         )}
 
         {error && (
-          <div className="rounded-lg border border-threat-critical-muted bg-threat-critical-muted/20 px-4 py-3">
-            <p className="text-sm text-red-300">Failed to load threat feed</p>
+          <div className="rounded-lg border border-red-500/40 bg-red-500/20 px-4 py-3">
+            <p className="text-sm text-red-300">{errorMessage}</p>
             <button
+              type="button"
               onClick={() => refetch()}
-              className="mt-2 text-xs text-accent hover:underline"
+              className="mt-2 rounded border border-red-500/50 px-2 py-1 text-xs text-red-200 transition hover:bg-red-500/20"
             >
-              Try again
+              Retry
             </button>
           </div>
         )}
@@ -212,7 +281,16 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                   animate={{ opacity: 1 }}
                   className="rounded-lg border border-border-subtle bg-bg-elevated px-4 py-8 text-center"
                 >
-                  <p className="text-sm text-text-muted">No threats match this filter</p>
+                  <p className="text-sm text-text-secondary">
+                    {items.length === 0
+                      ? "No threat activity yet."
+                      : "No threats match the selected filter."}
+                  </p>
+                  <p className="mt-1 text-xs text-text-disabled">
+                    {items.length === 0
+                      ? "Live alerts will appear here as new assessments arrive."
+                      : "Try a different severity filter."}
+                  </p>
                 </motion.div>
               ) : (
                 <ul className="space-y-2">
@@ -227,7 +305,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                       className={clsx(
                         "relative rounded-lg border border-border-subtle p-4 transition-all",
                         getThreatBgClass(item.threatLevel),
-                        highlightedIds.has(item.id) && "ring-1 ring-accent/50"
+                        highlightedIds.has(item.id) && "ring-1 ring-accent/50",
                       )}
                     >
                       {/* Left border indicator */}
@@ -237,7 +315,8 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                           item.threatLevel === "CRITICAL" && "bg-threat-critical",
                           item.threatLevel === "HIGH" && "bg-threat-high",
                           item.threatLevel === "MEDIUM" && "bg-threat-medium",
-                          (item.threatLevel === "LOW" || item.threatLevel === "NONE") && "bg-border-subtle"
+                          (item.threatLevel === "LOW" || item.threatLevel === "NONE") &&
+                            "bg-border-subtle",
                         )}
                       />
 
@@ -254,7 +333,8 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                           </p>
                           <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted">
                             <span>
-                              Confidence: {item.confidence !== null ? `${item.confidence.toFixed(0)}%` : "N/A"}
+                              Confidence:{" "}
+                              {item.confidence !== null ? `${item.confidence.toFixed(0)}%` : "N/A"}
                             </span>
                             <span className="hidden sm:inline">•</span>
                             <span className="hidden sm:inline">

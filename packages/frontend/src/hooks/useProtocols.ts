@@ -22,7 +22,7 @@ function normalizeProtocols(payload: unknown): ProtocolRecord[] {
 
   const list = Array.isArray(payload)
     ? payload
-    : ((payload as Record<string, unknown>).protocols as unknown[]) ?? [];
+    : (((payload as Record<string, unknown>).protocols as unknown[]) ?? []);
 
   return list
     .map((entry) => (entry ?? {}) as Record<string, unknown>)
@@ -39,8 +39,14 @@ function normalizeProtocols(payload: unknown): ProtocolRecord[] {
 
 function normalizeProtocolStatus(payload: unknown): ProtocolStatusResponse {
   const root = ((payload as Record<string, unknown>) ?? {}) as Record<string, unknown>;
-  const circuit = ((root.circuitBreaker as Record<string, unknown> | null) ?? null) as Record<string, unknown> | null;
-  const protocol = ((root.protocol as Record<string, unknown> | null) ?? null) as Record<string, unknown> | null;
+  const circuit = ((root.circuitBreaker as Record<string, unknown> | null) ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const protocol = ((root.protocol as Record<string, unknown> | null) ?? null) as Record<
+    string,
+    unknown
+  > | null;
 
   return {
     address: String(root.address ?? ""),

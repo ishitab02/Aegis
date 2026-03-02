@@ -9,10 +9,7 @@ export function ConsensusView({ consensus }: { consensus: ConsensusResult }) {
 
       <div className="flex items-center gap-3 mb-4">
         {consensus.votes.map((vote, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-lg border border-aegis-border p-3 text-center"
-          >
+          <div key={i} className="flex-1 rounded-lg border border-aegis-border p-3 text-center">
             <div
               className="w-3 h-3 rounded-full mx-auto mb-2"
               style={{

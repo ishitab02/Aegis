@@ -21,22 +21,15 @@ interface ICircuitBreaker {
 
     event ProtocolRegistered(address indexed protocol);
     event CircuitBreakerTriggered(
-        address indexed protocol,
-        bytes32 indexed threatId,
-        ThreatLevel threatLevel,
-        string reason
+        address indexed protocol, bytes32 indexed threatId, ThreatLevel threatLevel, string reason
     );
     event CircuitBreakerReset(address indexed protocol, address indexed resetBy);
     event ThreatAlertRecorded(address indexed protocol, bytes32 indexed threatId, ThreatLevel threatLevel);
 
     function registerProtocol(address protocol) external;
 
-    function triggerBreaker(
-        address protocol,
-        bytes32 threatId,
-        ThreatLevel threatLevel,
-        string calldata reason
-    ) external;
+    function triggerBreaker(address protocol, bytes32 threatId, ThreatLevel threatLevel, string calldata reason)
+        external;
 
     function recordAlert(address protocol, bytes32 threatId, ThreatLevel threatLevel) external;
 

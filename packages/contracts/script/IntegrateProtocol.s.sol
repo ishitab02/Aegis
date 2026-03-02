@@ -27,10 +27,10 @@ contract IntegrateProtocol is Script {
     // ============ Deployed Contract Addresses (Base Sepolia) ============
 
     address constant SENTINEL_REGISTRY = 0xd34FC1ee378F342EFb92C0D334362B9E577b489f;
-    address constant CIRCUIT_BREAKER   = 0xa0eE49660252B353830ADe5de0Ca9385647F85b5;
-    address constant THREAT_REPORT     = 0x3f01beefA5b7F5931B5545BbCFCF0a72c7131499;
+    address constant CIRCUIT_BREAKER = 0xa0eE49660252B353830ADe5de0Ca9385647F85b5;
+    address constant THREAT_REPORT = 0x3f01beefA5b7F5931B5545BbCFCF0a72c7131499;
     address constant REPUTATION_TRACKER = 0x7970433B694f7fa6f8D511c7B20110ECd28db100;
-    address constant MOCK_PROTOCOL     = 0x11887863b89F1bE23A650909135ffaCFab666803;
+    address constant MOCK_PROTOCOL = 0x11887863b89F1bE23A650909135ffaCFab666803;
 
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -72,25 +72,19 @@ contract IntegrateProtocol is Script {
         if (existing.length == 0) {
             // Register Liquidity Sentinel
             uint256 liquidityId = registry.registerSentinel(
-                ISentinelRegistry.SentinelType.LIQUIDITY,
-                operator,
-                "ipfs://QmAEGIS/sentinel/liquidity-1.json"
+                ISentinelRegistry.SentinelType.LIQUIDITY, operator, "ipfs://QmAEGIS/sentinel/liquidity-1.json"
             );
             console.log("[OK] Liquidity Sentinel registered, tokenId:", liquidityId);
 
             // Register Oracle Sentinel
             uint256 oracleId = registry.registerSentinel(
-                ISentinelRegistry.SentinelType.ORACLE,
-                operator,
-                "ipfs://QmAEGIS/sentinel/oracle-1.json"
+                ISentinelRegistry.SentinelType.ORACLE, operator, "ipfs://QmAEGIS/sentinel/oracle-1.json"
             );
             console.log("[OK] Oracle Sentinel registered, tokenId:", oracleId);
 
             // Register Governance Sentinel
             uint256 govId = registry.registerSentinel(
-                ISentinelRegistry.SentinelType.GOVERNANCE,
-                operator,
-                "ipfs://QmAEGIS/sentinel/governance-1.json"
+                ISentinelRegistry.SentinelType.GOVERNANCE, operator, "ipfs://QmAEGIS/sentinel/governance-1.json"
             );
             console.log("[OK] Governance Sentinel registered, tokenId:", govId);
         } else {

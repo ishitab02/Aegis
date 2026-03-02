@@ -75,11 +75,7 @@ contract ThreatReport is IThreatReport {
     }
 
     /// @inheritdoc IThreatReport
-    function getProtocolReports(address protocol, uint256 limit)
-        external
-        view
-        returns (bytes32[] memory)
-    {
+    function getProtocolReports(address protocol, uint256 limit) external view returns (bytes32[] memory) {
         bytes32[] storage all = protocolReports[protocol];
         uint256 count = limit < all.length ? limit : all.length;
 

@@ -18,11 +18,8 @@ contract SentinelRegistryTest is Test {
     }
 
     function test_RegisterSentinel() public {
-        uint256 tokenId = registry.registerSentinel(
-            ISentinelRegistry.SentinelType.LIQUIDITY,
-            operator1,
-            "ipfs://QmTestMetadata"
-        );
+        uint256 tokenId =
+            registry.registerSentinel(ISentinelRegistry.SentinelType.LIQUIDITY, operator1, "ipfs://QmTestMetadata");
 
         assertEq(tokenId, 0);
         assertEq(registry.ownerOf(0), operator1);
@@ -61,7 +58,7 @@ contract SentinelRegistryTest is Test {
         vm.prank(operator1);
         registry.heartbeat(0);
 
-        (, , , , uint256 lastActiveAt) = registry.sentinels(0);
+        (,,,, uint256 lastActiveAt) = registry.sentinels(0);
         assertEq(lastActiveAt, block.timestamp);
     }
 
@@ -78,7 +75,7 @@ contract SentinelRegistryTest is Test {
 
         registry.deactivate(0);
 
-        (, , bool active, , ) = registry.sentinels(0);
+        (,, bool active,,) = registry.sentinels(0);
         assertFalse(active);
 
         uint256[] memory activeSentinels = registry.getActiveSentinels();
@@ -90,7 +87,7 @@ contract SentinelRegistryTest is Test {
         registry.deactivate(0);
         registry.reactivate(0);
 
-        (, , bool active, , ) = registry.sentinels(0);
+        (,, bool active,,) = registry.sentinels(0);
         assertTrue(active);
     }
 

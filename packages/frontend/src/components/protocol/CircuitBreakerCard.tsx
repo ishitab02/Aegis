@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Lock, ShieldCheck, Timer, Unlock } from "lucide-react";
+import { AlertTriangle, Lock, RefreshCw, ShieldCheck, Timer, Unlock } from "lucide-react";
+import clsx from "clsx";
 import { useAlerts, formatRelativeTime } from "../../hooks/useAlerts";
 import { useProtocolStatus } from "../../hooks/useProtocols";
 import { useWallet } from "../../hooks/useWallet";
@@ -14,12 +15,32 @@ function formatCountdown(seconds: number): string {
   if (h > 0) {
     return `${h}h ${m}m ${s}s`;
   }
+
   return `${m}m ${s}s`;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Unable to fetch circuit breaker status.";
+  }
+
+  if (error.message.toLowerCase().includes("timed out")) {
+    return "Circuit breaker status request timed out. Please retry.";
+  }
+
+  return error.message || "Unable to fetch circuit breaker status.";
+}
+
 export function CircuitBreakerCard({ address }: { address: string }) {
-  const { data, isLoading, error } = useProtocolStatus(address, { refetchInterval: 10_000 });
-  const { data: alertHistory } = useAlerts({ page: 1, limit: 20, protocol: address, refetchInterval: 12_000 });
+  const { data, isLoading, error, refetch, isFetching } = useProtocolStatus(address, {
+    refetchInterval: 10_000,
+  });
+  const {
+    data: alertHistory,
+    error: alertHistoryError,
+    refetch: refetchAlertHistory,
+    isFetching: isFetchingAlertHistory,
+  } = useAlerts({ page: 1, limit: 20, protocol: address, refetchInterval: 12_000 });
   const wallet = useWallet();
 
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
@@ -52,53 +73,91 @@ export function CircuitBreakerCard({ address }: { address: string }) {
     return events.sort((left, right) => right.timestamp - left.timestamp);
   }, [alertHistory, paused, pausedAt]);
 
+  const errorMessage = getErrorMessage(error);
+  const alertTimelineErrorMessage = getErrorMessage(alertHistoryError);
+
   return (
     <section
-      className={`rounded-xl border p-4 transition ${
-        paused
-          ? "border-[#ef4444] bg-[#7f1d1d]/20"
-          : "border-[var(--border-subtle)] bg-[var(--bg-surface)]"
-      }`}
+      className={clsx(
+        "rounded-lg border p-4",
+        paused ? "border-red-500/40 bg-red-500/20" : "border-border-subtle bg-bg-surface",
+      )}
     >
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">Circuit Breaker Status</h3>
+        <h3 className="text-base font-semibold text-white">Circuit Breaker Status</h3>
         <span
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
-            paused ? "bg-[#7f1d1d] text-[#fca5a5]" : "bg-[#14532d] text-[#86efac]"
-          }`}
+          className={clsx(
+            "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium",
+            paused ? "bg-red-500/20 text-red-300" : "bg-green-500/20 text-green-300",
+          )}
         >
           {paused ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-          {paused ? "PAUSED" : "NORMAL"}
+          {paused ? "PAUSED" : "ACTIVE"}
         </span>
       </div>
 
-      {isLoading && <LoadingSkeleton lines={5} />}
-      {error && <p className="text-sm text-[#fca5a5]">Unable to fetch circuit breaker status.</p>}
+      {isLoading && (
+        <div className="space-y-3">
+          <LoadingSkeleton className="h-16" />
+          <LoadingSkeleton className="h-20" />
+          <LoadingSkeleton className="h-28" />
+        </div>
+      )}
 
-      {!isLoading && !error && (
+      {error && !isLoading && (
+        <div className="rounded-lg border border-red-500/40 bg-red-500/20 px-4 py-3">
+          <p className="text-sm text-red-300">{errorMessage}</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-2 inline-flex items-center gap-1 rounded border border-red-500/50 px-2 py-1 text-xs text-red-200 transition hover:bg-red-500/20"
+            disabled={isFetching}
+          >
+            <RefreshCw className={clsx("h-3.5 w-3.5", isFetching && "animate-spin")} />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !error && !data && (
+        <div className="rounded-lg border border-border-subtle bg-bg-elevated px-4 py-8 text-center">
+          <p className="text-sm text-text-secondary">No circuit breaker data available.</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-3 rounded border border-border-subtle px-3 py-1.5 text-xs text-text-secondary transition hover:bg-bg-elevated"
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !error && data && (
         <div className="space-y-4">
           {!paused && (
-            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-              <p className="mb-2 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
+            <div className="rounded-lg border border-border-subtle bg-bg-elevated p-3">
+              <p className="mb-2 inline-flex items-center gap-2 text-sm font-medium text-white">
                 <StatusDot status="low" animate />
                 Protocol Operating Normally
               </p>
-              <p className="text-sm text-[var(--text-secondary)]">
-                Last check: {new Date((data?.timestamp ?? now) * 1000).toLocaleString()}
+              <p className="text-sm text-text-muted">
+                Last check: {new Date((data.timestamp ?? now) * 1000).toLocaleString()}
               </p>
             </div>
           )}
 
           {paused && (
-            <div className="space-y-3 rounded-lg border border-[#7f1d1d] bg-[#7f1d1d]/30 p-3">
-              <p className="text-2xl font-bold tracking-wide text-[#fca5a5]">PAUSED</p>
-              <p className="text-sm text-[#fecaca]">{data?.circuitBreaker?.reason || "No pause reason was provided."}</p>
+            <div className="space-y-3 rounded-lg border border-red-500/40 bg-red-500/20 p-3">
+              <p className="text-2xl font-bold tracking-wide text-red-300">PAUSED</p>
+              <p className="text-sm text-red-100">
+                {data.circuitBreaker?.reason || "No pause reason was provided."}
+              </p>
               <div className="grid gap-2 text-sm sm:grid-cols-2">
-                <p className="inline-flex items-center gap-2 text-[#fecaca]">
+                <p className="inline-flex items-center gap-2 text-red-100">
                   <AlertTriangle className="h-4 w-4" />
                   Paused: {pausedAt > 0 ? new Date(pausedAt * 1000).toLocaleString() : "Unknown"}
                 </p>
-                <p className="inline-flex items-center gap-2 text-[#fecaca]">
+                <p className="inline-flex items-center gap-2 text-red-100">
                   <Timer className="h-4 w-4" />
                   Cooldown: {remaining > 0 ? formatCountdown(remaining) : "Completed"}
                 </p>
@@ -107,7 +166,7 @@ export function CircuitBreakerCard({ address }: { address: string }) {
               <button
                 type="button"
                 disabled={!wallet.isConnected || remaining > 0}
-                className="rounded-lg border border-[#ef4444] bg-[#ef4444]/20 px-3 py-2 text-sm font-medium text-[#fca5a5] transition hover:bg-[#ef4444]/35 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-red-500/50 bg-red-500/20 px-3 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-40"
                 title="Resume requires authorized wallet and on-chain transaction."
               >
                 Resume Protocol
@@ -115,22 +174,52 @@ export function CircuitBreakerCard({ address }: { address: string }) {
             </div>
           )}
 
-          <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-            <p className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
-              <ShieldCheck className="h-4 w-4 text-[var(--accent)]" />
-              Recent Breaker Timeline
-            </p>
+          <div className="rounded-lg border border-border-subtle bg-bg-elevated p-3">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="inline-flex items-center gap-2 text-sm font-medium text-white">
+                <ShieldCheck className="h-4 w-4 text-blue-400" />
+                Recent Breaker Timeline
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchAlertHistory()}
+                disabled={isFetchingAlertHistory}
+                className="rounded border border-border-subtle p-1.5 text-text-secondary transition hover:bg-bg-elevated"
+                aria-label="Refresh breaker timeline"
+              >
+                <RefreshCw
+                  className={clsx("h-3.5 w-3.5", isFetchingAlertHistory && "animate-spin")}
+                />
+              </button>
+            </div>
+
+            {alertHistoryError && (
+              <div className="mb-3 rounded border border-red-500/40 bg-red-500/20 px-3 py-2 text-xs text-red-200">
+                {alertTimelineErrorMessage}
+              </div>
+            )}
 
             <ul className="space-y-2">
-              {timeline.length === 0 && <li className="text-sm text-[var(--text-muted)]">No breaker events yet.</li>}
-              {timeline.map((event) => (
-                <li key={event.id} className="flex items-center justify-between rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2">
-                  <p className="text-sm text-[var(--text-secondary)]">{event.label}</p>
-                  <time className="text-xs text-[var(--text-muted)]" title={new Date(event.timestamp * 1000).toLocaleString()}>
-                    {formatRelativeTime(event.timestamp)}
-                  </time>
+              {timeline.length === 0 ? (
+                <li className="rounded border border-border-subtle bg-bg-surface px-3 py-2 text-sm text-text-muted">
+                  No breaker events yet.
                 </li>
-              ))}
+              ) : (
+                timeline.map((event) => (
+                  <li
+                    key={event.id}
+                    className="flex items-center justify-between rounded border border-border-subtle bg-bg-surface px-3 py-2"
+                  >
+                    <p className="text-sm text-text-primary">{event.label}</p>
+                    <time
+                      className="text-xs text-text-muted"
+                      title={new Date(event.timestamp * 1000).toLocaleString()}
+                    >
+                      {formatRelativeTime(event.timestamp)}
+                    </time>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
         </div>

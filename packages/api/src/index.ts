@@ -13,6 +13,7 @@ import { alerts } from "./routes/alerts.js";
 import { protocols } from "./routes/protocols.js";
 import { ws, subscriberCount } from "./routes/ws.js";
 import { docs } from "./routes/docs.js";
+import { demo } from "./routes/demo.js";
 import { config } from "./config.js";
 import { getDb } from "./db/index.js";
 
@@ -33,7 +34,7 @@ app.use("*", x402PaymentMiddleware);
 app.get("/", (c) =>
   c.json({
     name: "AEGIS Protocol API",
-    version: "1.2.0",
+    version: "1.3.0",
     description: "AI-Enhanced Guardian Intelligence System for DeFi Security",
     endpoints: {
       health: "/api/v1/health",
@@ -43,10 +44,11 @@ app.get("/", (c) =>
       reports: "/api/v1/reports/protocol",
       alerts: "/api/v1/alerts",
       protocols: "/api/v1/protocols",
+      demo: "/api/v1/demo/scenarios",
       ws: "/api/v1/ws (SSE)",
       docs: "/api/v1/docs",
     },
-  })
+  }),
 );
 
 // ---- API Routes ----
@@ -57,6 +59,7 @@ app.route("/api/v1/reports", reports);
 app.route("/api/v1/alerts", alerts);
 app.route("/api/v1/protocols", protocols);
 app.route("/api/v1/ws", ws);
+app.route("/api/v1/demo", demo);
 app.route("/api/v1", docs);
 
 // ---- Start Server ----

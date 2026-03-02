@@ -51,11 +51,7 @@ export async function getSentinelById(id: string) {
 
 // ---- Forensics ----
 
-export async function runForensics(
-  txHash: string,
-  protocol: string,
-  description = ""
-) {
+export async function runForensics(txHash: string, protocol: string, description = "") {
   const res = await agentFetch("/api/v1/forensics", {
     method: "POST",
     body: JSON.stringify({ tx_hash: txHash, protocol, description }),
@@ -83,4 +79,24 @@ export async function getAgentHealth() {
   } catch {
     return { status: "UNHEALTHY", error: "Agent API unreachable" };
   }
+}
+
+// ---- Demo ----
+
+export async function getDemoScenarios() {
+  const res = await agentFetch("/api/v1/demo/scenarios");
+  return res.json();
+}
+
+export async function startEulerReplay() {
+  const res = await agentFetch("/api/v1/demo/euler-replay", {
+    method: "POST",
+  });
+  return res.json();
+}
+
+export async function getEulerReplayStep(stepNumber: number) {
+  const res = await agentFetch(`/api/v1/demo/euler-replay/step/${stepNumber}`);
+  if (!res.ok) return null;
+  return res.json();
 }

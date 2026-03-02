@@ -14,6 +14,18 @@ interface AlertHistoryProps {
   className?: string;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Failed to load alerts.";
+  }
+
+  if (error.message.toLowerCase().includes("timed out")) {
+    return "Alert request timed out. Please retry.";
+  }
+
+  return error.message || "Failed to load alerts.";
+}
+
 export function AlertHistory({
   title = "Alert History",
   subtitle = "Complete timeline of detected threats and actions taken",
@@ -35,12 +47,18 @@ export function AlertHistory({
   const totalPages = data?.totalPages ?? 1;
   const currentPage = data?.page ?? 1;
   const total = data?.total ?? tableRows.length;
+  const errorMessage = getErrorMessage(error);
 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, total);
 
   return (
-    <section className={clsx("card overflow-hidden", className)}>
+    <section
+      className={clsx(
+        "overflow-hidden rounded-lg border border-border-subtle bg-bg-surface",
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle px-5 py-4">
         <div>
@@ -63,10 +81,20 @@ export function AlertHistory({
             className="btn-secondary gap-1.5"
             onClick={() => {
               // Export functionality placeholder
-              const csv = tableRows.map(row =>
-                [row.id, row.protocolName, row.threatLevel, row.action, new Date(row.createdAt * 1000).toISOString()].join(",")
-              ).join("\n");
-              const blob = new Blob([`ID,Protocol,Threat,Action,Time\n${csv}`], { type: "text/csv" });
+              const csv = tableRows
+                .map((row) =>
+                  [
+                    row.id,
+                    row.protocolName,
+                    row.threatLevel,
+                    row.action,
+                    new Date(row.createdAt * 1000).toISOString(),
+                  ].join(","),
+                )
+                .join("\n");
+              const blob = new Blob([`ID,Protocol,Threat,Action,Time\n${csv}`], {
+                type: "text/csv",
+              });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
@@ -107,13 +135,14 @@ export function AlertHistory({
       {/* Error state */}
       {error && !isLoading && (
         <div className="p-5">
-          <div className="rounded-lg border border-threat-critical-muted bg-threat-critical-muted/20 px-4 py-3">
-            <p className="text-sm text-red-300">Failed to load alerts</p>
+          <div className="rounded-lg border border-red-500/40 bg-red-500/20 px-4 py-3">
+            <p className="text-sm text-red-300">{errorMessage}</p>
             <button
+              type="button"
               onClick={() => refetch()}
-              className="mt-2 text-xs text-accent hover:underline"
+              className="mt-2 rounded border border-red-500/50 px-2 py-1 text-xs text-red-200 transition hover:bg-red-500/20"
             >
-              Try again
+              Retry
             </button>
           </div>
         </div>
@@ -139,9 +168,9 @@ export function AlertHistory({
                 {tableRows.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-12 text-center">
-                      <p className="text-sm text-text-muted">No alerts found</p>
+                      <p className="text-sm text-text-secondary">No alerts detected yet.</p>
                       <p className="mt-1 text-xs text-text-disabled">
-                        Alerts will appear here when threats are detected
+                        This table will populate when sentinels publish new alerts.
                       </p>
                     </td>
                   </tr>
@@ -200,7 +229,7 @@ export function AlertHistory({
                           "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition",
                           pageNum === currentPage
                             ? "bg-accent text-white"
-                            : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+                            : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary",
                         )}
                       >
                         {pageNum}

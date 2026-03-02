@@ -26,7 +26,7 @@ if (walletConnectProjectId) {
         url: "https://aegis.protocol",
         icons: ["https://aegis.protocol/logo.png"],
       },
-    })
+    }),
   );
 }
 

@@ -70,14 +70,22 @@ function getThreatBorder(level: ThreatLevel): string {
   }
 }
 
+type VoteEntry = {
+  sentinel_id?: string;
+  threat_level?: string;
+  confidence?: number;
+};
+
 export function ThreatDashboard({
   threatLevel,
   consensusReached,
   agreementRatio,
+  votes,
 }: {
   threatLevel: ThreatLevel;
   consensusReached: boolean;
   agreementRatio: number;
+  votes?: VoteEntry[];
 }) {
   const Icon = ICONS[threatLevel];
   const isCritical = threatLevel === "CRITICAL";
@@ -90,7 +98,7 @@ export function ThreatDashboard({
       className={clsx(
         "relative overflow-hidden rounded-2xl border p-8 text-center",
         getThreatBorder(threatLevel),
-        "bg-bg-surface"
+        "bg-bg-surface",
       )}
     >
       {/* Animated gradient background */}
@@ -98,7 +106,7 @@ export function ThreatDashboard({
         className={clsx(
           "absolute inset-0 bg-gradient-to-b",
           getThreatGradient(threatLevel),
-          (isCritical || isHigh) && "animate-pulse"
+          (isCritical || isHigh) && "animate-pulse",
         )}
       />
 
@@ -119,7 +127,7 @@ export function ThreatDashboard({
             className={clsx(
               "mx-auto h-16 w-16",
               getThreatColor(threatLevel),
-              isCritical && "animate-pulse"
+              isCritical && "animate-pulse",
             )}
             strokeWidth={1.5}
           />
@@ -130,10 +138,7 @@ export function ThreatDashboard({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className={clsx(
-            "mb-2 text-3xl font-bold tracking-tight",
-            getThreatColor(threatLevel)
-          )}
+          className={clsx("mb-2 text-3xl font-bold tracking-tight", getThreatColor(threatLevel))}
         >
           {LABELS[threatLevel]}
         </motion.h2>
@@ -160,13 +165,13 @@ export function ThreatDashboard({
               <span
                 className={clsx(
                   "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-                  consensusReached ? "bg-success" : "bg-text-muted"
+                  consensusReached ? "bg-success" : "bg-text-muted",
                 )}
               />
               <span
                 className={clsx(
                   "relative inline-flex h-2 w-2 rounded-full",
-                  consensusReached ? "bg-success" : "bg-text-muted"
+                  consensusReached ? "bg-success" : "bg-text-muted",
                 )}
               />
             </span>
@@ -179,7 +184,15 @@ export function ThreatDashboard({
             <>
               <span className="h-4 w-px bg-border-subtle" />
               <span className="text-sm font-medium text-text-primary">
-                {(agreementRatio * 100).toFixed(0)}% agreement
+                {(() => {
+                  if (!votes || votes.length === 0) {
+                    return `${(agreementRatio * 100).toFixed(0)}% agreement`;
+                  }
+                  const agreeing = votes.filter(
+                    (v) => v.threat_level?.toUpperCase() === threatLevel,
+                  ).length;
+                  return `${agreeing}/${votes.length} sentinels agree`;
+                })()}
               </span>
             </>
           )}

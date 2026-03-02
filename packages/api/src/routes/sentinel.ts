@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import {
-  getSentinelAggregate,
-  getSentinelById,
-  runDetection,
-} from "../services/agentProxy.js";
+import { randomUUID } from "node:crypto";
+import { getSentinelAggregate, getSentinelById, runDetection } from "../services/agentProxy.js";
 import { config } from "../config.js";
+import { insertAlert } from "../db/index.js";
+import { broadcast } from "./ws.js";
+import { sendAlert } from "../services/telegram.js";
 
 const sentinel = new Hono();
 
@@ -40,6 +40,32 @@ sentinel.post("/detect", async (c) => {
     simulate_price_deviation_percent: body.simulate_price_deviation_percent,
     simulate_short_voting_period: body.simulate_short_voting_period,
   });
+
+  // Auto-create alert in DB when consensus is reached with HIGH or CRITICAL
+  try {
+    const consensus = (result as any)?.consensus;
+    if (
+      consensus?.consensus_reached &&
+      (consensus.final_threat_level === "CRITICAL" || consensus.final_threat_level === "HIGH")
+    ) {
+      const row = insertAlert({
+        id: randomUUID(),
+        protocol: protocolAddress,
+        protocol_name: body.protocol_name || "MockProtocol",
+        threat_level: consensus.final_threat_level,
+        confidence: consensus.votes?.[0]?.confidence ?? 0.9,
+        action: consensus.action_recommended || "ALERT",
+        consensus_data: JSON.stringify(consensus),
+      });
+      broadcast(row);
+      if (row.threat_level === "CRITICAL" || row.threat_level === "HIGH") {
+        sendAlert(row).catch(() => {});
+      }
+    }
+  } catch (e) {
+    console.error("[sentinel/detect] auto-alert creation failed:", e);
+  }
+
   return c.json(result);
 });
 

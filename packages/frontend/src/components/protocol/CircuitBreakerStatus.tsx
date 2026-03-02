@@ -15,9 +15,7 @@ export function CircuitBreakerStatus({
   return (
     <div
       className={`rounded-xl border p-5 ${
-        paused
-          ? "border-red-500/30 bg-red-500/5"
-          : "border-aegis-border bg-aegis-card"
+        paused ? "border-red-500/30 bg-red-500/5" : "border-aegis-border bg-aegis-card"
       }`}
     >
       <div className="flex items-center justify-between mb-3">
@@ -40,8 +38,7 @@ export function CircuitBreakerStatus({
           {reason && <p className="text-gray-400">{reason}</p>}
           {remaining > 0 && (
             <p className="text-amber-400">
-              Cooldown: {Math.floor(remaining / 60)}m {remaining % 60}s
-              remaining
+              Cooldown: {Math.floor(remaining / 60)}m {remaining % 60}s remaining
             </p>
           )}
         </div>
@@ -49,8 +46,7 @@ export function CircuitBreakerStatus({
 
       {!paused && (
         <p className="text-xs text-gray-500">
-          Protocol is operating normally. Circuit breaker will trigger on 2/3
-          CRITICAL consensus.
+          Protocol is operating normally. Circuit breaker will trigger on 2/3 CRITICAL consensus.
         </p>
       )}
     </div>

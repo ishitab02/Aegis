@@ -4,7 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from aegis.models import SentinelType, ThreatAssessment, ThreatLevel
+from aegis.models import SentinelType, ThreatAssessment
 from aegis.utils import now_seconds
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,8 @@ _sentinel_statuses: dict[str, dict] = {
 
 
 _last_consensus: dict | None = None
+_last_protocol_name: str = "MockProtocol"
+_last_protocol_address: str = ""
 
 
 def update_sentinel_assessment(assessment: ThreatAssessment) -> None:
@@ -51,6 +53,13 @@ def update_consensus(consensus_data: dict) -> None:
     """Cache the latest consensus result for the aggregate endpoint."""
     global _last_consensus
     _last_consensus = consensus_data
+
+
+def update_protocol_info(name: str, address: str) -> None:
+    """Cache the protocol name/address for the aggregate endpoint."""
+    global _last_protocol_name, _last_protocol_address
+    _last_protocol_name = name
+    _last_protocol_address = address
 
 
 @router.get("/aggregate")
@@ -68,6 +77,8 @@ async def get_sentinel_aggregate():
 
     return {
         "timestamp": now_seconds(),
+        "protocol_name": _last_protocol_name,
+        "protocol_address": _last_protocol_address,
         "assessments": assessments,
         "consensus": _last_consensus,
     }

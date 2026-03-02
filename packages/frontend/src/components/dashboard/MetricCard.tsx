@@ -83,7 +83,7 @@ export function MetricCard({
       transition={{ duration: 0.2 }}
       className={clsx(
         "group relative rounded-xl border border-border-subtle bg-bg-surface p-5 transition-all duration-200 hover:border-border-muted",
-        className
+        className,
       )}
     >
       {/* Header row */}
@@ -101,7 +101,7 @@ export function MetricCard({
           <span
             className={clsx(
               "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
-              trendStyle.classes
+              trendStyle.classes,
             )}
           >
             <TrendIcon className="h-3 w-3" />
@@ -115,14 +115,14 @@ export function MetricCard({
               <span
                 className={clsx(
                   "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-                  indicatorStyle.dot
+                  indicatorStyle.dot,
                 )}
               />
               <span
                 className={clsx(
                   "relative inline-flex h-2 w-2 rounded-full",
                   indicatorStyle.dot,
-                  indicatorStyle.glow
+                  indicatorStyle.glow,
                 )}
               />
             </span>
@@ -136,9 +136,7 @@ export function MetricCard({
       </p>
 
       {/* Subvalue */}
-      {subvalue && (
-        <p className="mt-2 text-sm text-text-muted">{subvalue}</p>
-      )}
+      {subvalue && <p className="mt-2 text-sm text-text-muted">{subvalue}</p>}
     </motion.article>
   );
 }
@@ -156,12 +154,16 @@ export function MetricInline({
   return (
     <div className="flex items-center justify-between rounded-lg bg-bg-surface px-3 py-2">
       <span className="text-xs text-text-muted">{label}</span>
-      <span className={clsx(
-        "text-sm font-semibold",
-        trend === "up" ? "text-success" :
-        trend === "down" ? "text-threat-critical" :
-        "text-text-primary"
-      )}>
+      <span
+        className={clsx(
+          "text-sm font-semibold",
+          trend === "up"
+            ? "text-success"
+            : trend === "down"
+              ? "text-threat-critical"
+              : "text-text-primary",
+        )}
+      >
         {value}
       </span>
     </div>

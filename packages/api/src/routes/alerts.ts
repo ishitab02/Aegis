@@ -36,13 +36,10 @@ alerts.post("/", async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: "Invalid JSON body" }, 400);
 
-  const { protocol, threat_level, confidence, action, consensus_data } = body;
+  const { protocol, protocol_name, threat_level, confidence, action, consensus_data } = body;
 
   if (!protocol || !threat_level || confidence === undefined || !action) {
-    return c.json(
-      { error: "protocol, threat_level, confidence, and action are required" },
-      400
-    );
+    return c.json({ error: "protocol, threat_level, confidence, and action are required" }, 400);
   }
 
   const id = body.id ?? randomUUID();
@@ -50,6 +47,7 @@ alerts.post("/", async (c) => {
   const row = insertAlert({
     id,
     protocol,
+    protocol_name: protocol_name || "",
     threat_level,
     confidence: Number(confidence),
     action,

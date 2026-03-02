@@ -9,13 +9,7 @@ interface TooltipProps {
   className?: string;
 }
 
-export function Tooltip({
-  content,
-  children,
-  side = "top",
-  delay = 200,
-  className,
-}: TooltipProps) {
+export function Tooltip({ content, children, side = "top", delay = 200, className }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -49,9 +43,11 @@ export function Tooltip({
 
   const arrowClasses = {
     top: "top-full left-1/2 -translate-x-1/2 border-t-[#1f1f23] border-x-transparent border-b-transparent",
-    bottom: "bottom-full left-1/2 -translate-x-1/2 border-b-[#1f1f23] border-x-transparent border-t-transparent",
+    bottom:
+      "bottom-full left-1/2 -translate-x-1/2 border-b-[#1f1f23] border-x-transparent border-t-transparent",
     left: "left-full top-1/2 -translate-y-1/2 border-l-[#1f1f23] border-y-transparent border-r-transparent",
-    right: "right-full top-1/2 -translate-y-1/2 border-r-[#1f1f23] border-y-transparent border-l-transparent",
+    right:
+      "right-full top-1/2 -translate-y-1/2 border-r-[#1f1f23] border-y-transparent border-l-transparent",
   };
 
   return (
@@ -68,17 +64,12 @@ export function Tooltip({
           className={clsx(
             "absolute z-50 whitespace-nowrap rounded-md border border-border-subtle bg-bg-overlay px-2.5 py-1.5 text-xs text-text-primary shadow-dropdown animate-fade-in",
             positionClasses[side],
-            className
+            className,
           )}
           role="tooltip"
         >
           {content}
-          <span
-            className={clsx(
-              "absolute h-0 w-0 border-4",
-              arrowClasses[side]
-            )}
-          />
+          <span className={clsx("absolute h-0 w-0 border-4", arrowClasses[side])} />
         </div>
       )}
     </div>

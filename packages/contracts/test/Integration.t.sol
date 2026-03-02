@@ -44,9 +44,7 @@ contract IntegrationTest is Test {
         // Register sentinels
         registry.registerSentinel(ISentinelRegistry.SentinelType.LIQUIDITY, operator, "ipfs://liq");
         registry.registerSentinel(ISentinelRegistry.SentinelType.ORACLE, operator, "ipfs://oracle");
-        registry.registerSentinel(
-            ISentinelRegistry.SentinelType.GOVERNANCE, operator, "ipfs://gov"
-        );
+        registry.registerSentinel(ISentinelRegistry.SentinelType.GOVERNANCE, operator, "ipfs://gov");
     }
 
     function test_FullThreatDetectionFlow() public {
@@ -118,16 +116,7 @@ contract IntegrationTest is Test {
         );
 
         // 7. Verify report
-        (
-            ,
-            address protocol,
-            uint8 level,
-            ,
-            ,
-            ,
-            ,
-            bool action
-        ) = threatReport.reports(reportId);
+        (, address protocol, uint8 level,,,,, bool action) = threatReport.reports(reportId);
 
         assertEq(protocol, address(mockProtocol));
         assertEq(level, 4);

@@ -96,7 +96,12 @@ function normalizeConsensusData(raw: RawAlert): Record<string, unknown> | null {
 
 function normalizeAlert(raw: RawAlert, index: number): AlertRecord {
   const createdAt = toUnixSeconds(raw.created_at ?? raw.timestamp);
-  const confidence = typeof raw.confidence === "number" ? (raw.confidence <= 1 ? raw.confidence * 100 : raw.confidence) : null;
+  const confidence =
+    typeof raw.confidence === "number"
+      ? raw.confidence <= 1
+        ? raw.confidence * 100
+        : raw.confidence
+      : null;
 
   return {
     id: String(raw.id ?? `alert-${createdAt}-${index}`),
@@ -132,9 +137,20 @@ function normalizeAlertsResponse(payload: unknown): AlertsPage {
 
   const root = payload as Record<string, unknown>;
   const list = (root.items ?? root.alerts ?? root.data ?? []) as unknown[];
-  const page = Math.max(1, Number(root.page ?? (root.pagination as Record<string, unknown> | undefined)?.page ?? 1));
-  const limit = Math.max(1, Number(root.limit ?? (root.pagination as Record<string, unknown> | undefined)?.limit ?? 20));
-  const total = Math.max(0, Number(root.total ?? (root.pagination as Record<string, unknown> | undefined)?.total ?? list.length));
+  const page = Math.max(
+    1,
+    Number(root.page ?? (root.pagination as Record<string, unknown> | undefined)?.page ?? 1),
+  );
+  const limit = Math.max(
+    1,
+    Number(root.limit ?? (root.pagination as Record<string, unknown> | undefined)?.limit ?? 20),
+  );
+  const total = Math.max(
+    0,
+    Number(
+      root.total ?? (root.pagination as Record<string, unknown> | undefined)?.total ?? list.length,
+    ),
+  );
 
   const items = list.map((entry, index) => normalizeAlert((entry ?? {}) as RawAlert, index));
 

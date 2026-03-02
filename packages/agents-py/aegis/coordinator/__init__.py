@@ -1,5 +1,5 @@
-from aegis.coordinator.consensus import reach_consensus, weighted_consensus
 from aegis.coordinator.aggregator import SentinelAggregator
+from aegis.coordinator.consensus import reach_consensus, weighted_consensus
 from aegis.coordinator.crew import run_detection_cycle
 
 __all__ = [

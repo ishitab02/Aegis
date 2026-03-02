@@ -56,7 +56,7 @@ export async function x402PaymentMiddleware(c: Context, next: Next) {
           description: priceConfig.description,
         },
       },
-      402
+      402,
     );
   }
 

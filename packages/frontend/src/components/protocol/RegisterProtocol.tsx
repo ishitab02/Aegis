@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Link as LinkIcon, Sparkles } from "lu
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 import { api } from "../../lib/api";
+import { useToast } from "../common/Toast";
 
 const ENS_CLIENT = createPublicClient({
   chain: mainnet,
@@ -14,7 +15,12 @@ const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
 const steps = ["Protocol", "Thresholds", "Notifications", "Review"];
 
-const protocolSignatures: Array<{ id: string; label: string; prefix?: string; includes?: string[] }> = [
+const protocolSignatures: Array<{
+  id: string;
+  label: string;
+  prefix?: string;
+  includes?: string[];
+}> = [
   { id: "aave-v3", label: "Aave V3", includes: ["aave"] },
   { id: "uniswap-v3", label: "Uniswap V3", includes: ["uni", "swap"] },
   { id: "compound-v3", label: "Compound V3", includes: ["comp"] },
@@ -50,7 +56,11 @@ function detectProtocolType(address: string, name: string): string {
 }
 
 function formatUsd(value: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 interface RegisterProtocolProps {
@@ -59,6 +69,7 @@ interface RegisterProtocolProps {
 
 export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
 
   const [step, setStep] = useState(0);
   const [isResolvingEns, setIsResolvingEns] = useState(false);
@@ -101,6 +112,10 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
       }),
     onSuccess: async () => {
       setBanner({ type: "success", message: "Protocol registered successfully." });
+      pushToast({
+        variant: "success",
+        message: "Protocol registered successfully",
+      });
       setStep(0);
       setForm({
         address: "",
@@ -117,6 +132,12 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
     },
     onError: (error: Error) => {
       setBanner({ type: "error", message: error.message || "Failed to register protocol." });
+      pushToast({
+        variant: "error",
+        message: error.message.toLowerCase().includes("timed out")
+          ? "Failed to connect to API"
+          : error.message || "Failed to connect to API",
+      });
     },
   });
 
@@ -159,7 +180,12 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
     }
 
     if (step === 1) {
-      return form.alertThreshold >= 5 && form.alertThreshold <= 50 && form.breakerThreshold >= 10 && form.breakerThreshold <= 75;
+      return (
+        form.alertThreshold >= 5 &&
+        form.alertThreshold <= 50 &&
+        form.breakerThreshold >= 10 &&
+        form.breakerThreshold <= 75
+      );
     }
 
     return true;
@@ -200,7 +226,9 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
     <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-[var(--text-primary)]">Register Protocol</h3>
-        <p className="text-sm text-[var(--text-secondary)]">Guided onboarding with risk thresholds and notification routing.</p>
+        <p className="text-sm text-[var(--text-secondary)]">
+          Guided onboarding with risk thresholds and notification routing.
+        </p>
       </div>
 
       <ol className="mb-6 grid grid-cols-4 gap-2">
@@ -221,7 +249,11 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
               >
                 {completed ? <Check className="h-3.5 w-3.5" /> : index + 1}
               </span>
-              <span className={`hidden text-xs sm:inline ${active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{label}</span>
+              <span
+                className={`hidden text-xs sm:inline ${active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}
+              >
+                {label}
+              </span>
             </li>
           );
         })}
@@ -243,14 +275,19 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <label htmlFor="protocol-address" className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
+              <label
+                htmlFor="protocol-address"
+                className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+              >
                 Protocol Address or ENS
               </label>
               <div className="flex gap-2">
                 <input
                   id="protocol-address"
                   value={form.address}
-                  onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, address: event.target.value }))
+                  }
                   placeholder="0x... or protocol.eth"
                   className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[color:rgba(59,130,246,0.5)]"
                   required
@@ -268,13 +305,18 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
             </div>
 
             <div>
-              <label htmlFor="protocol-name" className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
+              <label
+                htmlFor="protocol-name"
+                className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+              >
                 Protocol Name
               </label>
               <input
                 id="protocol-name"
                 value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, name: event.target.value }))
+                }
                 placeholder="Aave V3"
                 className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[color:rgba(59,130,246,0.5)]"
                 required
@@ -283,7 +325,8 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
 
             <p className="inline-flex items-center gap-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--text-secondary)]">
               <Sparkles className="h-3.5 w-3.5 text-[var(--accent)]" />
-              Detected type: <span className="font-medium text-[var(--text-primary)]">{form.detectedType}</span>
+              Detected type:{" "}
+              <span className="font-medium text-[var(--text-primary)]">{form.detectedType}</span>
             </p>
           </div>
         )}
@@ -292,7 +335,10 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
           <div className="space-y-5">
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label htmlFor="alert-threshold" className="text-sm font-medium text-[var(--text-secondary)]">
+                <label
+                  htmlFor="alert-threshold"
+                  className="text-sm font-medium text-[var(--text-secondary)]"
+                >
                   Alert Threshold
                 </label>
                 <span className="text-sm text-[var(--text-primary)]">{form.alertThreshold}%</span>
@@ -303,15 +349,22 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
                 min={5}
                 max={50}
                 value={form.alertThreshold}
-                onChange={(event) => setForm((current) => ({ ...current, alertThreshold: Number(event.target.value) }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, alertThreshold: Number(event.target.value) }))
+                }
                 className="w-full accent-[var(--accent)]"
               />
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Lower value increases detection sensitivity.</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                Lower value increases detection sensitivity.
+              </p>
             </div>
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label htmlFor="breaker-threshold" className="text-sm font-medium text-[var(--text-secondary)]">
+                <label
+                  htmlFor="breaker-threshold"
+                  className="text-sm font-medium text-[var(--text-secondary)]"
+                >
                   Circuit Breaker Threshold
                 </label>
                 <span className="text-sm text-[var(--text-primary)]">{form.breakerThreshold}%</span>
@@ -322,19 +375,32 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
                 min={10}
                 max={75}
                 value={form.breakerThreshold}
-                onChange={(event) => setForm((current) => ({ ...current, breakerThreshold: Number(event.target.value) }))}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    breakerThreshold: Number(event.target.value),
+                  }))
+                }
                 className="w-full accent-[var(--critical)]"
               />
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Higher value delays automated protocol pause action.</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                Higher value delays automated protocol pause action.
+              </p>
             </div>
 
             <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-              <p className="mb-2 text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">Preview</p>
-              <p className="text-sm text-[var(--text-secondary)]">
-                Alerts trigger at <span className="text-[var(--text-primary)]">{form.alertThreshold}%</span> deviation.
+              <p className="mb-2 text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                Preview
               </p>
               <p className="text-sm text-[var(--text-secondary)]">
-                Circuit breaker engages at <span className="text-[var(--text-primary)]">{form.breakerThreshold}%</span> deviation.
+                Alerts trigger at{" "}
+                <span className="text-[var(--text-primary)]">{form.alertThreshold}%</span>{" "}
+                deviation.
+              </p>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Circuit breaker engages at{" "}
+                <span className="text-[var(--text-primary)]">{form.breakerThreshold}%</span>{" "}
+                deviation.
               </p>
             </div>
           </div>
@@ -344,26 +410,37 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
           <div className="space-y-4">
             <label className="flex items-center justify-between rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-2">
               <span>
-                <span className="block text-sm font-medium text-[var(--text-primary)]">Telegram Alerts</span>
-                <span className="text-xs text-[var(--text-muted)]">Send high-priority alerts instantly</span>
+                <span className="block text-sm font-medium text-[var(--text-primary)]">
+                  Telegram Alerts
+                </span>
+                <span className="text-xs text-[var(--text-muted)]">
+                  Send high-priority alerts instantly
+                </span>
               </span>
               <input
                 type="checkbox"
                 checked={form.telegramEnabled}
-                onChange={(event) => setForm((current) => ({ ...current, telegramEnabled: event.target.checked }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, telegramEnabled: event.target.checked }))
+                }
                 className="h-4 w-4 rounded border-[var(--border-subtle)] bg-[var(--bg-base)] accent-[var(--accent)]"
               />
             </label>
 
             {form.telegramEnabled && (
               <div>
-                <label htmlFor="telegram-channel" className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
+                <label
+                  htmlFor="telegram-channel"
+                  className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+                >
                   Telegram Channel / Chat ID
                 </label>
                 <input
                   id="telegram-channel"
                   value={form.telegramChannel}
-                  onChange={(event) => setForm((current) => ({ ...current, telegramChannel: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, telegramChannel: event.target.value }))
+                  }
                   placeholder="@aegis-security"
                   className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[color:rgba(59,130,246,0.5)]"
                 />
@@ -371,26 +448,35 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
             )}
 
             <div>
-              <label htmlFor="webhook-url" className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
+              <label
+                htmlFor="webhook-url"
+                className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+              >
                 Webhook URL
               </label>
               <input
                 id="webhook-url"
                 value={form.webhookUrl}
-                onChange={(event) => setForm((current) => ({ ...current, webhookUrl: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, webhookUrl: event.target.value }))
+                }
                 placeholder="https://hooks.company.com/aegis"
                 className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[color:rgba(59,130,246,0.5)]"
               />
             </div>
 
-            <p className="text-xs text-[var(--text-muted)]">Email notifications are planned and not yet active.</p>
+            <p className="text-xs text-[var(--text-muted)]">
+              Email notifications are planned and not yet active.
+            </p>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-4">
             <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-              <p className="mb-3 text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">Review Configuration</p>
+              <p className="mb-3 text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                Review Configuration
+              </p>
               <dl className="grid gap-2 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-[var(--text-muted)]">Protocol</dt>
@@ -410,19 +496,29 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-[var(--text-muted)]">Telegram</dt>
-                  <dd className="text-[var(--text-primary)]">{form.telegramEnabled ? "Enabled" : "Disabled"}</dd>
+                  <dd className="text-[var(--text-primary)]">
+                    {form.telegramEnabled ? "Enabled" : "Disabled"}
+                  </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-[var(--text-muted)]">Webhook</dt>
-                  <dd className="text-[var(--text-primary)]">{form.webhookUrl ? "Configured" : "Not configured"}</dd>
+                  <dd className="text-[var(--text-primary)]">
+                    {form.webhookUrl ? "Configured" : "Not configured"}
+                  </dd>
                 </div>
               </dl>
             </div>
 
             <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-              <p className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">Estimated Monthly Cost</p>
-              <p className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{formatUsd(estimatedMonthlyCost)}</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Includes monitoring, detection, and configured notification channels.</p>
+              <p className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                Estimated Monthly Cost
+              </p>
+              <p className="mt-1 text-2xl font-bold text-[var(--text-primary)]">
+                {formatUsd(estimatedMonthlyCost)}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                Includes monitoring, detection, and configured notification channels.
+              </p>
             </div>
           </div>
         )}

@@ -1,0 +1,229 @@
+name: AEGIS CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ============ Smart Contract Tests ============
+  contracts:
+    name: Contracts (Foundry)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/contracts
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: |
+          forge install foundry-rs/forge-std --no-git
+          forge install OpenZeppelin/openzeppelin-contracts --no-git
+
+      - name: Build contracts
+        run: forge build --sizes
+
+      - name: Run tests
+        run: forge test -vvv
+
+      - name: Run gas report
+        run: forge test --gas-report
+
+      - name: Check formatting
+        run: forge fmt --check
+
+  # ============ Python Agent Tests ============
+  agents-py:
+    name: Python Agents (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/agents-py
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: packages/agents-py/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short
+        env:
+          ANTHROPIC_API_KEY: "sk-ant-test-placeholder"
+          BASE_SEPOLIA_RPC: "https://sepolia.base.org"
+
+      - name: Check import integrity
+        run: python -c "from aegis.coordinator.crew import run_detection_cycle; print('OK')"
+        env:
+          ANTHROPIC_API_KEY: "sk-ant-test-placeholder"
+
+  # ============ TypeScript API Build ============
+  api:
+    name: TypeScript API (build + typecheck)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck API
+        working-directory: packages/api
+        run: npx tsc --noEmit
+
+  # ============ CRE Workflows Typecheck ============
+  cre-workflows:
+    name: CRE Workflows (typecheck)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck CRE workflows
+        working-directory: packages/cre-workflows
+        run: npx tsc --noEmit
+
+  # ============ Frontend Build ============
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: packages/frontend
+        run: pnpm build
+
+  # ============ Integration Smoke Test ============
+  integration:
+    name: Integration Smoke Test
+    runs-on: ubuntu-latest
+    needs: [contracts, agents-py, api, cre-workflows, frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: packages/agents-py/requirements.txt
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies
+        working-directory: packages/agents-py
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start Python Agent API
+        working-directory: packages/agents-py
+        run: |
+          uvicorn aegis.api.server:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          ANTHROPIC_API_KEY: "sk-ant-test-placeholder"
+          BASE_SEPOLIA_RPC: "https://sepolia.base.org"
+
+      - name: Start TypeScript API
+        working-directory: packages/api
+        run: |
+          npx tsx src/index.ts &
+          sleep 5
+        env:
+          AGENT_API_URL: "http://localhost:8000"
+          BASE_SEPOLIA_RPC: "https://sepolia.base.org"
+
+      - name: Smoke test — Python API health
+        run: curl -sf http://localhost:8000/api/v1/health | jq .
+
+      - name: Smoke test — TS API health
+        run: curl -sf http://localhost:3000/api/v1/health | jq .
+
+      - name: Smoke test — Sentinel aggregate
+        run: curl -sf http://localhost:3000/api/v1/sentinel/aggregate | jq .
+
+      - name: Smoke test — Detection cycle (simulated CRITICAL)
+        run: |
+          RESULT=$(curl -sf -X POST http://localhost:3000/api/v1/sentinel/detect \
+            -H "Content-Type: application/json" \
+            -d '{"protocol_address":"0x1","simulate_tvl_drop_percent":25,"simulate_price_deviation_percent":6}')
+          echo "$RESULT" | jq .
+          THREAT=$(echo "$RESULT" | jq -r '.consensus.final_threat_level')
+          if [ "$THREAT" != "CRITICAL" ]; then
+            echo "::error::Expected CRITICAL consensus, got $THREAT"
+            exit 1
+          fi
+          echo "✅ Consensus correctly returned CRITICAL"

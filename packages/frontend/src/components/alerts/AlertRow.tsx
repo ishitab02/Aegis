@@ -10,10 +10,14 @@ import { Tooltip } from "../common/Tooltip";
 
 function getStatusType(threat: ThreatLevel): "critical" | "high" | "medium" | "low" | "neutral" {
   switch (threat) {
-    case "CRITICAL": return "critical";
-    case "HIGH": return "high";
-    case "MEDIUM": return "medium";
-    default: return "neutral";
+    case "CRITICAL":
+      return "critical";
+    case "HIGH":
+      return "high";
+    case "MEDIUM":
+      return "medium";
+    default:
+      return "neutral";
   }
 }
 
@@ -42,7 +46,7 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
       <tr
         className={clsx(
           "group cursor-pointer border-b border-border-subtle text-sm transition-colors",
-          expanded ? "bg-bg-elevated" : "hover:bg-white/[0.02]"
+          expanded ? "bg-bg-elevated" : "hover:bg-white/[0.02]",
         )}
         onClick={onToggle}
       >
@@ -62,9 +66,7 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
               <Boxes className="h-4 w-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-text-primary">
-                {alert.protocolName}
-              </p>
+              <p className="truncate text-sm font-medium text-text-primary">{alert.protocolName}</p>
               <p className="truncate font-mono text-xs text-text-muted">
                 {truncateAddress(alert.protocol)}
               </p>
@@ -79,14 +81,16 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
 
         {/* Action */}
         <td className="px-4 py-3.5">
-          <span className={clsx(
-            "rounded-md px-2 py-1 text-xs font-medium",
-            alert.action === "CIRCUIT_BREAKER" || alert.action === "PAUSE"
-              ? "bg-threat-critical-muted/30 text-red-300"
-              : alert.action === "ALERT" || alert.action === "INVESTIGATE"
-                ? "bg-threat-medium-muted/30 text-yellow-300"
-                : "bg-border-subtle/50 text-text-secondary"
-          )}>
+          <span
+            className={clsx(
+              "rounded-md px-2 py-1 text-xs font-medium",
+              alert.action === "CIRCUIT_BREAKER" || alert.action === "PAUSE"
+                ? "bg-threat-critical-muted/30 text-red-300"
+                : alert.action === "ALERT" || alert.action === "INVESTIGATE"
+                  ? "bg-threat-medium-muted/30 text-yellow-300"
+                  : "bg-border-subtle/50 text-text-secondary",
+            )}
+          >
             {alert.action.replace(/_/g, " ")}
           </span>
         </td>
@@ -99,9 +103,11 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                 <div
                   className={clsx(
                     "h-full rounded-full transition-all",
-                    alert.consensusPercent >= 80 ? "bg-success" :
-                    alert.consensusPercent >= 60 ? "bg-threat-medium" :
-                    "bg-threat-critical"
+                    alert.consensusPercent >= 80
+                      ? "bg-success"
+                      : alert.consensusPercent >= 60
+                        ? "bg-threat-medium"
+                        : "bg-threat-critical",
                   )}
                   style={{ width: `${Math.min(100, alert.consensusPercent)}%` }}
                 />
@@ -126,10 +132,7 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
 
         {/* Expand */}
         <td className="w-12 px-4 py-3.5 text-right">
-          <motion.div
-            animate={{ rotate: expanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
+          <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown className="h-4 w-4 text-text-muted" />
           </motion.div>
         </td>
@@ -157,9 +160,7 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                     Alert ID
                   </p>
                   <div className="flex items-center gap-2">
-                    <p className="truncate font-mono text-sm text-text-secondary">
-                      {alert.id}
-                    </p>
+                    <p className="truncate font-mono text-sm text-text-secondary">{alert.id}</p>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -167,7 +168,11 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                       }}
                       className="flex-shrink-0 rounded p-1 text-text-muted hover:bg-white/[0.05] hover:text-text-secondary"
                     >
-                      {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied ? (
+                        <Check className="h-3.5 w-3.5 text-success" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>

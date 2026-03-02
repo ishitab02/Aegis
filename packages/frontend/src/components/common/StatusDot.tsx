@@ -42,12 +42,7 @@ const SIZES = {
   lg: "h-2.5 w-2.5",
 };
 
-export function StatusDot({
-  status,
-  animate = true,
-  size = "md",
-  className,
-}: StatusDotProps) {
+export function StatusDot({ status, animate = true, size = "md", className }: StatusDotProps) {
   const colors = STATUS_COLORS[status];
   const sizeClass = SIZES[size];
 
@@ -57,13 +52,11 @@ export function StatusDot({
         <span
           className={clsx(
             "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-            colors.ping
+            colors.ping,
           )}
         />
       )}
-      <span
-        className={clsx("relative inline-flex rounded-full", sizeClass, colors.dot)}
-      />
+      <span className={clsx("relative inline-flex rounded-full", sizeClass, colors.dot)} />
     </span>
   );
 }

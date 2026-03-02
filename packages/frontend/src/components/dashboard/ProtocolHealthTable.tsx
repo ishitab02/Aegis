@@ -54,7 +54,10 @@ export function ProtocolHealthTable() {
         continue;
       }
 
-      const highest = THREAT_RANK[alert.threatLevel] > THREAT_RANK[current.highest] ? alert.threatLevel : current.highest;
+      const highest =
+        THREAT_RANK[alert.threatLevel] > THREAT_RANK[current.highest]
+          ? alert.threatLevel
+          : current.highest;
       grouped.set(key, { highest, lastSeen: Math.max(current.lastSeen, alert.createdAt) });
     }
 
@@ -120,7 +123,9 @@ export function ProtocolHealthTable() {
                       {row.paused ? "PAUSED" : "NORMAL"}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-[var(--text-secondary)]">{new Date(row.lastSeen * 1000).toLocaleString()}</td>
+                  <td className="px-3 py-3 text-[var(--text-secondary)]">
+                    {new Date(row.lastSeen * 1000).toLocaleString()}
+                  </td>
                 </tr>
               ))}
             </tbody>

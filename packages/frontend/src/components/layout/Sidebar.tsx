@@ -1,15 +1,6 @@
 import clsx from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Activity,
-  Boxes,
-  LayoutDashboard,
-  Search,
-  Settings,
-  ShieldAlert,
-  X,
-  AlertTriangle,
-} from "lucide-react";
+import { Activity, Boxes, LayoutDashboard, Search, Settings, ShieldAlert, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -34,7 +25,8 @@ export function Sidebar({ open, onClose, alertCount = 0 }: SidebarProps) {
     <nav className="flex flex-col gap-1 px-3 py-4">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = location.pathname === item.path ||
+        const isActive =
+          location.pathname === item.path ||
           (item.path !== "/" && location.pathname.startsWith(item.path));
         const badge = item.hasBadge ? alertCount : 0;
 
@@ -44,25 +36,23 @@ export function Sidebar({ open, onClose, alertCount = 0 }: SidebarProps) {
             to={item.path}
             onClick={isMobile ? onClose : undefined}
             className={clsx(
-              "group relative flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+              "group relative flex items-center justify-between overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
               isActive
                 ? "bg-white/[0.06] text-text-primary"
-                : "text-text-secondary hover:bg-white/[0.03] hover:text-text-primary"
+                : "text-text-secondary hover:bg-white/[0.03] hover:text-text-primary",
             )}
           >
             {isActive && (
-              <motion.div
-                layoutId={isMobile ? "sidebar-indicator-mobile" : "sidebar-indicator"}
-                className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <span className="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r-full bg-accent" />
             )}
 
             <span className="flex items-center gap-3">
               <Icon
                 className={clsx(
                   "h-[18px] w-[18px] transition-colors",
-                  isActive ? "text-text-primary" : "text-text-muted group-hover:text-text-secondary"
+                  isActive
+                    ? "text-text-primary"
+                    : "text-text-muted group-hover:text-text-secondary",
                 )}
               />
               <span>{item.label}</span>

@@ -23,7 +23,7 @@ function isConfigured(): boolean {
   if (BOT_TOKEN && CHAT_ID) return true;
   if (!_warned) {
     console.warn(
-      "[telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set – notifications disabled"
+      "[telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set – notifications disabled",
     );
     _warned = true;
   }
@@ -69,10 +69,12 @@ export async function sendAlert(alert: AlertRow): Promise<void> {
   const confidence = (alert.confidence * 100).toFixed(1);
   const time = new Date(alert.created_at * 1000).toISOString();
 
+  const proto = alert.protocol_name || alert.protocol;
   const text = [
     `${emoji} *${alert.threat_level} ALERT*`,
     "",
-    `*Protocol:* \`${alert.protocol}\``,
+    `*Protocol:* ${proto}`,
+    `*Address:* \`${alert.protocol}\``,
     `*Threat Level:* ${alert.threat_level}`,
     `*Confidence:* ${confidence}%`,
     `*Action:* ${alert.action}`,

@@ -20,12 +20,7 @@ import {
   ok,
   consensusIdenticalAggregation,
 } from "@chainlink/cre-sdk";
-import {
-  type Address,
-  encodeFunctionData,
-  decodeFunctionResult,
-  zeroAddress,
-} from "viem";
+import { type Address, encodeFunctionData, decodeFunctionResult, zeroAddress } from "viem";
 
 import { sentinelRegistryAbi, chainlinkAggregatorAbi } from "../../types/abis";
 import { configSchema, type Config, type HealthResponse } from "../../types";
@@ -43,18 +38,13 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   // ---- Check 1: Agent API health ----
   runtime.log("Check 1: Agent API health...");
   const httpClient = new cre.capabilities.HTTPClient();
 
-  const fetchHealth = (
-    sendRequester: HTTPSendRequester,
-    config: Config
-  ): HealthResponse => {
+  const fetchHealth = (sendRequester: HTTPSendRequester, config: Config): HealthResponse => {
     const resp = sendRequester
       .sendRequest({
         url: `${config.agentApiUrl}/api/v1/health`,
@@ -71,11 +61,9 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
   };
 
   const health = httpClient
-    .sendRequest(
-      runtime,
-      fetchHealth,
-      consensusIdenticalAggregation<HealthResponse>()
-    )(runtime.config)
+    .sendRequest(runtime, fetchHealth, consensusIdenticalAggregation<HealthResponse>())(
+      runtime.config,
+    )
     .result();
 
   runtime.log(`  Agent API: ${health.status}`);
@@ -124,9 +112,7 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
     }) as boolean;
     if (alive) aliveCount++;
   }
-  runtime.log(
-    `  Sentinels: ${aliveCount}/${activeSentinels.length} alive`
-  );
+  runtime.log(`  Sentinels: ${aliveCount}/${activeSentinels.length} alive`);
 
   // ---- Check 3: Chainlink Data Feed freshness ----
   runtime.log("Check 3: Chainlink feed freshness...");
@@ -151,15 +137,11 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
 
   const feedAge = Math.floor(Date.now() / 1000) - Number(updatedAt);
   const feedFresh = feedAge < 3600;
-  runtime.log(
-    `  ETH/USD feed age: ${feedAge}s (${feedFresh ? "FRESH" : "STALE"})`
-  );
+  runtime.log(`  ETH/USD feed age: ${feedAge}s (${feedFresh ? "FRESH" : "STALE"})`);
 
   // ---- Summary ----
   const overallStatus =
-    health.status === "HEALTHY" &&
-    aliveCount === activeSentinels.length &&
-    feedFresh
+    health.status === "HEALTHY" && aliveCount === activeSentinels.length && feedFresh
       ? "HEALTHY"
       : "DEGRADED";
 
@@ -180,7 +162,7 @@ const initWorkflow = (config: Config) => {
   return [
     cre.handler(
       cronCap.trigger({ schedule: "0 */5 * * * *" }), // Every 5 minutes
-      onCronTrigger
+      onCronTrigger,
     ),
   ];
 };

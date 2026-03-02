@@ -12,16 +12,14 @@ Supports two modes:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING
 
 from aegis.blockchain.chainlink_feeds import get_eth_usd_price
-from aegis.blockchain.contracts import get_protocol_tvl, is_protocol_paused
+from aegis.blockchain.contracts import get_protocol_tvl
 from aegis.blockchain.web3_client import get_web3
 from aegis.coordinator.aggregator import SentinelAggregator
 from aegis.models import (
-    ConsensusResult,
     DetectionResponse,
     GovernanceProposal,
     ThreatAssessment,
@@ -88,7 +86,7 @@ def run_detection_cycle(
     # Auto-detect adapter if not provided and not in simulation mode
     if adapter is None and not is_simulation:
         try:
-            from aegis.adapters import get_adapter, ProtocolType
+            from aegis.adapters import get_adapter
             adapter = get_adapter(w3, protocol_address)
             logger.info("Auto-detected adapter: %s", adapter.protocol_type)
         except Exception as e:

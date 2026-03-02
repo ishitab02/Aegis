@@ -26,7 +26,7 @@ export async function getCircuitBreakerState(protocol: string) {
   const contract = new ethers.Contract(
     config.circuitBreakerAddress,
     CIRCUIT_BREAKER_ABI,
-    getProvider()
+    getProvider(),
   );
   try {
     const state = await contract.getBreakerState(protocol);
@@ -48,7 +48,7 @@ export async function isProtocolPaused(protocol: string): Promise<boolean> {
   const contract = new ethers.Contract(
     config.circuitBreakerAddress,
     CIRCUIT_BREAKER_ABI,
-    getProvider()
+    getProvider(),
   );
   try {
     return await contract.isPaused(protocol);
@@ -68,7 +68,7 @@ export async function getProtocolReports(protocol: string, limit = 10) {
   const contract = new ethers.Contract(
     config.threatReportAddress,
     THREAT_REPORT_ABI,
-    getProvider()
+    getProvider(),
   );
   try {
     return await contract.getProtocolReports(protocol, limit);
@@ -89,7 +89,7 @@ export async function getActiveSentinels() {
   const contract = new ethers.Contract(
     config.sentinelRegistryAddress,
     SENTINEL_REGISTRY_ABI,
-    getProvider()
+    getProvider(),
   );
   try {
     const ids = await contract.getActiveSentinels();
@@ -107,11 +107,7 @@ const MOCK_PROTOCOL_ABI = [
 ];
 
 export async function getProtocolTVL(protocol: string) {
-  const contract = new ethers.Contract(
-    protocol,
-    MOCK_PROTOCOL_ABI,
-    getProvider()
-  );
+  const contract = new ethers.Contract(protocol, MOCK_PROTOCOL_ABI, getProvider());
   try {
     const tvl = await contract.getTVL();
     return tvl.toString();
