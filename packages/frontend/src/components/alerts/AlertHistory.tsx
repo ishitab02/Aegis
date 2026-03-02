@@ -56,7 +56,7 @@ export function AlertHistory({
     <section
       className={clsx(
         "overflow-hidden rounded-lg border border-border-subtle bg-bg-surface",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -81,10 +81,20 @@ export function AlertHistory({
             className="btn-secondary gap-1.5"
             onClick={() => {
               // Export functionality placeholder
-              const csv = tableRows.map(row =>
-                [row.id, row.protocolName, row.threatLevel, row.action, new Date(row.createdAt * 1000).toISOString()].join(",")
-              ).join("\n");
-              const blob = new Blob([`ID,Protocol,Threat,Action,Time\n${csv}`], { type: "text/csv" });
+              const csv = tableRows
+                .map((row) =>
+                  [
+                    row.id,
+                    row.protocolName,
+                    row.threatLevel,
+                    row.action,
+                    new Date(row.createdAt * 1000).toISOString(),
+                  ].join(","),
+                )
+                .join("\n");
+              const blob = new Blob([`ID,Protocol,Threat,Action,Time\n${csv}`], {
+                type: "text/csv",
+              });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
@@ -219,7 +229,7 @@ export function AlertHistory({
                           "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition",
                           pageNum === currentPage
                             ? "bg-accent text-white"
-                            : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+                            : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary",
                         )}
                       >
                         {pageNum}

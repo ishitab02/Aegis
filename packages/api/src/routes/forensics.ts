@@ -1,9 +1,5 @@
 import { Hono } from "hono";
-import {
-  runForensics,
-  getForensicReport,
-  listForensicReports,
-} from "../services/agentProxy.js";
+import { runForensics, getForensicReport, listForensicReports } from "../services/agentProxy.js";
 
 const forensics = new Hono();
 
@@ -13,10 +9,7 @@ forensics.post("/", async (c) => {
   const { tx_hash, protocol, description } = body;
 
   if (!tx_hash || !protocol) {
-    return c.json(
-      { error: "tx_hash and protocol are required" },
-      400
-    );
+    return c.json({ error: "tx_hash and protocol are required" }, 400);
   }
 
   const report = await runForensics(tx_hash, protocol, description);

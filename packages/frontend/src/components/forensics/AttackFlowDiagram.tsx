@@ -16,10 +16,18 @@ export function AttackFlowDiagram({
           <div key={node.id} className="contents">
             <article className="w-56 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
               <p className="text-sm font-medium text-[var(--text-primary)]">{node.label}</p>
-              {node.address && <p className="mt-1 break-all font-mono text-xs text-[var(--text-muted)]">{node.address}</p>}
-              {node.action && <p className="mt-2 text-xs text-[var(--text-secondary)]">Action: {node.action}</p>}
+              {node.address && (
+                <p className="mt-1 break-all font-mono text-xs text-[var(--text-muted)]">
+                  {node.address}
+                </p>
+              )}
+              {node.action && (
+                <p className="mt-2 text-xs text-[var(--text-secondary)]">Action: {node.action}</p>
+              )}
             </article>
-            {index < nodes.length - 1 && <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" />}
+            {index < nodes.length - 1 && (
+              <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" />
+            )}
           </div>
         ))}
       </div>

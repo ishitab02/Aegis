@@ -44,12 +44,7 @@ import {
   mockProtocolAbi,
   chainlinkAggregatorAbi,
 } from "../../types/abis";
-import {
-  configSchema,
-  type Config,
-  type DetectionResponse,
-  THREAT_LEVEL_UINT8,
-} from "../../types";
+import { configSchema, type Config, type DetectionResponse, THREAT_LEVEL_UINT8 } from "../../types";
 
 // ============ Cron Trigger Callback ============
 
@@ -69,9 +64,7 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   // ---- Step 1: Read on-chain TVL from MockProtocol ----
   runtime.log("Step 1: Reading on-chain TVL...");
@@ -122,15 +115,12 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
   runtime.log("Step 3: Calling AI agent detection API...");
   const httpClient = new cre.capabilities.HTTPClient();
 
-  const fetchDetection = (
-    sendRequester: HTTPSendRequester,
-    config: Config
-  ): DetectionResponse => {
+  const fetchDetection = (sendRequester: HTTPSendRequester, config: Config): DetectionResponse => {
     const bodyBytes = new TextEncoder().encode(
       JSON.stringify({
         protocol_address: evm.mockProtocolAddress,
         protocol_name: "MockProtocol",
-      })
+      }),
     );
     const body = Buffer.from(bodyBytes).toString("base64");
 
@@ -152,43 +142,28 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
   };
 
   const detection = httpClient
-    .sendRequest(
-      runtime,
-      fetchDetection,
-      consensusIdenticalAggregation<DetectionResponse>()
-    )(runtime.config)
+    .sendRequest(runtime, fetchDetection, consensusIdenticalAggregation<DetectionResponse>())(
+      runtime.config,
+    )
     .result();
 
   const { consensus } = detection;
   runtime.log(
-    `  Consensus: ${consensus.final_threat_level} (${consensus.agreement_ratio.toFixed(2)}) — reached: ${consensus.consensus_reached}`
+    `  Consensus: ${consensus.final_threat_level} (${consensus.agreement_ratio.toFixed(2)}) — reached: ${consensus.consensus_reached}`,
   );
 
   // ---- Step 4: If CRITICAL → trigger CircuitBreaker ----
-  if (
-    consensus.consensus_reached &&
-    consensus.action_recommended === "CIRCUIT_BREAKER"
-  ) {
+  if (consensus.consensus_reached && consensus.action_recommended === "CIRCUIT_BREAKER") {
     runtime.log("Step 4: CRITICAL threat — triggering CircuitBreaker...");
 
-    const threatId = keccak256(
-      toHex(`aegis-${Date.now()}-${consensus.final_threat_level}`)
-    );
-    const threatLevelUint8 =
-      THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
+    const threatId = keccak256(toHex(`aegis-${Date.now()}-${consensus.final_threat_level}`));
+    const threatLevelUint8 = THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
     const reason = `AEGIS consensus: ${consensus.final_threat_level} (${consensus.agreement_ratio.toFixed(2)} agreement). ${detection.assessments.map((a) => a.details).join("; ")}`;
 
     // Encode report payload for CRE signed report
     const reportData = encodeAbiParameters(
-      parseAbiParameters(
-        "address protocol, bytes32 threatId, uint8 threatLevel, string reason"
-      ),
-      [
-        evm.mockProtocolAddress as Address,
-        threatId as `0x${string}`,
-        threatLevelUint8,
-        reason,
-      ]
+      parseAbiParameters("address protocol, bytes32 threatId, uint8 threatLevel, string reason"),
+      [evm.mockProtocolAddress as Address, threatId as `0x${string}`, threatLevelUint8, reason],
     );
 
     const reportResponse = runtime
@@ -209,18 +184,14 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
       .result();
 
     if (writeResult.txStatus === TxStatus.SUCCESS) {
-      const txHash = bytesToHex(
-        writeResult.txHash ?? new Uint8Array(32)
-      );
+      const txHash = bytesToHex(writeResult.txHash ?? new Uint8Array(32));
       runtime.log(`  CircuitBreaker triggered! TX: ${txHash}`);
     } else {
-      runtime.log(
-        `  CircuitBreaker TX failed: ${writeResult.txStatus}`
-      );
+      runtime.log(`  CircuitBreaker TX failed: ${writeResult.txStatus}`);
     }
   } else if (consensus.consensus_reached) {
     runtime.log(
-      `Step 4: Threat level ${consensus.final_threat_level} — alert only, no circuit breaker.`
+      `Step 4: Threat level ${consensus.final_threat_level} — alert only, no circuit breaker.`,
     );
   } else {
     runtime.log("Step 4: No consensus reached or no threat detected.");
@@ -228,14 +199,10 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
 
   // ---- Step 5: Submit ThreatReport on-chain ----
   runtime.log("Step 5: Submitting ThreatReport on-chain...");
-  const threatLevelUint8 =
-    THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
-  const consensusHash = keccak256(
-    toHex(JSON.stringify(consensus))
-  );
+  const threatLevelUint8 = THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
+  const consensusHash = keccak256(toHex(JSON.stringify(consensus)));
   const actionTaken =
-    consensus.action_recommended === "CIRCUIT_BREAKER" &&
-    consensus.consensus_reached;
+    consensus.action_recommended === "CIRCUIT_BREAKER" && consensus.consensus_reached;
 
   // Encode the submitReport call
   const votes = consensus.votes.map((v, i) => ({
@@ -258,10 +225,10 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
     ],
   });
 
-  const submitReportData = encodeAbiParameters(
-    parseAbiParameters("address to, bytes data"),
-    [evm.threatReportAddress as Address, submitCallData]
-  );
+  const submitReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
+    evm.threatReportAddress as Address,
+    submitCallData,
+  ]);
 
   const reportResponse2 = runtime
     .report({
@@ -281,9 +248,7 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
     .result();
 
   if (writeResult2.txStatus === TxStatus.SUCCESS) {
-    const txHash = bytesToHex(
-      writeResult2.txHash ?? new Uint8Array(32)
-    );
+    const txHash = bytesToHex(writeResult2.txHash ?? new Uint8Array(32));
     runtime.log(`  ThreatReport submitted! TX: ${txHash}`);
   } else {
     runtime.log(`  ThreatReport TX failed: ${writeResult2.txStatus}`);
@@ -305,10 +270,7 @@ const initWorkflow = (config: Config) => {
 
   return [
     // Cron trigger — runs every minute (Chainlink Automation)
-    cre.handler(
-      cronCap.trigger({ schedule: config.schedule }),
-      onCronTrigger
-    ),
+    cre.handler(cronCap.trigger({ schedule: config.schedule }), onCronTrigger),
   ];
 };
 

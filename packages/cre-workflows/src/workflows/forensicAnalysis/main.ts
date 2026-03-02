@@ -50,19 +50,13 @@ type ForensicReportResponse = {
 
 // ============ Log Trigger Callback ============
 
-const onCircuitBreakerTriggered = (
-  runtime: Runtime<Config>,
-  log: EVMLog
-): string => {
+const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): string => {
   runtime.log("AEGIS: CircuitBreakerTriggered event detected!");
 
   const evm = runtime.config.evms[0];
 
   // Decode the event log
-  const topics = log.topics.map((t) => bytesToHex(t)) as [
-    `0x${string}`,
-    ...`0x${string}`[],
-  ];
+  const topics = log.topics.map((t) => bytesToHex(t)) as [`0x${string}`, ...`0x${string}`[]];
   const data = bytesToHex(log.data);
 
   const decoded = decodeEventLog({
@@ -83,14 +77,14 @@ const onCircuitBreakerTriggered = (
 
   const fetchForensics = (
     sendRequester: HTTPSendRequester,
-    config: Config
+    config: Config,
   ): ForensicReportResponse => {
     const bodyBytes = new TextEncoder().encode(
       JSON.stringify({
         tx_hash: threatId, // Use threatId as a reference; real impl would extract tx hash
         protocol: protocol,
         description: `Automated forensic analysis triggered by CircuitBreaker event`,
-      })
+      }),
     );
     const body = Buffer.from(bodyBytes).toString("base64");
 
@@ -112,15 +106,13 @@ const onCircuitBreakerTriggered = (
   };
 
   const report = httpClient
-    .sendRequest(
-      runtime,
-      fetchForensics,
-      consensusIdenticalAggregation<ForensicReportResponse>()
-    )(runtime.config)
+    .sendRequest(runtime, fetchForensics, consensusIdenticalAggregation<ForensicReportResponse>())(
+      runtime.config,
+    )
     .result();
 
   runtime.log(
-    `  Attack type: ${report.attack_classification.primary_type} (${report.attack_classification.confidence})`
+    `  Attack type: ${report.attack_classification.primary_type} (${report.attack_classification.confidence})`,
   );
   runtime.log(`  Report ID: ${report.report_id}`);
 
@@ -133,9 +125,7 @@ const onCircuitBreakerTriggered = (
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   const reportHash = keccak256(toHex(JSON.stringify(report)));
 
@@ -152,10 +142,10 @@ const onCircuitBreakerTriggered = (
     ],
   });
 
-  const reportData = encodeAbiParameters(
-    parseAbiParameters("address to, bytes data"),
-    [evm.threatReportAddress as Address, submitCallData]
-  );
+  const reportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
+    evm.threatReportAddress as Address,
+    submitCallData,
+  ]);
 
   const reportResponse = runtime
     .report({
@@ -199,13 +189,10 @@ const initWorkflow = (config: Config) => {
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   // Listen for CircuitBreakerTriggered events
-  const eventSignature =
-    "CircuitBreakerTriggered(address,bytes32,uint8,string)";
+  const eventSignature = "CircuitBreakerTriggered(address,bytes32,uint8,string)";
   const eventHash = keccak256(toHex(eventSignature));
 
   return [
@@ -215,7 +202,7 @@ const initWorkflow = (config: Config) => {
         topics: [{ values: [eventHash] }],
         confidence: "CONFIDENCE_LEVEL_FINALIZED",
       }),
-      onCircuitBreakerTriggered
+      onCircuitBreakerTriggered,
     ),
   ];
 };

@@ -126,11 +126,7 @@ export interface ForensicsSummary {
   }>;
 }
 
-export type ActionRecommendation =
-  | "NONE"
-  | "ALERT"
-  | "INVESTIGATE"
-  | "CIRCUIT_BREAKER";
+export type ActionRecommendation = "NONE" | "ALERT" | "INVESTIGATE" | "CIRCUIT_BREAKER";
 
 export type SentinelVote = {
   sentinel_id: string;

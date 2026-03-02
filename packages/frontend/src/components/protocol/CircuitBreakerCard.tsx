@@ -32,13 +32,9 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function CircuitBreakerCard({ address }: { address: string }) {
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-  } = useProtocolStatus(address, { refetchInterval: 10_000 });
+  const { data, isLoading, error, refetch, isFetching } = useProtocolStatus(address, {
+    refetchInterval: 10_000,
+  });
   const {
     data: alertHistory,
     error: alertHistoryError,
@@ -84,9 +80,7 @@ export function CircuitBreakerCard({ address }: { address: string }) {
     <section
       className={clsx(
         "rounded-lg border p-4",
-        paused
-          ? "border-red-500/40 bg-red-500/20"
-          : "border-border-subtle bg-bg-surface"
+        paused ? "border-red-500/40 bg-red-500/20" : "border-border-subtle bg-bg-surface",
       )}
     >
       <div className="mb-4 flex items-center justify-between">
@@ -94,7 +88,7 @@ export function CircuitBreakerCard({ address }: { address: string }) {
         <span
           className={clsx(
             "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium",
-            paused ? "bg-red-500/20 text-red-300" : "bg-green-500/20 text-green-300"
+            paused ? "bg-red-500/20 text-red-300" : "bg-green-500/20 text-green-300",
           )}
         >
           {paused ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
@@ -193,7 +187,9 @@ export function CircuitBreakerCard({ address }: { address: string }) {
                 className="rounded border border-border-subtle p-1.5 text-text-secondary transition hover:bg-bg-elevated"
                 aria-label="Refresh breaker timeline"
               >
-                <RefreshCw className={clsx("h-3.5 w-3.5", isFetchingAlertHistory && "animate-spin")} />
+                <RefreshCw
+                  className={clsx("h-3.5 w-3.5", isFetchingAlertHistory && "animate-spin")}
+                />
               </button>
             </div>
 

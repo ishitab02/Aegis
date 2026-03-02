@@ -39,10 +39,7 @@ alerts.post("/", async (c) => {
   const { protocol, protocol_name, threat_level, confidence, action, consensus_data } = body;
 
   if (!protocol || !threat_level || confidence === undefined || !action) {
-    return c.json(
-      { error: "protocol, threat_level, confidence, and action are required" },
-      400
-    );
+    return c.json({ error: "protocol, threat_level, confidence, and action are required" }, 400);
   }
 
   const id = body.id ?? randomUUID();

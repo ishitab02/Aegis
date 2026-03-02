@@ -5,10 +5,7 @@ import { getActiveSentinels } from "../services/contractReader.js";
 const health = new Hono();
 
 health.get("/", async (c) => {
-  const [agentHealth, sentinels] = await Promise.all([
-    getAgentHealth(),
-    getActiveSentinels(),
-  ]);
+  const [agentHealth, sentinels] = await Promise.all([getAgentHealth(), getActiveSentinels()]);
 
   const ah = agentHealth as Record<string, unknown>;
   const status = ah.status === "HEALTHY" ? "HEALTHY" : "DEGRADED";

@@ -38,10 +38,11 @@ export function ProtocolsPage() {
     isFetching,
   } = useProtocols({ refetchInterval: 15_000 });
 
-  const {
-    data: alerts,
-    error: alertsError,
-  } = useAlerts({ page: 1, limit: 200, refetchInterval: 15_000 });
+  const { data: alerts, error: alertsError } = useAlerts({
+    page: 1,
+    limit: 200,
+    refetchInterval: 15_000,
+  });
 
   const latestByProtocol = useMemo(() => {
     const map = new Map<string, number>();
@@ -75,7 +76,9 @@ export function ProtocolsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle bg-bg-surface p-4">
         <div>
           <h1 className="text-xl font-semibold text-white">Protocols</h1>
-          <p className="text-sm text-text-muted">Manage registered protocols and inspect circuit breaker state.</p>
+          <p className="text-sm text-text-muted">
+            Manage registered protocols and inspect circuit breaker state.
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -143,7 +146,9 @@ export function ProtocolsPage() {
           <div className="px-4 py-10 text-center">
             <Boxes className="mx-auto mb-2 h-8 w-8 text-text-disabled" />
             <p className="text-sm text-text-secondary">No protocols match the selected status.</p>
-            <p className="mt-1 text-xs text-text-disabled">Register a new protocol or adjust the status filter.</p>
+            <p className="mt-1 text-xs text-text-disabled">
+              Register a new protocol or adjust the status filter.
+            </p>
           </div>
         )}
 
@@ -170,28 +175,40 @@ export function ProtocolsPage() {
                     <Fragment key={protocol.address}>
                       <tr
                         className="cursor-pointer border-b border-border-subtle text-sm text-text-primary transition hover:bg-bg-elevated/40"
-                        onClick={() => setExpandedAddress((current) => (current === protocol.address ? null : protocol.address))}
+                        onClick={() =>
+                          setExpandedAddress((current) =>
+                            current === protocol.address ? null : protocol.address,
+                          )
+                        }
                       >
                         <td className="px-4 py-3 font-medium text-white">{protocol.name}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-text-muted">{protocol.address}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-text-muted">
+                          {protocol.address}
+                        </td>
                         <td className="px-4 py-3">
                           <span
                             className={clsx(
                               "inline-flex rounded px-2 py-0.5 text-xs font-medium",
                               status === "PAUSED"
                                 ? "bg-red-500/20 text-red-300"
-                                : "bg-green-500/20 text-green-300"
+                                : "bg-green-500/20 text-green-300",
                             )}
                           >
                             {status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-text-secondary">{protocol.alertThreshold}%</td>
+                        <td className="px-4 py-3 text-text-secondary">
+                          {protocol.alertThreshold}%
+                        </td>
                         <td className="px-4 py-3 text-text-muted">
                           {latest ? formatRelativeTime(latest) : "No alerts"}
                         </td>
                         <td className="px-4 py-3 text-right text-text-muted">
-                          {rowOpen ? <ChevronUp className="ml-auto h-4 w-4" /> : <ChevronDown className="ml-auto h-4 w-4" />}
+                          {rowOpen ? (
+                            <ChevronUp className="ml-auto h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="ml-auto h-4 w-4" />
+                          )}
                         </td>
                       </tr>
 
@@ -211,7 +228,9 @@ export function ProtocolsPage() {
         )}
 
         {alertsError && !isLoading && !error && (
-          <div className="border-t border-border-subtle px-4 py-3 text-xs text-yellow-300">{alertsErrorMessage}</div>
+          <div className="border-t border-border-subtle px-4 py-3 text-xs text-yellow-300">
+            {alertsErrorMessage}
+          </div>
         )}
       </section>
 

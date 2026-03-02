@@ -20,12 +20,12 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
 
   const recentEscalated = useMemo(
     () => (alerts?.items ?? []).filter((item) => isEscalatedThreat(item.threatLevel)).slice(0, 5),
-    [alerts]
+    [alerts],
   );
 
   const unreadCount = useMemo(
     () => recentEscalated.filter((alert) => !readAlertIds.has(alert.id)).length,
-    [recentEscalated, readAlertIds]
+    [recentEscalated, readAlertIds],
   );
 
   function markAllAsRead() {

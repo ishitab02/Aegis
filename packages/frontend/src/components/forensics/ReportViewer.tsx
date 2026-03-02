@@ -48,7 +48,13 @@ function normalizeSeverity(value: unknown): ThreatLevel {
   }
 
   const upper = value.toUpperCase();
-  if (upper === "CRITICAL" || upper === "HIGH" || upper === "MEDIUM" || upper === "LOW" || upper === "NONE") {
+  if (
+    upper === "CRITICAL" ||
+    upper === "HIGH" ||
+    upper === "MEDIUM" ||
+    upper === "LOW" ||
+    upper === "NONE"
+  ) {
     return upper;
   }
 
@@ -68,13 +74,19 @@ function parseRecommendations(value: unknown): ForensicsSummary["recommendations
       }
 
       const object = asObject(entry);
-      const text = asString(object.text, asString(object.recommendation, asString(object.action, "")));
+      const text = asString(
+        object.text,
+        asString(object.recommendation, asString(object.action, "")),
+      );
       if (!text) {
         return null;
       }
 
       const priorityRaw = asString(object.priority, "MEDIUM").toUpperCase();
-      const priority = priorityRaw === "HIGH" || priorityRaw === "LOW" ? (priorityRaw as "HIGH" | "LOW") : "MEDIUM";
+      const priority =
+        priorityRaw === "HIGH" || priorityRaw === "LOW"
+          ? (priorityRaw as "HIGH" | "LOW")
+          : "MEDIUM";
       return { text, priority };
     })
     .filter((item): item is { text: string; priority: "HIGH" | "MEDIUM" | "LOW" } => item !== null);
@@ -83,8 +95,12 @@ function parseRecommendations(value: unknown): ForensicsSummary["recommendations
 function parseSummary(raw: unknown, reportId: string): ForensicsSummary {
   const root = asObject(raw);
   const reportPayload = asObject(root.report || root.data || raw);
-  const summary = asObject(reportPayload.executive_summary || reportPayload.summary || reportPayload.attack_summary);
-  const technical = asObject(reportPayload.technical_details || reportPayload.details || root.details);
+  const summary = asObject(
+    reportPayload.executive_summary || reportPayload.summary || reportPayload.attack_summary,
+  );
+  const technical = asObject(
+    reportPayload.technical_details || reportPayload.details || root.details,
+  );
 
   const flowRaw =
     asList(reportPayload.attack_flow).length > 0
@@ -95,7 +111,10 @@ function parseSummary(raw: unknown, reportId: string): ForensicsSummary {
 
   const flow = flowRaw.map((entry, index) => {
     const node = asObject(entry);
-    const label = asString(node.label, asString(node.name, asString(node.step, `Step ${index + 1}`)));
+    const label = asString(
+      node.label,
+      asString(node.name, asString(node.step, `Step ${index + 1}`)),
+    );
 
     return {
       id: asString(node.id, `node-${index}`),
@@ -124,7 +143,9 @@ function parseSummary(raw: unknown, reportId: string): ForensicsSummary {
     };
   });
 
-  const affectedFunctions = asList(technical.affected_functions).map((item) => asString(item)).filter(Boolean);
+  const affectedFunctions = asList(technical.affected_functions)
+    .map((item) => asString(item))
+    .filter(Boolean);
 
   const recommendations =
     parseRecommendations(reportPayload.recommendations).length > 0
@@ -139,15 +160,24 @@ function parseSummary(raw: unknown, reportId: string): ForensicsSummary {
     address: asString(reportPayload.address, protocol),
     severity: normalizeSeverity(summary.severity || reportPayload.severity || root.severity),
     attackType: asString(summary.attack_type, asString(reportPayload.attack_type, "Unknown")),
-    estimatedLoss: asString(summary.estimated_loss, asString(reportPayload.estimated_loss, "Undisclosed")),
-    summaryText: asString(summary.description, asString(summary.summary, "No executive summary was provided.")),
+    estimatedLoss: asString(
+      summary.estimated_loss,
+      asString(reportPayload.estimated_loss, "Undisclosed"),
+    ),
+    summaryText: asString(
+      summary.description,
+      asString(summary.summary, "No executive summary was provided."),
+    ),
     timestamp: toUnixSeconds(root.created_at || reportPayload.timestamp || Date.now()),
     flow,
     destinations,
     technicalDetails: {
       vulnerability: asString(technical.vulnerability, "Not specified"),
       affectedFunctions,
-      codeSnippet: asString(technical.code_snippet, asString(technical.snippet, "No code snippet provided.")),
+      codeSnippet: asString(
+        technical.code_snippet,
+        asString(technical.snippet, "No code snippet provided."),
+      ),
     },
     recommendations:
       recommendations.length > 0
@@ -182,11 +212,12 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
     setOpenSections((current) => ({ ...current, [section]: !current[section] }));
   }
 
-  const errorMessage = error instanceof Error
-    ? error.message.toLowerCase().includes("timed out")
-      ? "Forensics request timed out. Please retry."
-      : error.message
-    : "Failed to load forensic report.";
+  const errorMessage =
+    error instanceof Error
+      ? error.message.toLowerCase().includes("timed out")
+        ? "Forensics request timed out. Please retry."
+        : error.message
+      : "Failed to load forensic report.";
 
   if (!reportId) {
     return (
@@ -251,7 +282,9 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
               onClick={() => toggleSection("summary")}
             >
               <span className="text-base font-semibold text-white">1. Executive Summary</span>
-              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.summary ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 text-text-muted transition ${openSections.summary ? "rotate-180" : ""}`}
+              />
             </button>
             {openSections.summary && (
               <div className="grid gap-3 border-t border-border-subtle px-4 py-3 sm:grid-cols-3">
@@ -260,7 +293,9 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
                   <p className="mt-1 text-sm text-white">{report.attackType}</p>
                 </article>
                 <article className="rounded-md border border-border-subtle bg-bg-elevated p-3">
-                  <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Estimated Loss</p>
+                  <p className="text-xs uppercase tracking-[0.08em] text-text-muted">
+                    Estimated Loss
+                  </p>
                   <p className="mt-1 text-sm text-white">{report.estimatedLoss}</p>
                 </article>
                 <article className="rounded-md border border-border-subtle bg-bg-elevated p-3">
@@ -279,14 +314,18 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
               onClick={() => toggleSection("flow")}
             >
               <span className="text-base font-semibold text-white">2. Attack Flow</span>
-              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.flow ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 text-text-muted transition ${openSections.flow ? "rotate-180" : ""}`}
+              />
             </button>
             {openSections.flow && (
               <div className="border-t border-border-subtle px-4 py-3">
                 {report.flow.length > 0 ? (
                   <AttackFlowDiagram nodes={report.flow} />
                 ) : (
-                  <p className="text-sm text-text-muted">No attack flow graph available for this report.</p>
+                  <p className="text-sm text-text-muted">
+                    No attack flow graph available for this report.
+                  </p>
                 )}
               </div>
             )}
@@ -299,7 +338,9 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
               onClick={() => toggleSection("destinations")}
             >
               <span className="text-base font-semibold text-white">3. Fund Destinations</span>
-              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.destinations ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 text-text-muted transition ${openSections.destinations ? "rotate-180" : ""}`}
+              />
             </button>
             {openSections.destinations && (
               <div className="border-t border-border-subtle px-4 py-3">
@@ -318,8 +359,13 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
                       </thead>
                       <tbody>
                         {report.destinations.map((destination) => (
-                          <tr key={`${destination.address}-${destination.amount}`} className="border-b border-border-subtle text-sm">
-                            <td className="px-2 py-2 font-mono text-text-secondary">{destination.address}</td>
+                          <tr
+                            key={`${destination.address}-${destination.amount}`}
+                            className="border-b border-border-subtle text-sm"
+                          >
+                            <td className="px-2 py-2 font-mono text-text-secondary">
+                              {destination.address}
+                            </td>
                             <td className="px-2 py-2 text-text-secondary">{destination.amount}</td>
                             <td className="px-2 py-2">
                               <span
@@ -360,17 +406,25 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
               onClick={() => toggleSection("technical")}
             >
               <span className="text-base font-semibold text-white">4. Technical Details</span>
-              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.technical ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 text-text-muted transition ${openSections.technical ? "rotate-180" : ""}`}
+              />
             </button>
             {openSections.technical && (
               <div className="space-y-3 border-t border-border-subtle px-4 py-3">
                 <article>
-                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-muted">Vulnerability</p>
-                  <p className="text-sm text-text-secondary">{report.technicalDetails.vulnerability}</p>
+                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-muted">
+                    Vulnerability
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    {report.technicalDetails.vulnerability}
+                  </p>
                 </article>
 
                 <article>
-                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-muted">Affected Functions</p>
+                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-muted">
+                    Affected Functions
+                  </p>
                   {report.technicalDetails.affectedFunctions.length > 0 ? (
                     <ul className="space-y-1 text-sm text-text-secondary">
                       {report.technicalDetails.affectedFunctions.map((func) => (
@@ -404,7 +458,9 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
               onClick={() => toggleSection("recommendations")}
             >
               <span className="text-base font-semibold text-white">5. Recommendations</span>
-              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.recommendations ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 text-text-muted transition ${openSections.recommendations ? "rotate-180" : ""}`}
+              />
             </button>
             {openSections.recommendations && (
               <div className="space-y-2 border-t border-border-subtle px-4 py-3">

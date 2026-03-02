@@ -15,7 +15,6 @@ export const config = {
   rpcUrl: process.env.BASE_SEPOLIA_RPC ?? "https://sepolia.base.org",
 
   // x402
-  x402FacilitatorUrl:
-    process.env.X402_FACILITATOR_URL ?? "https://x402.org/facilitator",
+  x402FacilitatorUrl: process.env.X402_FACILITATOR_URL ?? "https://x402.org/facilitator",
   payeeAddress: process.env.PAYEE_ADDRESS ?? "",
 } as const;

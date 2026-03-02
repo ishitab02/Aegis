@@ -71,7 +71,7 @@ function toUnixSeconds(value: unknown): number {
 }
 
 function normalizeForensicsList(payload: unknown): ForensicsListRow[] {
-  const root = (payload && typeof payload === "object") ? payload as Record<string, unknown> : {};
+  const root = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
   const source = Array.isArray(root.reports)
     ? root.reports
     : Array.isArray(root.items)
@@ -82,20 +82,21 @@ function normalizeForensicsList(payload: unknown): ForensicsListRow[] {
 
   return source
     .map((entry, index) => {
-      const row = (entry && typeof entry === "object") ? entry as Record<string, unknown> : {};
-      const report = (row.report && typeof row.report === "object") ? row.report as Record<string, unknown> : {};
-      const summary = (report.executive_summary && typeof report.executive_summary === "object")
-        ? report.executive_summary as Record<string, unknown>
-        : {};
+      const row = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
+      const report =
+        row.report && typeof row.report === "object" ? (row.report as Record<string, unknown>) : {};
+      const summary =
+        report.executive_summary && typeof report.executive_summary === "object"
+          ? (report.executive_summary as Record<string, unknown>)
+          : {};
 
-      const id = typeof row.id === "string" && row.id
-        ? row.id
-        : `report-${index}`;
-      const protocol = (typeof row.protocol === "string" && row.protocol)
-        || (typeof report.protocol === "string" && report.protocol)
-        || "Unknown Protocol";
+      const id = typeof row.id === "string" && row.id ? row.id : `report-${index}`;
+      const protocol =
+        (typeof row.protocol === "string" && row.protocol) ||
+        (typeof report.protocol === "string" && report.protocol) ||
+        "Unknown Protocol";
       const severity = normalizeForensicsSeverity(
-        summary.severity ?? report.severity ?? row.severity
+        summary.severity ?? report.severity ?? row.severity,
       );
       const timestamp = toUnixSeconds(row.created_at ?? report.timestamp ?? row.timestamp);
 
@@ -113,7 +114,7 @@ function DashboardNavLink({ to, label }: { to: string; label: string }) {
           "rounded px-3 py-1.5 text-xs font-medium transition",
           isActive
             ? "bg-accent/15 text-text-primary"
-            : "bg-bg-elevated text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
+            : "bg-bg-elevated text-text-secondary hover:bg-white/[0.04] hover:text-text-primary",
         )
       }
     >
@@ -138,9 +139,9 @@ function DashboardPage({ stream }: { stream: StreamInfo }) {
   const criticalAlerts = useMemo(
     () =>
       (alertsData?.items ?? []).filter(
-        (a) => a.threatLevel === "CRITICAL" || a.threatLevel === "HIGH"
+        (a) => a.threatLevel === "CRITICAL" || a.threatLevel === "HIGH",
       ).length,
-    [alertsData]
+    [alertsData],
   );
 
   const isHealthy = (health?.status ?? "").toUpperCase() === "HEALTHY";
@@ -173,7 +174,7 @@ function DashboardPage({ stream }: { stream: StreamInfo }) {
               <span
                 className={clsx(
                   "h-2.5 w-2.5 rounded-full",
-                  isHealthy ? "bg-success" : "bg-threat-critical"
+                  isHealthy ? "bg-success" : "bg-threat-critical",
                 )}
               />
               <span>System: {isHealthy ? "Healthy" : "Degraded"}</span>
@@ -295,11 +296,12 @@ function ForensicsPage() {
   });
 
   const reports = useMemo(() => normalizeForensicsList(data), [data]);
-  const errorMessage = error instanceof Error
-    ? error.message.toLowerCase().includes("timed out")
-      ? "Forensics list request timed out. Please retry."
-      : error.message
-    : "Failed to load forensic reports.";
+  const errorMessage =
+    error instanceof Error
+      ? error.message.toLowerCase().includes("timed out")
+        ? "Forensics list request timed out. Please retry."
+        : error.message
+      : "Failed to load forensic reports.";
 
   return (
     <PageWrapper
@@ -385,8 +387,10 @@ function ForensicsPage() {
                         report.severity === "CRITICAL" && "bg-red-500/20 text-red-300",
                         report.severity === "HIGH" && "bg-orange-500/20 text-orange-300",
                         report.severity === "MEDIUM" && "bg-yellow-500/20 text-yellow-300",
-                        (report.severity === "LOW" || report.severity === "NONE" || report.severity === "UNKNOWN")
-                          && "bg-bg-elevated text-text-secondary"
+                        (report.severity === "LOW" ||
+                          report.severity === "NONE" ||
+                          report.severity === "UNKNOWN") &&
+                          "bg-bg-elevated text-text-secondary",
                       )}
                     >
                       {report.severity}
@@ -405,10 +409,7 @@ function ForensicsPage() {
 
 function LiveFeedPage() {
   return (
-    <PageWrapper
-      title="Live Feed"
-      subtitle="Real-time threat detection stream"
-    >
+    <PageWrapper title="Live Feed" subtitle="Real-time threat detection stream">
       <ThreatFeed compact={false} />
     </PageWrapper>
   );
@@ -442,7 +443,8 @@ function WalletSettings() {
 
   const [copied, setCopied] = useState(false);
 
-  const currentNetwork = chainId === baseSepolia.id ? "Base Sepolia" : chainId === base.id ? "Base" : `Chain ${chainId}`;
+  const currentNetwork =
+    chainId === baseSepolia.id ? "Base Sepolia" : chainId === base.id ? "Base" : `Chain ${chainId}`;
 
   async function copyAddress() {
     if (!address) return;
@@ -481,7 +483,9 @@ function WalletSettings() {
                     }}
                   />
                   <div>
-                    <p className="font-mono text-sm font-medium text-text-primary">{shortAddress}</p>
+                    <p className="font-mono text-sm font-medium text-text-primary">
+                      {shortAddress}
+                    </p>
                     <p className="text-xs text-text-muted">Connected</p>
                   </div>
                 </div>
@@ -492,12 +496,12 @@ function WalletSettings() {
               </div>
 
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={copyAddress}
-                  className="btn-ghost flex-1 text-xs"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                <button type="button" onClick={copyAddress} className="btn-ghost flex-1 text-xs">
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-success" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                   {copied ? "Copied" : "Copy Address"}
                 </button>
                 <a
@@ -562,11 +566,7 @@ function WalletSettings() {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => disconnect()}
-              className="btn-danger w-full"
-            >
+            <button type="button" onClick={() => disconnect()} className="btn-danger w-full">
               <LogOut className="h-4 w-4" />
               Disconnect Wallet
             </button>
@@ -608,10 +608,7 @@ function WalletSettings() {
 
 function SettingsPage() {
   return (
-    <PageWrapper
-      title="Settings"
-      subtitle="Configure your AEGIS dashboard preferences"
-    >
+    <PageWrapper title="Settings" subtitle="Configure your AEGIS dashboard preferences">
       <div className="grid gap-6 lg:grid-cols-2">
         <WalletSettings />
 
@@ -696,7 +693,9 @@ function SettingsPage() {
               </div>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-text-primary">API Endpoint</label>
+              <label className="mb-2 block text-sm font-medium text-text-primary">
+                API Endpoint
+              </label>
               <input
                 type="text"
                 className="input w-full"

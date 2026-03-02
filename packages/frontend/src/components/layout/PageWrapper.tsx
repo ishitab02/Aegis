@@ -21,20 +21,13 @@ export function PageWrapper({ children, title, subtitle, actions }: PageWrapperP
 
   const alertCount = useMemo(
     () => (alerts?.items ?? []).filter((item) => isEscalatedThreat(item.threatLevel)).length,
-    [alerts]
+    [alerts],
   );
 
   return (
     <div className="min-h-screen bg-bg-base text-text-primary">
-      <Header
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen((open) => !open)}
-      />
-      <Sidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        alertCount={alertCount}
-      />
+      <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((open) => !open)} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} alertCount={alertCount} />
 
       <main className="min-h-[calc(100vh-4rem)] px-4 pb-8 pt-20 sm:px-6 lg:ml-64 lg:px-8">
         <motion.div
@@ -49,13 +42,9 @@ export function PageWrapper({ children, title, subtitle, actions }: PageWrapperP
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 {title && (
-                  <h1 className="text-xl font-semibold text-text-primary sm:text-2xl">
-                    {title}
-                  </h1>
+                  <h1 className="text-xl font-semibold text-text-primary sm:text-2xl">{title}</h1>
                 )}
-                {subtitle && (
-                  <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
-                )}
+                {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
               </div>
               {actions && <div className="flex items-center gap-3">{actions}</div>}
             </div>
@@ -69,25 +58,16 @@ export function PageWrapper({ children, title, subtitle, actions }: PageWrapperP
 }
 
 // Simple page container without layout (for use in nested routes)
-export function PageContainer({
-  children,
-  title,
-  subtitle,
-  actions,
-}: PageWrapperProps) {
+export function PageContainer({ children, title, subtitle, actions }: PageWrapperProps) {
   return (
     <div className="mx-auto max-w-7xl">
       {(title || actions) && (
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             {title && (
-              <h1 className="text-xl font-semibold text-text-primary sm:text-2xl">
-                {title}
-              </h1>
+              <h1 className="text-xl font-semibold text-text-primary sm:text-2xl">{title}</h1>
             )}
-            {subtitle && (
-              <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
-            )}
+            {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
           </div>
           {actions && <div className="flex items-center gap-3">{actions}</div>}
         </div>

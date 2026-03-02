@@ -37,7 +37,7 @@ export function LoadingSkeleton({
               baseClasses,
               variantClasses.text,
               i === lines - 1 && "w-3/4",
-              className
+              className,
             )}
             style={{ height: height || 16 }}
           />
@@ -46,12 +46,7 @@ export function LoadingSkeleton({
     );
   }
 
-  return (
-    <div
-      className={clsx(baseClasses, variantClasses[variant], className)}
-      style={style}
-    />
-  );
+  return <div className={clsx(baseClasses, variantClasses[variant], className)} style={style} />;
 }
 
 export function MetricCardSkeleton() {
@@ -72,10 +67,7 @@ export function TableRowSkeleton({ columns = 5 }: { columns?: number }) {
     <tr className="table-row">
       {Array.from({ length: columns }).map((_, i) => (
         <td key={i} className="table-cell">
-          <LoadingSkeleton
-            width={i === 0 ? 24 : i === columns - 1 ? 60 : "80%"}
-            height={16}
-          />
+          <LoadingSkeleton width={i === 0 ? 24 : i === columns - 1 ? 60 : "80%"} height={16} />
         </td>
       ))}
     </tr>

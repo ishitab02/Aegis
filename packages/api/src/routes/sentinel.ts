@@ -1,10 +1,6 @@
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
-import {
-  getSentinelAggregate,
-  getSentinelById,
-  runDetection,
-} from "../services/agentProxy.js";
+import { getSentinelAggregate, getSentinelById, runDetection } from "../services/agentProxy.js";
 import { config } from "../config.js";
 import { insertAlert } from "../db/index.js";
 import { broadcast } from "./ws.js";
@@ -50,8 +46,7 @@ sentinel.post("/detect", async (c) => {
     const consensus = (result as any)?.consensus;
     if (
       consensus?.consensus_reached &&
-      (consensus.final_threat_level === "CRITICAL" ||
-        consensus.final_threat_level === "HIGH")
+      (consensus.final_threat_level === "CRITICAL" || consensus.final_threat_level === "HIGH")
     ) {
       const row = insertAlert({
         id: randomUUID(),
@@ -63,10 +58,7 @@ sentinel.post("/detect", async (c) => {
         consensus_data: JSON.stringify(consensus),
       });
       broadcast(row);
-      if (
-        row.threat_level === "CRITICAL" ||
-        row.threat_level === "HIGH"
-      ) {
+      if (row.threat_level === "CRITICAL" || row.threat_level === "HIGH") {
         sendAlert(row).catch(() => {});
       }
     }

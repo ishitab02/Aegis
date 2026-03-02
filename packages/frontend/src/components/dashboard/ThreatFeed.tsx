@@ -68,7 +68,8 @@ function extractFeedItems(payload: unknown): FeedItem[] {
     (typeof root.protocol === "string" && root.protocol) ||
     "Unknown Protocol";
   const fallbackAction =
-    (typeof (root.consensus as Record<string, unknown> | undefined)?.action_recommended === "string" &&
+    (typeof (root.consensus as Record<string, unknown> | undefined)?.action_recommended ===
+      "string" &&
       String((root.consensus as Record<string, unknown>).action_recommended)) ||
     "MONITOR";
 
@@ -80,7 +81,8 @@ function extractFeedItems(payload: unknown): FeedItem[] {
       return {
         id:
           (typeof assessment.id === "string" && assessment.id) ||
-          (typeof assessment.sentinel_id === "string" && `${assessment.sentinel_id}-${timestamp}`) ||
+          (typeof assessment.sentinel_id === "string" &&
+            `${assessment.sentinel_id}-${timestamp}`) ||
           `feed-${timestamp}-${index}`,
         protocolName:
           (typeof assessment.protocol_name === "string" && assessment.protocol_name) ||
@@ -111,9 +113,7 @@ function extractAlertFeedItems(payload: unknown): FeedItem[] {
     const timestamp = normalizeTimestamp(alert.created_at ?? alert.timestamp);
 
     return {
-      id:
-        (typeof alert.id === "string" && alert.id) ||
-        `alert-${timestamp}-${index}`,
+      id: (typeof alert.id === "string" && alert.id) || `alert-${timestamp}-${index}`,
       protocolName:
         (typeof alert.protocol_name === "string" && alert.protocol_name) ||
         (typeof alert.protocol === "string" && alert.protocol) ||
@@ -123,9 +123,7 @@ function extractAlertFeedItems(payload: unknown): FeedItem[] {
         (typeof alert.details === "string" && alert.details) ||
         `${normalizeThreat(alert.threat_level)} threat detected — ${(typeof alert.action === "string" && alert.action) || "ALERT"}`,
       confidence: normalizeConfidence(alert.confidence),
-      action:
-        (typeof alert.action === "string" && alert.action) ||
-        "ALERT",
+      action: (typeof alert.action === "string" && alert.action) || "ALERT",
       timestamp,
     };
   });
@@ -173,10 +171,11 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
     return merged.sort((a, b) => b.timestamp - a.timestamp);
   }, [data, alertsData]);
   const filteredItems = useMemo(
-    () => items
-      .filter((item) => filter === "ALL" ? true : item.threatLevel === filter)
-      .slice(0, visibleCount),
-    [filter, items, visibleCount]
+    () =>
+      items
+        .filter((item) => (filter === "ALL" ? true : item.threatLevel === filter))
+        .slice(0, visibleCount),
+    [filter, items, visibleCount],
   );
 
   // Track new items for highlight effect
@@ -196,7 +195,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
     <section
       className={clsx(
         "overflow-hidden rounded-lg border border-border-subtle bg-bg-surface",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -221,7 +220,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
             onClick={() => setPaused((s) => !s)}
             className={clsx(
               "btn-secondary gap-1.5",
-              paused && "border-threat-medium/50 text-threat-medium"
+              paused && "border-threat-medium/50 text-threat-medium",
             )}
           >
             {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
@@ -242,7 +241,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
               "flex-shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-all",
               filter === level
                 ? "border-accent bg-accent/10 text-accent"
-                : "border-border-subtle text-text-secondary hover:border-border-muted hover:text-text-primary"
+                : "border-border-subtle text-text-secondary hover:border-border-muted hover:text-text-primary",
             )}
           >
             {level === "ALL" ? "All" : level}
@@ -306,7 +305,7 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                       className={clsx(
                         "relative rounded-lg border border-border-subtle p-4 transition-all",
                         getThreatBgClass(item.threatLevel),
-                        highlightedIds.has(item.id) && "ring-1 ring-accent/50"
+                        highlightedIds.has(item.id) && "ring-1 ring-accent/50",
                       )}
                     >
                       {/* Left border indicator */}
@@ -316,7 +315,8 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                           item.threatLevel === "CRITICAL" && "bg-threat-critical",
                           item.threatLevel === "HIGH" && "bg-threat-high",
                           item.threatLevel === "MEDIUM" && "bg-threat-medium",
-                          (item.threatLevel === "LOW" || item.threatLevel === "NONE") && "bg-border-subtle"
+                          (item.threatLevel === "LOW" || item.threatLevel === "NONE") &&
+                            "bg-border-subtle",
                         )}
                       />
 
@@ -333,7 +333,8 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                           </p>
                           <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted">
                             <span>
-                              Confidence: {item.confidence !== null ? `${item.confidence.toFixed(0)}%` : "N/A"}
+                              Confidence:{" "}
+                              {item.confidence !== null ? `${item.confidence.toFixed(0)}%` : "N/A"}
                             </span>
                             <span className="hidden sm:inline">•</span>
                             <span className="hidden sm:inline">

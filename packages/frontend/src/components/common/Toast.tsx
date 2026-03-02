@@ -73,7 +73,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         dismissToast(id);
       }, durationMs);
     },
-    [dismissToast]
+    [dismissToast],
   );
 
   const clearToasts = useCallback(() => {
@@ -82,7 +82,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ pushToast, dismissToast, clearToasts }),
-    [pushToast, dismissToast, clearToasts]
+    [pushToast, dismissToast, clearToasts],
   );
 
   return (
@@ -97,7 +97,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={clsx(
               "pointer-events-auto rounded-lg border p-3 shadow-lg backdrop-blur",
               TOAST_STYLE[toast.variant],
-              toast.variant === "critical" && "animate-pulse"
+              toast.variant === "critical" && "animate-pulse",
             )}
           >
             <div className="flex items-start gap-2">
@@ -106,9 +106,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               </span>
 
               <div className="min-w-0 flex-1">
-                {toast.title && (
-                  <p className="text-sm font-semibold text-white">{toast.title}</p>
-                )}
+                {toast.title && <p className="text-sm font-semibold text-white">{toast.title}</p>}
                 <p className="text-sm">{toast.message}</p>
               </div>
 

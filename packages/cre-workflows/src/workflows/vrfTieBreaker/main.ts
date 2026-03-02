@@ -42,10 +42,7 @@ import {
   zeroAddress,
 } from "viem";
 
-import {
-  vrfCoordinatorAbi,
-  sentinelRegistryAbi,
-} from "../../types/abis";
+import { vrfCoordinatorAbi, sentinelRegistryAbi } from "../../types/abis";
 import {
   configSchema,
   type Config,
@@ -101,7 +98,7 @@ const DEFAULT_REPUTATION: Record<string, number> = {
  */
 function weightedSelect(
   votes: SentinelVote[],
-  randomWord: bigint
+  randomWord: bigint,
 ): { selectedIndex: number; selectedVote: SentinelVote } {
   const weights = votes.map((v) => {
     // Extract sentinel type from ID (e.g., "liquidity-1" → "liquidity")
@@ -160,9 +157,7 @@ const onTrigger = (runtime: Runtime<Config>): string => {
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   // ---- Step 1: Request VRF randomness (demonstration) ----
   runtime.log("Step 1: Requesting VRF randomness...");
@@ -178,20 +173,20 @@ const onTrigger = (runtime: Runtime<Config>): string => {
       abi: vrfCoordinatorAbi,
       functionName: "requestRandomWords",
       args: [
-        evm.vrfKeyHash as `0x${string}`,        // keyHash
-        BigInt(evm.vrfSubscriptionId),            // subId
-        3,                                        // requestConfirmations
-        200_000,                                  // callbackGasLimit
-        1,                                        // numWords
-        "0x" as `0x${string}`,                   // extraArgs
+        evm.vrfKeyHash as `0x${string}`, // keyHash
+        BigInt(evm.vrfSubscriptionId), // subId
+        3, // requestConfirmations
+        200_000, // callbackGasLimit
+        1, // numWords
+        "0x" as `0x${string}`, // extraArgs
       ],
     });
 
     // Submit VRF request via CRE signed report
-    const vrfReportData = encodeAbiParameters(
-      parseAbiParameters("address to, bytes data"),
-      [evm.vrfCoordinator as Address, requestCallData]
-    );
+    const vrfReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
+      evm.vrfCoordinator as Address,
+      requestCallData,
+    ]);
 
     const vrfReport = runtime
       .report({
@@ -222,27 +217,20 @@ const onTrigger = (runtime: Runtime<Config>): string => {
     } else {
       runtime.log(`  VRF request failed: ${vrfResult.txStatus}`);
       // Fallback to deterministic hash
-      randomWord = BigInt(
-        keccak256(toHex(`aegis-tiebreak-${Date.now()}`))
-      );
+      randomWord = BigInt(keccak256(toHex(`aegis-tiebreak-${Date.now()}`)));
       runtime.log("  Using deterministic fallback seed.");
     }
   } else {
     // No VRF configured — use keccak256-based seed for demo
     runtime.log("  VRF not configured — using keccak256 deterministic seed.");
-    randomWord = BigInt(
-      keccak256(toHex(`aegis-tiebreak-${Date.now()}`))
-    );
+    randomWord = BigInt(keccak256(toHex(`aegis-tiebreak-${Date.now()}`)));
   }
 
   // ---- Step 2: Fetch current sentinel votes ----
   runtime.log("Step 2: Fetching sentinel votes...");
   const httpClient = new cre.capabilities.HTTPClient();
 
-  const fetchVotes = (
-    sendRequester: HTTPSendRequester,
-    config: Config
-  ): SentinelVote[] => {
+  const fetchVotes = (sendRequester: HTTPSendRequester, config: Config): SentinelVote[] => {
     const resp = sendRequester
       .sendRequest({
         url: `${config.agentApiUrl}/api/v1/sentinel/aggregate`,
@@ -261,11 +249,9 @@ const onTrigger = (runtime: Runtime<Config>): string => {
   };
 
   const votes = httpClient
-    .sendRequest(
-      runtime,
-      fetchVotes,
-      consensusIdenticalAggregation<SentinelVote[]>()
-    )(runtime.config)
+    .sendRequest(runtime, fetchVotes, consensusIdenticalAggregation<
+        SentinelVote[]
+      >())(runtime.config)
     .result();
 
   if (votes.length === 0) {
@@ -281,18 +267,14 @@ const onTrigger = (runtime: Runtime<Config>): string => {
 
   runtime.log(`  Received ${votes.length} sentinel votes:`);
   for (const v of votes) {
-    runtime.log(
-      `    ${v.sentinel_id}: ${v.threat_level} (confidence: ${v.confidence})`
-    );
+    runtime.log(`    ${v.sentinel_id}: ${v.threat_level} (confidence: ${v.confidence})`);
   }
 
   // ---- Step 3: Weighted random selection ----
   runtime.log("Step 3: Performing weighted random selection...");
   const { selectedIndex, selectedVote } = weightedSelect(votes, randomWord);
 
-  runtime.log(
-    `  Selected sentinel: ${selectedVote.sentinel_id} (index ${selectedIndex})`
-  );
+  runtime.log(`  Selected sentinel: ${selectedVote.sentinel_id} (index ${selectedIndex})`);
   runtime.log(`  Final threat level: ${selectedVote.threat_level}`);
   runtime.log(`  Selection method: ${evm.vrfCoordinator ? "VRF" : "reputation-weighted"}`);
 
@@ -319,7 +301,7 @@ const initWorkflow = (config: Config) => {
   return [
     cre.handler(
       cronCap.trigger({ schedule: "0 */10 * * * *" }), // Every 10 minutes as keep-alive
-      onTrigger
+      onTrigger,
     ),
   ];
 };

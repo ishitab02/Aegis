@@ -46,7 +46,9 @@ export function ThreatActivityChart() {
     return { x, y, value };
   });
 
-  const linePath = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+  const linePath = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
   const areaPath = `${linePath} L ${padding + chartWidth} ${height - padding} L ${padding} ${height - padding} Z`;
 
   return (
@@ -54,16 +56,29 @@ export function ThreatActivityChart() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Threat Activity</h3>
-          <p className="text-sm text-[var(--text-secondary)]">Last 24 hours, sampled every 2 hours</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Last 24 hours, sampled every 2 hours
+          </p>
         </div>
-        <span className="text-xs text-[var(--text-muted)]">Total: {chart.buckets.reduce((sum, value) => sum + value, 0)}</span>
+        <span className="text-xs text-[var(--text-muted)]">
+          Total: {chart.buckets.reduce((sum, value) => sum + value, 0)}
+        </span>
       </div>
 
       {isLoading && <LoadingSkeleton lines={6} />}
-      {error && <p className="rounded-lg border border-[#7f1d1d] bg-[#7f1d1d]/30 px-3 py-2 text-sm text-[#fca5a5]">Unable to load threat activity timeline.</p>}
+      {error && (
+        <p className="rounded-lg border border-[#7f1d1d] bg-[#7f1d1d]/30 px-3 py-2 text-sm text-[#fca5a5]">
+          Unable to load threat activity timeline.
+        </p>
+      )}
 
       {!isLoading && !error && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="overflow-x-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className="overflow-x-auto"
+        >
           <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[620px]">
             <defs>
               <linearGradient id="threatArea" x1="0" y1="0" x2="0" y2="1">
@@ -91,7 +106,13 @@ export function ThreatActivityChart() {
             <path d={linePath} fill="none" stroke="rgba(239,68,68,0.85)" strokeWidth="2.5" />
 
             {points.map((point, index) => (
-              <circle key={`point-${index}`} cx={point.x} cy={point.y} r={3.5} fill="rgba(239,68,68,0.92)" />
+              <circle
+                key={`point-${index}`}
+                cx={point.x}
+                cy={point.y}
+                r={3.5}
+                fill="rgba(239,68,68,0.92)"
+              />
             ))}
           </svg>
 

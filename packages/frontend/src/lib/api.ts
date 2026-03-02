@@ -25,7 +25,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
     if (!response.ok) {
       const payload = await response.text().catch(() => "");
-      const message = payload ? `${response.status} ${response.statusText}: ${payload}` : `${response.status} ${response.statusText}`;
+      const message = payload
+        ? `${response.status} ${response.statusText}: ${payload}`
+        : `${response.status} ${response.statusText}`;
       throw new Error(message);
     }
 
@@ -80,11 +82,7 @@ export const api = {
     }),
   getForensics: () => apiFetch<unknown>("/forensics"),
   getForensicsById: (id: string) => apiFetch<unknown>(`/forensics/${id}`),
-  runForensics: (payload: {
-    tx_hash: string;
-    protocol: string;
-    description?: string;
-  }) =>
+  runForensics: (payload: { tx_hash: string; protocol: string; description?: string }) =>
     apiFetch<unknown>("/forensics", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -92,8 +90,7 @@ export const api = {
 
   // Demo endpoints
   getDemoScenarios: () => apiFetch<unknown>("/demo/scenarios"),
-  startEulerReplay: () =>
-    apiFetch<unknown>("/demo/euler-replay", { method: "POST" }),
+  startEulerReplay: () => apiFetch<unknown>("/demo/euler-replay", { method: "POST" }),
   getEulerReplayStep: (stepNumber: number) =>
     apiFetch<unknown>(`/demo/euler-replay/step/${stepNumber}`),
 };

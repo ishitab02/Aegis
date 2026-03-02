@@ -13,12 +13,24 @@ const evmConfigSchema = z.object({
     ethUsd: z.string().regex(/^0x[a-fA-F0-9]{40}$/u),
   }),
   // CCIP (optional — only needed for ccipAlert workflow)
-  ccipRouter: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  ccipRouter: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/u)
+    .optional(),
   ccipDestinationChainSelector: z.string().optional(),
-  ccipReceiverAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
-  linkToken: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  ccipReceiverAddress: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/u)
+    .optional(),
+  linkToken: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/u)
+    .optional(),
   // VRF (optional — only needed for vrfTieBreaker workflow)
-  vrfCoordinator: z.string().regex(/^0x[a-fA-F0-9]{40}$/u).optional(),
+  vrfCoordinator: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/u)
+    .optional(),
   vrfKeyHash: z.string().optional(),
   vrfSubscriptionId: z.string().optional(),
 });
@@ -35,11 +47,7 @@ export type Config = z.infer<typeof configSchema>;
 
 export type ThreatLevel = "NONE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
-export type ActionRecommendation =
-  | "NONE"
-  | "ALERT"
-  | "INVESTIGATE"
-  | "CIRCUIT_BREAKER";
+export type ActionRecommendation = "NONE" | "ALERT" | "INVESTIGATE" | "CIRCUIT_BREAKER";
 
 export type SentinelVote = {
   sentinel_id: string;

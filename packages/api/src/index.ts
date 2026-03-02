@@ -48,7 +48,7 @@ app.get("/", (c) =>
       ws: "/api/v1/ws (SSE)",
       docs: "/api/v1/docs",
     },
-  })
+  }),
 );
 
 // ---- API Routes ----

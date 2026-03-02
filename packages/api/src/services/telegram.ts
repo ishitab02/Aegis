@@ -23,7 +23,7 @@ function isConfigured(): boolean {
   if (BOT_TOKEN && CHAT_ID) return true;
   if (!_warned) {
     console.warn(
-      "[telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set – notifications disabled"
+      "[telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set – notifications disabled",
     );
     _warned = true;
   }

@@ -39,11 +39,7 @@ import {
   zeroAddress,
 } from "viem";
 
-import {
-  circuitBreakerAbi,
-  ccipRouterAbi,
-  linkTokenAbi,
-} from "../../types/abis";
+import { circuitBreakerAbi, ccipRouterAbi, linkTokenAbi } from "../../types/abis";
 import { configSchema, type Config, THREAT_LEVEL_UINT8 } from "../../types";
 
 // ============ Constants ============
@@ -55,10 +51,7 @@ const CCIP_EXTRA_ARGS =
 
 // ============ Log Trigger Callback ============
 
-const onCircuitBreakerTriggered = (
-  runtime: Runtime<Config>,
-  log: EVMLog
-): string => {
+const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): string => {
   runtime.log("AEGIS CCIP: CircuitBreakerTriggered event detected!");
 
   const evm = runtime.config.evms[0];
@@ -70,10 +63,7 @@ const onCircuitBreakerTriggered = (
   }
 
   // ---- Decode the CircuitBreakerTriggered event ----
-  const topics = log.topics.map((t) => bytesToHex(t)) as [
-    `0x${string}`,
-    ...`0x${string}`[],
-  ];
+  const topics = log.topics.map((t) => bytesToHex(t)) as [`0x${string}`, ...`0x${string}`[]];
   const data = bytesToHex(log.data);
 
   const decoded = decodeEventLog({
@@ -96,10 +86,8 @@ const onCircuitBreakerTriggered = (
   runtime.log("Building CCIP cross-chain alert message...");
 
   const ccipPayload = encodeAbiParameters(
-    parseAbiParameters(
-      "address protocol, bytes32 threatId, uint8 threatLevel, uint256 timestamp"
-    ),
-    [protocol, threatId, threatLevel, timestamp]
+    parseAbiParameters("address protocol, bytes32 threatId, uint8 threatLevel, uint256 timestamp"),
+    [protocol, threatId, threatLevel, timestamp],
   );
 
   const destinationChainSelector = BigInt(evm.ccipDestinationChainSelector);
@@ -112,9 +100,7 @@ const onCircuitBreakerTriggered = (
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   // ---- Step 1: Check LINK balance for CCIP fees ----
   runtime.log("Step 1: Checking LINK balance for CCIP fees...");
@@ -144,10 +130,9 @@ const onCircuitBreakerTriggered = (
   // ---- Step 2: Estimate CCIP fee ----
   runtime.log("Step 2: Estimating CCIP fee...");
   const ccipMessage = {
-    receiver: encodeAbiParameters(
-      parseAbiParameters("address"),
-      [evm.ccipReceiverAddress as Address]
-    ),
+    receiver: encodeAbiParameters(parseAbiParameters("address"), [
+      evm.ccipReceiverAddress as Address,
+    ]),
     data: ccipPayload,
     tokenAmounts: [] as { token: Address; amount: bigint }[],
     feeToken: (evm.linkToken ?? zeroAddress) as Address, // Pay in LINK; zeroAddress = native
@@ -186,10 +171,10 @@ const onCircuitBreakerTriggered = (
       args: [evm.ccipRouter as Address, fee * 2n], // 2x buffer for safety
     });
 
-    const approveReportData = encodeAbiParameters(
-      parseAbiParameters("address to, bytes data"),
-      [evm.linkToken as Address, approveCallData]
-    );
+    const approveReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
+      evm.linkToken as Address,
+      approveCallData,
+    ]);
 
     const approveReport = runtime
       .report({
@@ -223,10 +208,10 @@ const onCircuitBreakerTriggered = (
     args: [destinationChainSelector, ccipMessage],
   });
 
-  const ccipReportData = encodeAbiParameters(
-    parseAbiParameters("address to, bytes data"),
-    [evm.ccipRouter as Address, ccipSendCallData]
-  );
+  const ccipReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
+    evm.ccipRouter as Address,
+    ccipSendCallData,
+  ]);
 
   const ccipReport = runtime
     .report({
@@ -280,13 +265,10 @@ const initWorkflow = (config: Config) => {
   });
   if (!network) throw new Error(`Network not found: ${evm.chainSelectorName}`);
 
-  const evmClient = new cre.capabilities.EVMClient(
-    network.chainSelector.selector
-  );
+  const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
   // Listen for CircuitBreakerTriggered events
-  const eventSignature =
-    "CircuitBreakerTriggered(address,bytes32,uint8,string)";
+  const eventSignature = "CircuitBreakerTriggered(address,bytes32,uint8,string)";
   const eventHash = keccak256(toHex(eventSignature));
 
   return [
@@ -296,7 +278,7 @@ const initWorkflow = (config: Config) => {
         topics: [{ values: [eventHash] }],
         confidence: "CONFIDENCE_LEVEL_FINALIZED",
       }),
-      onCircuitBreakerTriggered
+      onCircuitBreakerTriggered,
     ),
   ];
 };

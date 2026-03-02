@@ -30,7 +30,7 @@ function getValidKeys(): Set<string> {
     raw
       .split(",")
       .map((k) => k.trim())
-      .filter(Boolean)
+      .filter(Boolean),
   );
   return _validKeys;
 }

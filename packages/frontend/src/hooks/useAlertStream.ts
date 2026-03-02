@@ -100,11 +100,12 @@ function normalizeConsensusData(raw: RawAlert): Record<string, unknown> | null {
 
 function normalizeAlert(raw: RawAlert, index: number): AlertRecord {
   const createdAt = toUnixSeconds(raw.created_at ?? raw.timestamp);
-  const confidence = typeof raw.confidence === "number"
-    ? raw.confidence <= 1
-      ? raw.confidence * 100
-      : raw.confidence
-    : null;
+  const confidence =
+    typeof raw.confidence === "number"
+      ? raw.confidence <= 1
+        ? raw.confidence * 100
+        : raw.confidence
+      : null;
 
   return {
     id: String(raw.id ?? `alert-${createdAt}-${index}`),
@@ -228,7 +229,7 @@ export function useAlertStream() {
         };
       });
     },
-    [queryClient]
+    [queryClient],
   );
 
   const connect = useCallback(() => {

@@ -36,9 +36,7 @@ setInterval(() => {
 
 function getClientIp(c: Context): string {
   return (
-    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ??
-    c.req.header("x-real-ip") ??
-    "unknown"
+    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? c.req.header("x-real-ip") ?? "unknown"
   );
 }
 
@@ -68,7 +66,7 @@ export async function rateLimitMiddleware(c: Context, next: Next) {
         error: "Too Many Requests",
         retryAfter,
       },
-      429
+      429,
     );
   }
 

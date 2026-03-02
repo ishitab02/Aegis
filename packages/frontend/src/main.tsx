@@ -28,5 +28,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </Web3Provider>
       </ToastProvider>
     </QueryClientProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

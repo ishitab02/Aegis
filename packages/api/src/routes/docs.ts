@@ -403,7 +403,7 @@ docs.get(
   "/docs",
   swaggerUI({
     url: "/api/v1/openapi",
-  })
+  }),
 );
 
 export { docs };

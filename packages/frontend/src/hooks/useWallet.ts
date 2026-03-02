@@ -14,11 +14,19 @@ function avatarSeed(address: string): string {
 
 export function useWallet() {
   const { address, isConnected, chainId } = useAccount();
-  const { connect, connectAsync, connectors, isPending: isConnecting, error: connectError } = useConnect();
+  const {
+    connect,
+    connectAsync,
+    connectors,
+    isPending: isConnecting,
+    error: connectError,
+  } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
 
-  const isWrongNetwork = Boolean(chainId && !(SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId));
+  const isWrongNetwork = Boolean(
+    chainId && !(SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId),
+  );
 
   const state = useMemo(
     () => ({
@@ -50,7 +58,7 @@ export function useWallet() {
       isSwitching,
       isWrongNetwork,
       switchChain,
-    ]
+    ],
   );
 
   return state;

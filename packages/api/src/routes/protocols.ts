@@ -9,12 +9,7 @@
  */
 
 import { Hono } from "hono";
-import {
-  insertProtocol,
-  getProtocol,
-  listProtocols,
-  updateProtocol,
-} from "../db/index.js";
+import { insertProtocol, getProtocol, listProtocols, updateProtocol } from "../db/index.js";
 import { getCircuitBreakerState } from "../services/contractReader.js";
 
 const protocols = new Hono();
@@ -49,12 +44,7 @@ protocols.post("/", async (c) => {
     return c.json({ error: "Protocol already registered" }, 409);
   }
 
-  const row = insertProtocol(
-    address,
-    name,
-    alert_threshold ?? 10,
-    breaker_threshold ?? 20
-  );
+  const row = insertProtocol(address, name, alert_threshold ?? 10, breaker_threshold ?? 20);
   return c.json(row, 201);
 });
 

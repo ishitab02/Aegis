@@ -51,11 +51,7 @@ export async function getSentinelById(id: string) {
 
 // ---- Forensics ----
 
-export async function runForensics(
-  txHash: string,
-  protocol: string,
-  description = ""
-) {
+export async function runForensics(txHash: string, protocol: string, description = "") {
   const res = await agentFetch("/api/v1/forensics", {
     method: "POST",
     body: JSON.stringify({ tx_hash: txHash, protocol, description }),

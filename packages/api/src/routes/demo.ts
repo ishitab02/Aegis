@@ -1,9 +1,5 @@
 import { Hono } from "hono";
-import {
-  getDemoScenarios,
-  startEulerReplay,
-  getEulerReplayStep,
-} from "../services/agentProxy.js";
+import { getDemoScenarios, startEulerReplay, getEulerReplayStep } from "../services/agentProxy.js";
 
 const demo = new Hono();
 

@@ -85,7 +85,7 @@ function MetricBox({
         variant === "danger" && "border-red-500/30 bg-red-500/10",
         variant === "success" && "border-green-500/30 bg-green-500/10",
         variant === "warning" && "border-yellow-500/30 bg-yellow-500/10",
-        variant === "default" && "border-border-subtle bg-bg-elevated"
+        variant === "default" && "border-border-subtle bg-bg-elevated",
       )}
     >
       <p className="text-xs text-text-muted">{label}</p>
@@ -95,7 +95,7 @@ function MetricBox({
           variant === "danger" && "text-red-400",
           variant === "success" && "text-green-400",
           variant === "warning" && "text-yellow-400",
-          variant === "default" && "text-text-primary"
+          variant === "default" && "text-text-primary",
         )}
       >
         {value}
@@ -144,7 +144,7 @@ function SentinelCard({ assessment }: { assessment: SentinelAssessment }) {
             "font-medium",
             assessment.recommended_action === "CIRCUIT_BREAKER" && "text-red-400",
             assessment.recommended_action === "ALERT" && "text-yellow-400",
-            assessment.recommended_action === "NONE" && "text-green-400"
+            assessment.recommended_action === "NONE" && "text-green-400",
           )}
         >
           {assessment.recommended_action.replace(/_/g, " ")}
@@ -178,12 +178,14 @@ export function EulerDemo() {
 
     const stepData = scenario.steps[currentStep];
     const nextStepData = scenario.steps[currentStep + 1];
-    const delay =
-      (nextStepData.timestamp_offset_seconds - stepData.timestamp_offset_seconds) * 100; // 10x speed
+    const delay = (nextStepData.timestamp_offset_seconds - stepData.timestamp_offset_seconds) * 100; // 10x speed
 
-    const timer = setTimeout(() => {
-      setCurrentStep((s) => Math.min(s + 1, scenario.total_steps - 1));
-    }, Math.max(delay, 500));
+    const timer = setTimeout(
+      () => {
+        setCurrentStep((s) => Math.min(s + 1, scenario.total_steps - 1));
+      },
+      Math.max(delay, 500),
+    );
 
     return () => clearTimeout(timer);
   }, [isPlaying, currentStep, scenario]);
@@ -207,12 +209,10 @@ export function EulerDemo() {
         <div className="mb-6 rounded-full bg-red-500/10 p-6">
           <AlertTriangle className="h-12 w-12 text-red-500" />
         </div>
-        <h2 className="mb-2 text-2xl font-bold text-text-primary">
-          Euler Finance Exploit Replay
-        </h2>
+        <h2 className="mb-2 text-2xl font-bold text-text-primary">Euler Finance Exploit Replay</h2>
         <p className="mb-6 max-w-md text-center text-text-secondary">
-          Experience how AEGIS would have detected and mitigated the March 2023 Euler Finance
-          hack ($197M). Watch the 9-step attack unfold and see real-time sentinel responses.
+          Experience how AEGIS would have detected and mitigated the March 2023 Euler Finance hack
+          ($197M). Watch the 9-step attack unfold and see real-time sentinel responses.
         </p>
         <button
           type="button"
@@ -321,7 +321,7 @@ export function EulerDemo() {
                 idx < currentStep && "bg-accent",
                 idx === currentStep && step.is_critical && "bg-red-500 animate-pulse",
                 idx === currentStep && !step.is_critical && "bg-accent",
-                idx > currentStep && "bg-border-subtle"
+                idx > currentStep && "bg-border-subtle",
               )}
               aria-label={`Go to step ${idx + 1}`}
             />
@@ -346,14 +346,12 @@ export function EulerDemo() {
                 "rounded-lg border p-4",
                 stepData.is_critical
                   ? "border-red-500/50 bg-red-500/10"
-                  : "border-border-subtle bg-bg-surface"
+                  : "border-border-subtle bg-bg-surface",
               )}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-text-primary">
-                    {stepData.title}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-text-primary">{stepData.title}</h3>
                   <p className="mt-1 text-sm text-text-secondary">{stepData.description}</p>
                 </div>
                 {stepData.is_critical && (
@@ -368,18 +366,14 @@ export function EulerDemo() {
             {/* Metrics */}
             {Object.keys(stepData.metrics).length > 0 && (
               <div className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-                <h4 className="mb-3 text-sm font-semibold text-text-primary">
-                  Protocol Metrics
-                </h4>
+                <h4 className="mb-3 text-sm font-semibold text-text-primary">Protocol Metrics</h4>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                   {stepData.metrics.tvl_usd !== undefined && (
                     <MetricBox
                       label="TVL"
                       value={formatUSD(stepData.metrics.tvl_usd)}
                       variant={
-                        (stepData.metrics.tvl_drop_percent as number) >= 15
-                          ? "danger"
-                          : "default"
+                        (stepData.metrics.tvl_drop_percent as number) >= 15 ? "danger" : "default"
                       }
                     />
                   )}
@@ -451,13 +445,11 @@ export function EulerDemo() {
                   stepData.consensus.final_threat_level === "CRITICAL"
                     ? "border-red-500/50 bg-red-500/10"
                     : stepData.consensus.final_threat_level === "HIGH"
-                    ? "border-orange-500/50 bg-orange-500/10"
-                    : "border-border-subtle bg-bg-surface"
+                      ? "border-orange-500/50 bg-orange-500/10"
+                      : "border-border-subtle bg-bg-surface",
                 )}
               >
-                <h4 className="mb-3 text-sm font-semibold text-text-primary">
-                  Consensus Result
-                </h4>
+                <h4 className="mb-3 text-sm font-semibold text-text-primary">Consensus Result</h4>
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
                     <span className="text-text-muted">Level:</span>
@@ -479,7 +471,7 @@ export function EulerDemo() {
                         "font-semibold",
                         stepData.consensus.recommended_action === "CIRCUIT_BREAKER" &&
                           "text-red-400",
-                        stepData.consensus.recommended_action === "ALERT" && "text-yellow-400"
+                        stepData.consensus.recommended_action === "ALERT" && "text-yellow-400",
                       )}
                     >
                       {stepData.consensus.recommended_action.replace(/_/g, " ")}

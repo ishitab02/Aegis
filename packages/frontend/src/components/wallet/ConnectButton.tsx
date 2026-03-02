@@ -35,7 +35,7 @@ export function ConnectButton() {
         connector,
         isReady: (connector as { ready?: boolean }).ready ?? true,
       })),
-    [connectors]
+    [connectors],
   );
 
   useEffect(() => {
@@ -72,7 +72,9 @@ export function ConnectButton() {
           onClick={() => setIsConnectMenuOpen((open) => !open)}
           disabled={isConnecting}
         >
-          {isConnecting && <LoaderCircle className="h-4 w-4 animate-spin text-[var(--text-secondary)]" />}
+          {isConnecting && (
+            <LoaderCircle className="h-4 w-4 animate-spin text-[var(--text-secondary)]" />
+          )}
           {isConnecting ? "Connecting" : "Connect Wallet"}
         </button>
 
@@ -96,9 +98,13 @@ export function ConnectButton() {
               </button>
             ))}
             {availableConnectors.length === 0 && (
-              <p className="px-3 py-2 text-xs text-[var(--text-muted)]">No wallet connector configured.</p>
+              <p className="px-3 py-2 text-xs text-[var(--text-muted)]">
+                No wallet connector configured.
+              </p>
             )}
-            {connectError && <p className="px-3 py-2 text-xs text-[#fca5a5]">{connectError.message}</p>}
+            {connectError && (
+              <p className="px-3 py-2 text-xs text-[#fca5a5]">{connectError.message}</p>
+            )}
           </div>
         )}
       </div>
@@ -112,7 +118,11 @@ export function ConnectButton() {
         className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-muted)]"
         onClick={() => setIsAccountMenuOpen((open) => !open)}
       >
-        <span className="h-5 w-5 rounded-full" style={{ backgroundColor: avatarColor(address) }} aria-hidden />
+        <span
+          className="h-5 w-5 rounded-full"
+          style={{ backgroundColor: avatarColor(address) }}
+          aria-hidden
+        />
         <span>{shortAddress}</span>
         <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />
       </button>

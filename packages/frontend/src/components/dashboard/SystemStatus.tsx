@@ -15,7 +15,9 @@ function getServiceStatus(status: string | undefined): ServiceStatus {
   return "unknown";
 }
 
-function getStatusDotType(status: ServiceStatus): "critical" | "high" | "medium" | "low" | "neutral" {
+function getStatusDotType(
+  status: ServiceStatus,
+): "critical" | "high" | "medium" | "low" | "neutral" {
   switch (status) {
     case "healthy":
       return "low";
@@ -40,8 +42,7 @@ export function SystemStatus() {
     },
     {
       name: "On-Chain",
-      status:
-        health?.services?.onChain?.activeSentinels != null ? "ACTIVE" : "UNKNOWN",
+      status: health?.services?.onChain?.activeSentinels != null ? "ACTIVE" : "UNKNOWN",
       detail:
         health?.services?.onChain?.activeSentinels != null
           ? `${health.services.onChain.activeSentinels} sentinels`
@@ -101,9 +102,7 @@ export function SystemStatus() {
                 </span>
                 <div>
                   <p className="text-sm font-medium text-text-primary">{service.name}</p>
-                  {service.detail && (
-                    <p className="text-xs text-text-muted">{service.detail}</p>
-                  )}
+                  {service.detail && <p className="text-xs text-text-muted">{service.detail}</p>}
                 </div>
               </div>
 
@@ -123,7 +122,7 @@ export function SystemStatus() {
                         status === "healthy" && "text-success",
                         status === "warning" && "text-threat-medium",
                         status === "error" && "text-threat-critical",
-                        status === "unknown" && "text-text-muted"
+                        status === "unknown" && "text-text-muted",
                       )}
                     >
                       {service.status}

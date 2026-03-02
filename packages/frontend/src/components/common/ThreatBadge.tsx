@@ -8,13 +8,16 @@ interface ThreatBadgeProps {
   className?: string;
 }
 
-const STYLES: Record<ThreatLevel, {
-  border: string;
-  bg: string;
-  text: string;
-  dot: string;
-  pulse?: boolean;
-}> = {
+const STYLES: Record<
+  ThreatLevel,
+  {
+    border: string;
+    bg: string;
+    text: string;
+    dot: string;
+    pulse?: boolean;
+  }
+> = {
   CRITICAL: {
     border: "border-l-threat-critical",
     bg: "bg-threat-critical-muted/50",
@@ -52,7 +55,7 @@ export function ThreatBadge({
   level,
   variant = "default",
   showDot = true,
-  className
+  className,
 }: ThreatBadgeProps) {
   const style = STYLES[level] ?? STYLES.NONE;
   const displayLabel = level === "NONE" ? "LOW" : level;
@@ -63,13 +66,18 @@ export function ThreatBadge({
         className={clsx(
           "inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide",
           style.text,
-          className
+          className,
         )}
       >
         {showDot && (
           <span className="relative flex h-1.5 w-1.5">
             {style.pulse && (
-              <span className={clsx("absolute h-full w-full animate-ping rounded-full opacity-75", style.dot)} />
+              <span
+                className={clsx(
+                  "absolute h-full w-full animate-ping rounded-full opacity-75",
+                  style.dot,
+                )}
+              />
             )}
             <span className={clsx("relative h-1.5 w-1.5 rounded-full", style.dot)} />
           </span>
@@ -88,13 +96,18 @@ export function ThreatBadge({
         style.bg,
         style.text,
         style.pulse && "animate-pulse-slow",
-        className
+        className,
       )}
     >
       {showDot && (
         <span className="relative flex h-1.5 w-1.5">
           {style.pulse && (
-            <span className={clsx("absolute h-full w-full animate-ping rounded-full opacity-75", style.dot)} />
+            <span
+              className={clsx(
+                "absolute h-full w-full animate-ping rounded-full opacity-75",
+                style.dot,
+              )}
+            />
           )}
           <span className={clsx("relative h-1.5 w-1.5 rounded-full", style.dot)} />
         </span>
@@ -106,22 +119,30 @@ export function ThreatBadge({
 
 export function getThreatColor(level: ThreatLevel): string {
   switch (level) {
-    case "CRITICAL": return "#ef4444";
-    case "HIGH": return "#f97316";
-    case "MEDIUM": return "#eab308";
+    case "CRITICAL":
+      return "#ef4444";
+    case "HIGH":
+      return "#f97316";
+    case "MEDIUM":
+      return "#eab308";
     case "LOW":
     case "NONE":
-    default: return "#71717a";
+    default:
+      return "#71717a";
   }
 }
 
 export function getThreatBgClass(level: ThreatLevel): string {
   switch (level) {
-    case "CRITICAL": return "bg-threat-critical-muted/30";
-    case "HIGH": return "bg-threat-high-muted/30";
-    case "MEDIUM": return "bg-threat-medium-muted/30";
+    case "CRITICAL":
+      return "bg-threat-critical-muted/30";
+    case "HIGH":
+      return "bg-threat-high-muted/30";
+    case "MEDIUM":
+      return "bg-threat-medium-muted/30";
     case "LOW":
     case "NONE":
-    default: return "bg-threat-low-muted/30";
+    default:
+      return "bg-threat-low-muted/30";
   }
 }

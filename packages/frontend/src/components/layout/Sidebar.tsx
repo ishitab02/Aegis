@@ -1,14 +1,6 @@
 import clsx from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Activity,
-  Boxes,
-  LayoutDashboard,
-  Search,
-  Settings,
-  ShieldAlert,
-  X,
-} from "lucide-react";
+import { Activity, Boxes, LayoutDashboard, Search, Settings, ShieldAlert, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -33,7 +25,8 @@ export function Sidebar({ open, onClose, alertCount = 0 }: SidebarProps) {
     <nav className="flex flex-col gap-1 px-3 py-4">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = location.pathname === item.path ||
+        const isActive =
+          location.pathname === item.path ||
           (item.path !== "/" && location.pathname.startsWith(item.path));
         const badge = item.hasBadge ? alertCount : 0;
 
@@ -46,7 +39,7 @@ export function Sidebar({ open, onClose, alertCount = 0 }: SidebarProps) {
               "group relative flex items-center justify-between overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
               isActive
                 ? "bg-white/[0.06] text-text-primary"
-                : "text-text-secondary hover:bg-white/[0.03] hover:text-text-primary"
+                : "text-text-secondary hover:bg-white/[0.03] hover:text-text-primary",
             )}
           >
             {isActive && (
@@ -57,7 +50,9 @@ export function Sidebar({ open, onClose, alertCount = 0 }: SidebarProps) {
               <Icon
                 className={clsx(
                   "h-[18px] w-[18px] transition-colors",
-                  isActive ? "text-text-primary" : "text-text-muted group-hover:text-text-secondary"
+                  isActive
+                    ? "text-text-primary"
+                    : "text-text-muted group-hover:text-text-secondary",
                 )}
               />
               <span>{item.label}</span>
