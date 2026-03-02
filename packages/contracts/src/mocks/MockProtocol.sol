@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title MockProtocol
- * @notice A mock DeFi protocol for testing AEGIS circuit breaker integration
- * @dev Implements pause/unpause so CircuitBreaker can interact with it
+ * @notice mock DeFi protocol for testing AEGIS circuit breaker integration
+ * @dev implements pause/unpause so CircuitBreaker can call them
  */
 contract MockProtocol is Ownable {
     bool public paused;
@@ -44,25 +44,16 @@ contract MockProtocol is Ownable {
         emit Withdrawn(msg.sender, amount);
     }
 
-    /**
-     * @notice Pause the protocol - callable by owner or CircuitBreaker
-     */
     function pause() external {
         paused = true;
         emit Paused();
     }
 
-    /**
-     * @notice Unpause the protocol - callable by owner or CircuitBreaker
-     */
     function unpause() external {
         paused = false;
         emit Unpaused();
     }
 
-    /**
-     * @notice Get current TVL (for sentinel monitoring)
-     */
     function getTVL() external view returns (uint256) {
         return tvl;
     }

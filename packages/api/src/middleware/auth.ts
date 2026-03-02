@@ -1,12 +1,4 @@
-/**
- * API Key authentication middleware.
- *
- * Reads a comma-separated list of valid keys from the API_KEYS env
- * variable.  If API_KEYS is empty / unset, authentication is disabled
- * (open access) so development stays frictionless.
- *
- * Public routes (health, sentinel aggregate) are always exempt.
- */
+// api key auth. disabled when API_KEYS env is unset (open access).
 
 import type { Context, Next } from "hono";
 
@@ -38,14 +30,13 @@ function getValidKeys(): Set<string> {
 export async function authMiddleware(c: Context, next: Next) {
   const keys = getValidKeys();
 
-  // If no keys are configured, auth is disabled (dev mode)
+  // if no keys configured, auth is disabled (dev mode)
   if (keys.size === 0) return next();
 
-  // Always allow public routes
   const pathname = new URL(c.req.url).pathname;
   if (PUBLIC_PATHS.has(pathname)) return next();
 
-  // Allow all demo routes (for hackathon presentation)
+  // allow demo routes without auth
   if (pathname.startsWith("/api/v1/demo/")) return next();
 
   const apiKey = c.req.header("X-API-Key");

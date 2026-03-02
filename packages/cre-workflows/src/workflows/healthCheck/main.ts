@@ -1,13 +1,5 @@
-/**
- * AEGIS Health Check Workflow
- *
- * Periodic health check (every 5 minutes) that verifies:
- *  1. Python agent API is responsive
- *  2. All registered sentinels are alive (on-chain liveness via SentinelRegistry)
- *  3. Chainlink Data Feeds are fresh
- *
- * Chainlink services: CRE + Automation + Data Feeds
- */
+// health check: 5-min cron verifying agent API, sentinel liveness, and data feed freshness
+// chainlink services: CRE, Automation, Data Feeds
 
 import {
   cre,
@@ -40,7 +32,6 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
-  // ---- Check 1: Agent API health ----
   runtime.log("Check 1: Agent API health...");
   const httpClient = new cre.capabilities.HTTPClient();
 
@@ -68,7 +59,6 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
 
   runtime.log(`  Agent API: ${health.status}`);
 
-  // ---- Check 2: On-chain sentinel liveness ----
   runtime.log("Check 2: Sentinel liveness (on-chain)...");
   const activeSentinelsCallData = encodeFunctionData({
     abi: sentinelRegistryAbi,
@@ -114,7 +104,6 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
   }
   runtime.log(`  Sentinels: ${aliveCount}/${activeSentinels.length} alive`);
 
-  // ---- Check 3: Chainlink Data Feed freshness ----
   runtime.log("Check 3: Chainlink feed freshness...");
   const priceCallData = encodeFunctionData({
     abi: chainlinkAggregatorAbi,
@@ -139,7 +128,6 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
   const feedFresh = feedAge < 3600;
   runtime.log(`  ETH/USD feed age: ${feedAge}s (${feedFresh ? "FRESH" : "STALE"})`);
 
-  // ---- Summary ----
   const overallStatus =
     health.status === "HEALTHY" && aliveCount === activeSentinels.length && feedFresh
       ? "HEALTHY"

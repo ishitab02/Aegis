@@ -1,8 +1,4 @@
-"""Curve Finance Protocol Adapter.
-
-Reads TVL, token balances, and events from Curve pools.
-Supports StableSwap and CryptoSwap pools on various EVM chains.
-"""
+"""Curve Finance adapter."""
 
 from __future__ import annotations
 
@@ -23,7 +19,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ============ Curve Contract Addresses ============
 
 CURVE_ADDRESSES = {
     # Ethereum Mainnet
@@ -78,11 +73,8 @@ CURVE_ADDRESSES = {
     },
 }
 
-# ============ Curve ABIs (Minimal) ============
 
-# StableSwap pool ABI (most common)
 CURVE_POOL_ABI = [
-    # Read functions
     {
         "name": "get_virtual_price",
         "outputs": [{"type": "uint256", "name": ""}],
@@ -118,7 +110,6 @@ CURVE_POOL_ABI = [
         "stateMutability": "view",
         "type": "function",
     },
-    # N_COINS getter (not always present)
     {
         "name": "N_COINS",
         "outputs": [{"type": "uint256", "name": ""}],
@@ -128,7 +119,6 @@ CURVE_POOL_ABI = [
     },
 ]
 
-# Events ABI
 CURVE_EVENTS_ABI = [
     {
         "name": "AddLiquidity",
@@ -201,7 +191,6 @@ CURVE_EVENTS_ABI = [
     },
 ]
 
-# ERC20 ABI for token info
 ERC20_ABI = [
     {
         "inputs": [],
@@ -228,18 +217,8 @@ ERC20_ABI = [
 
 
 class CurveAdapter(BaseProtocolAdapter):
-    """Adapter for Curve Finance pools.
-
-    Monitors:
-    - Total liquidity (sum of all coin balances)
-    - Individual coin balances
-    - Pool imbalance (deviation from ideal ratio)
-    - AddLiquidity, RemoveLiquidity, TokenExchange events
-    """
 
     PROTOCOL_TYPE = "curve"
-
-    # Maximum coins to check (most pools have 2-4)
     MAX_COINS = 8
 
     def __init__(
@@ -248,13 +227,6 @@ class CurveAdapter(BaseProtocolAdapter):
         pool_address: str,
         cache_ttl: int | None = None,
     ):
-        """Initialize Curve adapter for a specific pool.
-
-        Args:
-            web3: Web3 instance
-            pool_address: Address of the Curve pool
-            cache_ttl: Cache TTL in seconds (default: 60)
-        """
         super().__init__(web3, pool_address, cache_ttl)
         self._pool_contract: Contract | None = None
         self._coin_addresses: list[str] = []
@@ -262,7 +234,6 @@ class CurveAdapter(BaseProtocolAdapter):
 
     @property
     def pool_contract(self) -> Contract:
-        """Get or create the pool contract instance."""
         if self._pool_contract is None:
             self._pool_contract = self._web3.eth.contract(
                 address=self._protocol_address,
@@ -271,7 +242,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return self._pool_contract
 
     async def _get_n_coins(self) -> int:
-        """Determine the number of coins in the pool."""
         if self._n_coins is not None:
             return self._n_coins
 
@@ -280,7 +250,6 @@ class CurveAdapter(BaseProtocolAdapter):
         async def fetch():
             loop = asyncio.get_event_loop()
 
-            # Try to read N_COINS directly
             try:
                 n = await loop.run_in_executor(
                     None, self.pool_contract.functions.N_COINS().call
@@ -289,7 +258,7 @@ class CurveAdapter(BaseProtocolAdapter):
             except Exception:
                 pass
 
-            # Otherwise, probe coins until we hit an error
+            # fall back to probing coins() until revert
             for i in range(self.MAX_COINS):
                 try:
                     await loop.run_in_executor(
@@ -304,7 +273,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return self._n_coins
 
     async def _get_coin_addresses(self) -> list[str]:
-        """Get all coin addresses in the pool."""
         if self._coin_addresses:
             return self._coin_addresses
 
@@ -331,7 +299,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return self._coin_addresses
 
     async def _get_token_info(self, token_address: str) -> dict[str, Any]:
-        """Get token symbol and decimals."""
         cache_key = f"token_info:{token_address}"
 
         async def fetch():
@@ -348,7 +315,6 @@ class CurveAdapter(BaseProtocolAdapter):
                     None, token.functions.decimals().call
                 )
             except Exception:
-                # Handle ETH placeholder (0xEeee...) or non-standard tokens
                 if token_address.lower() == "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee":
                     symbol = "ETH"
                     decimals = 18
@@ -361,7 +327,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def _get_balances(self) -> list[int]:
-        """Get raw balances for all coins in the pool."""
         n_coins = await self._get_n_coins()
         loop = asyncio.get_event_loop()
         balances = []
@@ -379,11 +344,7 @@ class CurveAdapter(BaseProtocolAdapter):
         return balances
 
     async def _fetch_tvl(self) -> int:
-        """Fetch total TVL as sum of all coin balances.
-
-        Note: This is a simplified TVL that doesn't account for different
-        token decimals or prices. For accurate USD TVL, multiply by prices.
-        """
+        # normalizes all balances to 18 decimals, doesn't account for prices
         balances = await self._get_balances()
         coins = await self._get_coin_addresses()
 
@@ -391,7 +352,6 @@ class CurveAdapter(BaseProtocolAdapter):
         for i, balance in enumerate(balances):
             if i < len(coins):
                 token_info = await self._get_token_info(coins[i])
-                # Normalize to 18 decimals for comparison
                 decimals = token_info["decimals"]
                 normalized = balance * (10 ** (18 - decimals))
                 total_tvl += normalized
@@ -400,7 +360,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return total_tvl
 
     async def _fetch_token_balances(self) -> list[TokenBalance]:
-        """Fetch token balances for all coins in the pool."""
         coins = await self._get_coin_addresses()
         balances = await self._get_balances()
         token_balances: list[TokenBalance] = []
@@ -434,11 +393,6 @@ class CurveAdapter(BaseProtocolAdapter):
         from_block: int | None = None,
         limit: int = 100,
     ) -> list[ProtocolEvent]:
-        """Fetch recent Curve pool events.
-
-        Supported events: AddLiquidity, RemoveLiquidity, RemoveLiquidityOne,
-        RemoveLiquidityImbalance, TokenExchange, TokenExchangeUnderlying
-        """
         loop = asyncio.get_event_loop()
 
         current_block = await loop.run_in_executor(
@@ -464,7 +418,6 @@ class CurveAdapter(BaseProtocolAdapter):
 
         for name in event_names:
             try:
-                # Check if event exists on contract
                 if not hasattr(self.pool_contract.events, name):
                     continue
 
@@ -478,7 +431,6 @@ class CurveAdapter(BaseProtocolAdapter):
                 )
 
                 for e in raw_events[:limit]:
-                    # Convert args to serializable dict
                     args = {}
                     for key, value in e["args"].items():
                         if isinstance(value, bytes):
@@ -503,16 +455,11 @@ class CurveAdapter(BaseProtocolAdapter):
             except Exception as ex:
                 logger.debug("Failed to fetch %s events: %s", name, ex)
 
-        # Sort by block number descending
         events.sort(key=lambda x: x.block_number, reverse=True)
         return events[:limit]
 
     async def get_virtual_price(self) -> int:
-        """Get the pool's virtual price.
-
-        Virtual price represents the value of LP tokens.
-        A manipulation attack often causes sudden virtual price changes.
-        """
+        # sudden changes in virtual price can indicate manipulation
         cache_key = f"virtual_price:{self._protocol_address}"
 
         async def fetch():
@@ -527,10 +474,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def get_amplification(self) -> int:
-        """Get the pool's amplification coefficient (A).
-
-        The A parameter affects slippage. Changes to A can affect pool behavior.
-        """
         cache_key = f"A:{self._protocol_address}"
 
         async def fetch():
@@ -545,15 +488,6 @@ class CurveAdapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def get_pool_imbalance(self) -> dict[str, Any]:
-        """Calculate pool imbalance from ideal 1:1:... ratio.
-
-        Returns:
-            Dictionary with:
-            - max_deviation: Maximum deviation from ideal (0.0 to 1.0)
-            - deviations: List of deviation percentages per coin
-            - is_imbalanced: True if any coin deviates > 10%
-            - balances: Current balances per coin
-        """
         balances = await self._get_balances()
         coins = await self._get_coin_addresses()
 
@@ -565,7 +499,6 @@ class CurveAdapter(BaseProtocolAdapter):
                 "balances": [],
             }
 
-        # Normalize balances to same decimals
         normalized = []
         for i, balance in enumerate(balances):
             if i < len(coins):
@@ -583,14 +516,14 @@ class CurveAdapter(BaseProtocolAdapter):
         for norm_balance in normalized:
             actual_share = norm_balance / total if total > 0 else 0
             deviation = abs(actual_share - ideal_share) / ideal_share
-            deviations.append(round(deviation * 100, 2))  # As percentage
+            deviations.append(round(deviation * 100, 2))
 
         max_deviation = max(deviations) / 100 if deviations else 0.0
 
         return {
             "max_deviation": round(max_deviation, 4),
             "deviations": deviations,
-            "is_imbalanced": max_deviation > 0.10,  # >10% from ideal
+            "is_imbalanced": max_deviation > 0.10,
             "balances": balances,
             "normalized_balances": normalized,
         }
@@ -600,18 +533,12 @@ class CurveAdapter(BaseProtocolAdapter):
         threshold_usd: float = 100_000,
         from_block: int | None = None,
     ) -> list[ProtocolEvent]:
-        """Get token swaps above a USD threshold.
-
-        Note: For accurate USD values, we'd need price feeds.
-        This is a simplified version.
-        """
         events = await self._fetch_events(
             event_name="TokenExchange",
             from_block=from_block,
             limit=500,
         )
 
-        # Also check underlying swaps
         underlying_events = await self._fetch_events(
             event_name="TokenExchangeUnderlying",
             from_block=from_block,
@@ -619,7 +546,7 @@ class CurveAdapter(BaseProtocolAdapter):
         )
         events.extend(underlying_events)
 
-        # Filter for large amounts (simplified: assume 18 decimals, ~$2000/ETH)
+        # rough filter assuming 18 decimals and ~$2000/ETH
         threshold_raw = int(threshold_usd * 10**18 / 2000)
 
         large_swaps = []
@@ -636,7 +563,6 @@ class CurveAdapter(BaseProtocolAdapter):
         threshold_usd: float = 100_000,
         from_block: int | None = None,
     ) -> list[ProtocolEvent]:
-        """Get liquidity removals above a USD threshold."""
         events = []
 
         for event_name in [
@@ -651,12 +577,10 @@ class CurveAdapter(BaseProtocolAdapter):
             )
             events.extend(batch)
 
-        # Filter for large amounts
         threshold_raw = int(threshold_usd * 10**18 / 2000)
 
         large_withdrawals = []
         for e in events:
-            # Check different event formats
             amounts = e.args.get("token_amounts", [])
             if isinstance(amounts, (list, tuple)):
                 if any(a > threshold_raw for a in amounts):
@@ -669,31 +593,16 @@ class CurveAdapter(BaseProtocolAdapter):
         return large_withdrawals
 
     async def detect_manipulation(self) -> dict[str, Any]:
-        """Detect potential pool manipulation.
-
-        Checks for:
-        1. High imbalance (>20% deviation)
-        2. Virtual price anomalies
-        3. Suspicious swap patterns
-
-        Returns:
-            Dictionary with manipulation indicators
-        """
         imbalance = await self.get_pool_imbalance()
         virtual_price = await self.get_virtual_price()
 
-        # Check for recent large swaps
         large_swaps = await self.get_large_swaps(
-            threshold_usd=500_000,  # $500k+ swaps
+            threshold_usd=500_000,
             from_block=None,
         )
 
-        # Indicators
         high_imbalance = imbalance["max_deviation"] > 0.20
-        suspicious_swaps = len(large_swaps) > 5  # Many large swaps recently
-
-        # Virtual price should be close to 1e18 for new pools
-        # Large deviations may indicate manipulation or profits/losses
+        suspicious_swaps = len(large_swaps) > 5
         virtual_price_deviation = abs(virtual_price - 10**18) / 10**18
 
         return {
@@ -712,16 +621,6 @@ def get_curve_adapter(
     pool_address: str | None = None,
     pool_name: str | None = None,
 ) -> CurveAdapter:
-    """Factory function to create a Curve adapter.
-
-    Args:
-        web3: Web3 instance
-        pool_address: Direct pool address (optional)
-        pool_name: Pool name like "3pool", "steth" (optional)
-
-    Returns:
-        CurveAdapter instance
-    """
     chain_id = web3.eth.chain_id
     addresses = CURVE_ADDRESSES.get(chain_id, CURVE_ADDRESSES[1])
 
@@ -733,7 +632,6 @@ def get_curve_adapter(
         if pool_addr:
             return CurveAdapter(web3, pool_addr)
 
-    # Default to first pool if available
     if "pools" in addresses:
         first_pool = next(iter(addresses["pools"].values()))
         return CurveAdapter(web3, first_pool)
@@ -745,6 +643,5 @@ def get_curve_adapter(
 
 
 def get_known_curve_pools(chain_id: int = 1) -> dict[str, str]:
-    """Get known Curve pool addresses for a chain."""
     addresses = CURVE_ADDRESSES.get(chain_id, {})
     return addresses.get("pools", {})

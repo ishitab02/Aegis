@@ -1,7 +1,3 @@
-/**
- * On-chain reads using ethers.js v6.
- */
-
 import { ethers } from "ethers";
 import { config } from "../config.js";
 
@@ -13,8 +9,6 @@ function getProvider(): ethers.JsonRpcProvider {
   }
   return _provider;
 }
-
-// ============ CircuitBreaker ============
 
 const CIRCUIT_BREAKER_ABI = [
   "function isPaused(address protocol) view returns (bool)",
@@ -57,8 +51,6 @@ export async function isProtocolPaused(protocol: string): Promise<boolean> {
   }
 }
 
-// ============ ThreatReport ============
-
 const THREAT_REPORT_ABI = [
   "function getProtocolReports(address protocol, uint256 limit) view returns (bytes32[])",
 ];
@@ -76,8 +68,6 @@ export async function getProtocolReports(protocol: string, limit = 10) {
     return [];
   }
 }
-
-// ============ SentinelRegistry ============
 
 const SENTINEL_REGISTRY_ABI = [
   "function getActiveSentinels() view returns (uint256[])",
@@ -98,8 +88,6 @@ export async function getActiveSentinels() {
     return [];
   }
 }
-
-// ============ MockProtocol ============
 
 const MOCK_PROTOCOL_ABI = [
   "function getTVL() view returns (uint256)",

@@ -8,13 +8,11 @@ import { sendAlert } from "../services/telegram.js";
 
 const sentinel = new Hono();
 
-// GET /aggregate — all sentinel assessments + consensus
 sentinel.get("/aggregate", async (c) => {
   const data = await getSentinelAggregate();
   return c.json(data);
 });
 
-// GET /:id — single sentinel status
 sentinel.get("/:id", async (c) => {
   const id = c.req.param("id");
   const data = await getSentinelById(id);
@@ -24,7 +22,6 @@ sentinel.get("/:id", async (c) => {
   return c.json(data);
 });
 
-// POST /detect — trigger full detection cycle
 sentinel.post("/detect", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const protocolAddress = body.protocol_address || config.protocolToMonitor;
@@ -41,7 +38,7 @@ sentinel.post("/detect", async (c) => {
     simulate_short_voting_period: body.simulate_short_voting_period,
   });
 
-  // Auto-create alert in DB when consensus is reached with HIGH or CRITICAL
+  // auto-persist alert on HIGH or CRITICAL consensus
   try {
     const consensus = (result as any)?.consensus;
     if (

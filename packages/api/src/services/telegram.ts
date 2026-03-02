@@ -1,16 +1,5 @@
-/**
- * Telegram notification service.
- *
- * Sends formatted alert messages to a Telegram chat when HIGH or
- * CRITICAL threats are detected.
- *
- * Required env variables:
- *   TELEGRAM_BOT_TOKEN  — Bot API token from BotFather
- *   TELEGRAM_CHAT_ID    — Chat / channel / group ID to post to
- *
- * If either env var is missing the service degrades silently (logs a
- * warning once and becomes a no-op).
- */
+// telegram alert notifications. degrades silently when
+// TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID are unset.
 
 import type { AlertRow } from "../db/index.js";
 
@@ -30,10 +19,6 @@ function isConfigured(): boolean {
   return false;
 }
 
-/**
- * Re-export a minimal interface so the rest of the app doesn't depend
- * on the node-telegram-bot-api types.
- */
 async function sendMessage(text: string): Promise<void> {
   if (!isConfigured()) return;
 
@@ -63,7 +48,6 @@ const THREAT_EMOJI: Record<string, string> = {
   NONE: "✅",
 };
 
-/** Send a formatted alert notification to Telegram. */
 export async function sendAlert(alert: AlertRow): Promise<void> {
   const emoji = THREAT_EMOJI[alert.threat_level] ?? "❓";
   const confidence = (alert.confidence * 100).toFixed(1);
@@ -86,7 +70,6 @@ export async function sendAlert(alert: AlertRow): Promise<void> {
   await sendMessage(text);
 }
 
-/** Send a plain text message (for health/status pings). */
 export async function sendText(text: string): Promise<void> {
   await sendMessage(text);
 }

@@ -3,7 +3,6 @@ import { runForensics, getForensicReport, listForensicReports } from "../service
 
 const forensics = new Hono();
 
-// POST / — run forensic analysis (x402 payment gated)
 forensics.post("/", async (c) => {
   const body = await c.req.json();
   const { tx_hash, protocol, description } = body;
@@ -16,13 +15,11 @@ forensics.post("/", async (c) => {
   return c.json(report);
 });
 
-// GET / — list all forensic reports
 forensics.get("/", async (c) => {
   const reports = await listForensicReports();
   return c.json(reports);
 });
 
-// GET /:id — get specific forensic report
 forensics.get("/:id", async (c) => {
   const id = c.req.param("id");
   const report = await getForensicReport(id);

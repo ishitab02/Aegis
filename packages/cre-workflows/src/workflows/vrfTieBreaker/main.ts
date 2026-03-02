@@ -1,22 +1,5 @@
-/**
- * AEGIS VRF Tie-Breaker Workflow
- *
- * When sentinel consensus is split (e.g., 1 CRITICAL, 1 HIGH, 1 NONE — no 2/3
- * majority), this workflow uses Chainlink VRF to fairly select a tie-breaking
- * sentinel whose vote becomes the final decision.
- *
- * Flow:
- *  1. HTTP trigger receives the split vote data
- *  2. Read VRF randomness via on-chain request
- *  3. Use randomness to weight-select a sentinel (higher reputation = higher chance)
- *  4. Return the final consensus decision
- *
- * Chainlink services demonstrated:
- *  - CRE (this workflow)
- *  - VRF (verifiable random tie-breaker)
- *
- * This workflow is called by the threat detection workflow when consensus fails.
- */
+// vrf tie-breaker: when sentinel consensus is split, use VRF randomness for weighted sentinel selection
+// chainlink services: CRE, VRF
 
 import {
   cre,
@@ -51,8 +34,6 @@ import {
   THREAT_LEVEL_UINT8,
 } from "../../types";
 
-// ============ Types ============
-
 type TieBreakerInput = {
   votes: SentinelVote[];
   protocol_address: string;
@@ -66,51 +47,28 @@ type TieBreakerResult = {
   method: "vrf" | "reputation_weighted";
 };
 
-// ============ Reputation Weights ============
-
-/**
- * Default reputation weights per sentinel type.
- * In production these would come from ReputationTracker on-chain,
- * but for the hackathon demo we use sensible defaults.
- *
- * Higher weight = more trusted = higher chance of being selected as tie-breaker.
- */
+// default reputation weights; in production these come from ReputationTracker on-chain
 const DEFAULT_REPUTATION: Record<string, number> = {
   liquidity: 95,
   oracle: 90,
   governance: 85,
 };
 
-// ============ Core Logic ============
-
-/**
- * Weighted random selection using VRF randomness.
- *
- * Each sentinel's "ticket range" is proportional to their reputation score.
- * The VRF random number selects a point in the total range.
- *
- * Example with reputations [95, 90, 85] and random 142:
- *   Total = 270
- *   Sentinel 0 owns [0, 95)
- *   Sentinel 1 owns [95, 185)
- *   Sentinel 2 owns [185, 270)
- *   142 falls in Sentinel 1's range → Sentinel 1 is selected
- */
+// weighted random selection: sentinel ticket range proportional to (reputation * confidence),
+// VRF random number picks a point in the total range
 function weightedSelect(
   votes: SentinelVote[],
   randomWord: bigint,
 ): { selectedIndex: number; selectedVote: SentinelVote } {
   const weights = votes.map((v) => {
-    // Extract sentinel type from ID (e.g., "liquidity-1" → "liquidity")
     const sentinelType = v.sentinel_id.split("-")[0].toLowerCase();
     const reputation = DEFAULT_REPUTATION[sentinelType] ?? 80;
-    // Also factor in confidence: higher confidence = more weight
     return Math.round(reputation * v.confidence);
   });
 
   const totalWeight = weights.reduce((sum, w) => sum + w, 0);
   if (totalWeight === 0) {
-    // Fallback: pure random
+    // fallback: pure random
     const idx = Number(randomWord % BigInt(votes.length));
     return { selectedIndex: idx, selectedVote: votes[idx] };
   }
@@ -124,31 +82,20 @@ function weightedSelect(
     }
   }
 
-  // Should never reach here, but safety fallback
+  // should never reach here, safety fallback
   return {
     selectedIndex: votes.length - 1,
     selectedVote: votes[votes.length - 1],
   };
 }
 
-// ============ Cron Trigger Handler (HTTP-invoked) ============
-
 const onTrigger = (runtime: Runtime<Config>): string => {
   runtime.log("AEGIS VRF Tie-Breaker: Resolving split consensus...");
 
   const evm = runtime.config.evms[0];
 
-  // For the hackathon demo, we generate a deterministic-but-fair seed
-  // using keccak256 of the current state. In production this would
-  // be a real VRF callback.
-  //
-  // The workflow DEMONSTRATES the VRF integration pattern:
-  // 1. Request randomness from VRF Coordinator
-  // 2. Wait for fulfillment
-  // 3. Use the random word for selection
-  //
-  // Since VRF is async (requires callback), we show the full request
-  // flow and use a synchronous fallback for the demo.
+  // VRF is async (requires callback), so for the hackathon we request VRF on-chain
+  // then derive a seed from the tx hash; production would wait for actual fulfillment
 
   const network = getNetwork({
     chainFamily: "evm",
@@ -159,13 +106,11 @@ const onTrigger = (runtime: Runtime<Config>): string => {
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
-  // ---- Step 1: Request VRF randomness (demonstration) ----
   runtime.log("Step 1: Requesting VRF randomness...");
 
   let randomWord: bigint;
 
   if (evm.vrfCoordinator && evm.vrfKeyHash && evm.vrfSubscriptionId) {
-    // Full VRF flow — request on-chain randomness
     runtime.log(`  VRF Coordinator: ${evm.vrfCoordinator}`);
     runtime.log(`  Subscription ID: ${evm.vrfSubscriptionId}`);
 
@@ -182,7 +127,6 @@ const onTrigger = (runtime: Runtime<Config>): string => {
       ],
     });
 
-    // Submit VRF request via CRE signed report
     const vrfReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
       evm.vrfCoordinator as Address,
       requestCallData,
@@ -209,24 +153,19 @@ const onTrigger = (runtime: Runtime<Config>): string => {
       const txHash = bytesToHex(vrfResult.txHash ?? new Uint8Array(32));
       runtime.log(`  VRF request submitted! TX: ${txHash}`);
 
-      // In production, we'd wait for the VRF callback fulfillment.
-      // For the hackathon, we derive a seed from the tx hash as a
-      // demonstration of the pattern.
+      // derive seed from tx hash; production would wait for actual VRF callback
       randomWord = BigInt(keccak256(txHash as `0x${string}`));
       runtime.log(`  VRF-derived random word: ${randomWord.toString().slice(0, 20)}...`);
     } else {
       runtime.log(`  VRF request failed: ${vrfResult.txStatus}`);
-      // Fallback to deterministic hash
       randomWord = BigInt(keccak256(toHex(`aegis-tiebreak-${Date.now()}`)));
       runtime.log("  Using deterministic fallback seed.");
     }
   } else {
-    // No VRF configured — use keccak256-based seed for demo
     runtime.log("  VRF not configured — using keccak256 deterministic seed.");
     randomWord = BigInt(keccak256(toHex(`aegis-tiebreak-${Date.now()}`)));
   }
 
-  // ---- Step 2: Fetch current sentinel votes ----
   runtime.log("Step 2: Fetching sentinel votes...");
   const httpClient = new cre.capabilities.HTTPClient();
 
@@ -270,7 +209,6 @@ const onTrigger = (runtime: Runtime<Config>): string => {
     runtime.log(`    ${v.sentinel_id}: ${v.threat_level} (confidence: ${v.confidence})`);
   }
 
-  // ---- Step 3: Weighted random selection ----
   runtime.log("Step 3: Performing weighted random selection...");
   const { selectedIndex, selectedVote } = weightedSelect(votes, randomWord);
 
@@ -290,23 +228,13 @@ const onTrigger = (runtime: Runtime<Config>): string => {
   return JSON.stringify(result);
 };
 
-// ============ Workflow Initialization ============
-
 const initWorkflow = (config: Config) => {
   const cronCap = new cre.capabilities.CronCapability();
 
-  // This workflow is triggered on-demand (effectively by the detection workflow
-  // when consensus is split). We use a long cron interval as a keep-alive;
-  // in production this would be an HTTP trigger or called programmatically.
-  return [
-    cre.handler(
-      cronCap.trigger({ schedule: "0 */10 * * * *" }), // Every 10 minutes as keep-alive
-      onTrigger,
-    ),
-  ];
+  // triggered on-demand when consensus is split; 10-min cron as keep-alive
+  // (production would use HTTP trigger instead)
+  return [cre.handler(cronCap.trigger({ schedule: "0 */10 * * * *" }), onTrigger)];
 };
-
-// ============ Entry Point ============
 
 export async function main() {
   const runner = await Runner.newRunner<Config>({ configSchema });

@@ -1,7 +1,4 @@
-"""Configuration constants for AEGIS Protocol.
-
-Ported from packages/agents/src/shared/constants.ts
-"""
+"""Configuration constants."""
 
 import os
 
@@ -9,7 +6,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ============ Network Configuration ============
 
 CHAIN_CONFIG = {
     "base_sepolia": {
@@ -20,7 +16,6 @@ CHAIN_CONFIG = {
     },
 }
 
-# ============ Chainlink Feed Addresses (Base Sepolia) ============
 
 CHAINLINK_FEEDS: dict[str, str] = {
     "ETH/USD": "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
@@ -29,7 +24,6 @@ CHAINLINK_FEEDS: dict[str, str] = {
     "USDC/USD": "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
 }
 
-# Chainlink Feeds for Ethereum Mainnet (for reference)
 CHAINLINK_FEEDS_MAINNET: dict[str, str] = {
     "ETH/USD": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
     "BTC/USD": "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c",
@@ -43,7 +37,6 @@ CHAINLINK_FEEDS_MAINNET: dict[str, str] = {
     "COMP/USD": "0xdbd020CAeF83eFd542f4De03864e8c6E9A6DD67E",
 }
 
-# Chainlink Feeds for Base Mainnet
 CHAINLINK_FEEDS_BASE: dict[str, str] = {
     "ETH/USD": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
     "BTC/USD": "0x64c911996D3c6aC71E9b1AeF0C79bb0CC8e5fFAf",
@@ -55,12 +48,10 @@ CHAINLINK_FEEDS_BASE: dict[str, str] = {
 
 CHAINLINK_LINK_TOKEN = "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
 
-# ============ x402 Configuration ============
 
 X402_FACILITATOR_URL = "https://x402.org/facilitator"
 USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
 
-# ============ Contract Addresses (from .env after deployment) ============
 
 SENTINEL_REGISTRY_ADDRESS = os.getenv("SENTINEL_REGISTRY_ADDRESS", "")
 CIRCUIT_BREAKER_ADDRESS = os.getenv("CIRCUIT_BREAKER_ADDRESS", "")
@@ -68,7 +59,6 @@ THREAT_REPORT_ADDRESS = os.getenv("THREAT_REPORT_ADDRESS", "")
 REPUTATION_TRACKER_ADDRESS = os.getenv("REPUTATION_TRACKER_ADDRESS", "")
 PROTOCOL_TO_MONITOR = os.getenv("PROTOCOL_TO_MONITOR", "")
 
-# ============ Sentinel Configuration ============
 
 SENTINEL_CONFIG = {
     "monitoring_interval_ms": 30_000,
@@ -77,7 +67,6 @@ SENTINEL_CONFIG = {
     "consensus_threshold": 2 / 3,
 }
 
-# ============ Threat Thresholds ============
 
 LIQUIDITY_THRESHOLDS = {
     "critical_tvl_drop": -20,
@@ -93,7 +82,6 @@ ORACLE_THRESHOLDS = {
     "medium_staleness": 1800,
 }
 
-# ============ ABI Fragments ============
 
 AGGREGATOR_V3_ABI = [
     {
@@ -149,12 +137,10 @@ MOCK_PROTOCOL_ABI = [
     },
 ]
 
-# ============ AI Configuration ============
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 
-# ============ API Configuration ============
 
 AGENT_API_HOST = os.getenv("AGENT_API_HOST", "0.0.0.0")
 AGENT_API_PORT = int(os.getenv("AGENT_API_PORT", "8000"))

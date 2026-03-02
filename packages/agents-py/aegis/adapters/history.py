@@ -1,11 +1,4 @@
-"""Historical TVL Tracking.
-
-This module provides persistent TVL tracking capabilities:
-- Store TVL snapshots with timestamps
-- Calculate rolling averages (1h, 24h, 7d)
-- Detect anomalous drops vs historical baseline
-- In-memory storage with optional SQLite persistence
-"""
+"""TVL history tracking and anomaly detection."""
 
 from __future__ import annotations
 
@@ -26,19 +19,15 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ============ Time Constants ============
 
 SECONDS_PER_HOUR = 3600
 SECONDS_PER_DAY = 86400
 SECONDS_PER_WEEK = 604800
 
 
-# ============ Data Models ============
 
 
 class TVLSnapshot(BaseModel):
-    """A single TVL snapshot at a point in time."""
-
     protocol_address: str
     tvl_wei: int
     timestamp: int
@@ -47,13 +36,10 @@ class TVLSnapshot(BaseModel):
 
     @property
     def tvl_eth(self) -> float:
-        """TVL in ETH (assuming 18 decimals)."""
         return self.tvl_wei / 10**18
 
 
 class RollingAverage(BaseModel):
-    """Rolling average TVL over a time period."""
-
     period_seconds: int
     period_name: str  # "1h", "24h", "7d"
     average_tvl: int
@@ -63,8 +49,6 @@ class RollingAverage(BaseModel):
 
 
 class AnomalyType(str, Enum):
-    """Types of TVL anomalies."""
-
     SUDDEN_DROP = "SUDDEN_DROP"
     GRADUAL_DECLINE = "GRADUAL_DECLINE"
     BELOW_BASELINE = "BELOW_BASELINE"
@@ -73,8 +57,6 @@ class AnomalyType(str, Enum):
 
 
 class TVLAnomaly(BaseModel):
-    """Detected TVL anomaly."""
-
     protocol_address: str
     anomaly_type: AnomalyType
     severity: str  # "LOW", "MEDIUM", "HIGH", "CRITICAL"
@@ -86,8 +68,6 @@ class TVLAnomaly(BaseModel):
 
 
 class HistoricalStats(BaseModel):
-    """Historical statistics for a protocol's TVL."""
-
     protocol_address: str
     current_tvl: int
     avg_1h: int
@@ -103,24 +83,21 @@ class HistoricalStats(BaseModel):
     last_snapshot: int
 
 
-# ============ Anomaly Detection Thresholds ============
 
 
 @dataclass
 class AnomalyThresholds:
-    """Thresholds for anomaly detection."""
-
-    # Sudden drop thresholds (single snapshot vs previous)
+    # sudden drop thresholds (single snapshot vs previous)
     sudden_drop_critical: float = -20.0  # >= 20% drop = CRITICAL
     sudden_drop_high: float = -10.0  # >= 10% drop = HIGH
     sudden_drop_medium: float = -5.0  # >= 5% drop = MEDIUM
 
-    # Below baseline thresholds (current vs rolling average)
+    # below baseline thresholds (current vs rolling average)
     baseline_deviation_critical: float = -30.0
     baseline_deviation_high: float = -20.0
     baseline_deviation_medium: float = -10.0
 
-    # Flash drain (very rapid drop within minutes)
+    # flash drain (rapid drop within minutes)
     flash_drain_threshold: float = -15.0  # 15% drop in < 5 minutes
     flash_drain_window_seconds: int = 300  # 5 minutes
 
@@ -128,15 +105,9 @@ class AnomalyThresholds:
 DEFAULT_THRESHOLDS = AnomalyThresholds()
 
 
-# ============ In-Memory History Store ============
 
 
 class TVLHistoryStore:
-    """In-memory store for TVL history with rolling window.
-
-    Maintains a configurable window of historical snapshots for each protocol.
-    """
-
     def __init__(
         self,
         max_snapshots_per_protocol: int = 10080,  # 1 week at 1 snapshot/min
@@ -148,7 +119,6 @@ class TVLHistoryStore:
         self._lock = asyncio.Lock()
 
     async def add_snapshot(self, snapshot: TVLSnapshot) -> None:
-        """Add a TVL snapshot for a protocol."""
         async with self._lock:
             addr = snapshot.protocol_address.lower()
             if addr not in self._snapshots:
@@ -156,7 +126,6 @@ class TVLHistoryStore:
             self._snapshots[addr].append(snapshot)
 
     def add_snapshot_sync(self, snapshot: TVLSnapshot) -> None:
-        """Synchronous version of add_snapshot."""
         addr = snapshot.protocol_address.lower()
         if addr not in self._snapshots:
             self._snapshots[addr] = deque(maxlen=self._max_snapshots)
@@ -168,7 +137,6 @@ class TVLHistoryStore:
         since_timestamp: int | None = None,
         limit: int | None = None,
     ) -> list[TVLSnapshot]:
-        """Get snapshots for a protocol, optionally filtered by time."""
         addr = protocol_address.lower()
         if addr not in self._snapshots:
             return []
@@ -184,26 +152,22 @@ class TVLHistoryStore:
         return snapshots
 
     def get_latest_snapshot(self, protocol_address: str) -> TVLSnapshot | None:
-        """Get the most recent snapshot for a protocol."""
         addr = protocol_address.lower()
         if addr not in self._snapshots or not self._snapshots[addr]:
             return None
         return self._snapshots[addr][-1]
 
     def get_previous_snapshot(self, protocol_address: str) -> TVLSnapshot | None:
-        """Get the second most recent snapshot for a protocol."""
         addr = protocol_address.lower()
         if addr not in self._snapshots or len(self._snapshots[addr]) < 2:
             return None
         return self._snapshots[addr][-2]
 
     def get_snapshot_count(self, protocol_address: str) -> int:
-        """Get the number of snapshots for a protocol."""
         addr = protocol_address.lower()
         return len(self._snapshots.get(addr, []))
 
     def clear(self, protocol_address: str | None = None) -> None:
-        """Clear snapshots for a protocol or all protocols."""
         if protocol_address:
             addr = protocol_address.lower()
             if addr in self._snapshots:
@@ -212,26 +176,21 @@ class TVLHistoryStore:
             self._snapshots.clear()
 
 
-# ============ SQLite Persistence ============
 
 
 class SQLiteTVLStore:
-    """SQLite-based persistent TVL history store."""
-
     def __init__(self, db_path: str | Path = ":memory:"):
         self._db_path = str(db_path)
         self._conn: sqlite3.Connection | None = None
         self._initialized = False
 
     def _get_conn(self) -> sqlite3.Connection:
-        """Get or create database connection."""
         if self._conn is None:
             self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
             self._conn.row_factory = sqlite3.Row
         return self._conn
 
     def initialize(self) -> None:
-        """Initialize database schema."""
         if self._initialized:
             return
 
@@ -262,7 +221,6 @@ class SQLiteTVLStore:
         self._initialized = True
 
     def add_snapshot(self, snapshot: TVLSnapshot) -> int:
-        """Add a snapshot and return the row ID."""
         self.initialize()
         conn = self._get_conn()
         cursor = conn.execute(
@@ -288,7 +246,6 @@ class SQLiteTVLStore:
         until_timestamp: int | None = None,
         limit: int = 1000,
     ) -> list[TVLSnapshot]:
-        """Get snapshots for a protocol with optional time filtering."""
         self.initialize()
         conn = self._get_conn()
 
@@ -316,16 +273,14 @@ class SQLiteTVLStore:
                 block_number=row["block_number"],
                 protocol_type=row["protocol_type"],
             )
-            for row in reversed(rows)  # Return chronologically
+            for row in reversed(rows)  # chronological order
         ]
 
     def get_latest_snapshot(self, protocol_address: str) -> TVLSnapshot | None:
-        """Get the most recent snapshot."""
         snapshots = self.get_snapshots(protocol_address, limit=1)
         return snapshots[0] if snapshots else None
 
     def cleanup_old_snapshots(self, max_age_seconds: int = SECONDS_PER_WEEK * 4) -> int:
-        """Delete snapshots older than max_age_seconds. Returns count deleted."""
         self.initialize()
         conn = self._get_conn()
         cutoff = int(time.time()) - max_age_seconds
@@ -336,20 +291,14 @@ class SQLiteTVLStore:
         return cursor.rowcount
 
     def close(self) -> None:
-        """Close the database connection."""
         if self._conn:
             self._conn.close()
             self._conn = None
 
 
-# ============ Historical TVL Tracker ============
 
 
 class HistoricalTVLTracker:
-    """Tracks TVL history and detects anomalies.
-
-    Combines in-memory cache for fast access with optional SQLite persistence.
-    """
 
     def __init__(
         self,
@@ -362,7 +311,6 @@ class HistoricalTVLTracker:
         self._adapters: dict[str, "BaseProtocolAdapter"] = {}
 
     def register_adapter(self, protocol_address: str, adapter: "BaseProtocolAdapter") -> None:
-        """Register an adapter for automatic TVL polling."""
         self._adapters[protocol_address.lower()] = adapter
 
     async def record_snapshot(
@@ -372,7 +320,6 @@ class HistoricalTVLTracker:
         block_number: int = 0,
         protocol_type: str = "",
     ) -> TVLSnapshot:
-        """Record a new TVL snapshot."""
         snapshot = TVLSnapshot(
             protocol_address=protocol_address,
             tvl_wei=tvl_wei,
@@ -381,10 +328,8 @@ class HistoricalTVLTracker:
             protocol_type=protocol_type,
         )
 
-        # Add to memory store
         await self._memory_store.add_snapshot(snapshot)
 
-        # Persist to SQLite if configured
         if self._sqlite_store:
             self._sqlite_store.add_snapshot(snapshot)
 
@@ -404,7 +349,6 @@ class HistoricalTVLTracker:
         block_number: int = 0,
         protocol_type: str = "",
     ) -> TVLSnapshot:
-        """Synchronous version of record_snapshot."""
         snapshot = TVLSnapshot(
             protocol_address=protocol_address,
             tvl_wei=tvl_wei,
@@ -426,14 +370,12 @@ class HistoricalTVLTracker:
         period_seconds: int,
         period_name: str = "",
     ) -> RollingAverage | None:
-        """Calculate rolling average TVL for a time period."""
         now = int(time.time())
         since = now - period_seconds
 
-        # Try memory store first
         snapshots = self._memory_store.get_snapshots(protocol_address, since_timestamp=since)
 
-        # Fall back to SQLite if needed
+        # fall back to sqlite if memory store is empty
         if not snapshots and self._sqlite_store:
             snapshots = self._sqlite_store.get_snapshots(
                 protocol_address, since_timestamp=since
@@ -455,10 +397,8 @@ class HistoricalTVLTracker:
         )
 
     def get_historical_stats(self, protocol_address: str) -> HistoricalStats | None:
-        """Get comprehensive historical statistics."""
         now = int(time.time())
 
-        # Get snapshots for different periods
         snapshots_1h = self._memory_store.get_snapshots(
             protocol_address, since_timestamp=now - SECONDS_PER_HOUR
         )
@@ -469,17 +409,14 @@ class HistoricalTVLTracker:
             protocol_address, since_timestamp=now - SECONDS_PER_WEEK
         )
 
-        # Get latest snapshot
         latest = self._memory_store.get_latest_snapshot(protocol_address)
         if not latest:
             return None
 
-        # Calculate averages
         avg_1h = sum(s.tvl_wei for s in snapshots_1h) // len(snapshots_1h) if snapshots_1h else 0
         avg_24h = sum(s.tvl_wei for s in snapshots_24h) // len(snapshots_24h) if snapshots_24h else 0
         avg_7d = sum(s.tvl_wei for s in snapshots_7d) // len(snapshots_7d) if snapshots_7d else 0
 
-        # Calculate changes
         def calc_change(current: int, baseline: int) -> float:
             if baseline == 0:
                 return 0.0
@@ -489,11 +426,9 @@ class HistoricalTVLTracker:
         change_24h = calc_change(latest.tvl_wei, avg_24h) if avg_24h else 0.0
         change_7d = calc_change(latest.tvl_wei, avg_7d) if avg_7d else 0.0
 
-        # Min/max for 24h
         min_24h = min(s.tvl_wei for s in snapshots_24h) if snapshots_24h else 0
         max_24h = max(s.tvl_wei for s in snapshots_24h) if snapshots_24h else 0
 
-        # First/last timestamps
         all_snapshots = self._memory_store.get_snapshots(protocol_address)
         first_ts = all_snapshots[0].timestamp if all_snapshots else 0
         last_ts = all_snapshots[-1].timestamp if all_snapshots else 0
@@ -515,21 +450,18 @@ class HistoricalTVLTracker:
         )
 
     def detect_anomalies(self, protocol_address: str) -> list[TVLAnomaly]:
-        """Detect TVL anomalies for a protocol."""
         anomalies: list[TVLAnomaly] = []
         now = int(time.time())
 
-        # Get latest and previous snapshots
         latest = self._memory_store.get_latest_snapshot(protocol_address)
         previous = self._memory_store.get_previous_snapshot(protocol_address)
 
         if not latest:
             return anomalies
 
-        # Get rolling averages for baseline
         avg_24h = self.get_rolling_average(protocol_address, SECONDS_PER_DAY, "24h")
 
-        # 1. Check for sudden drop (current vs previous)
+        # sudden drop: current vs previous
         if previous and previous.tvl_wei > 0:
             change_pct = ((latest.tvl_wei - previous.tvl_wei) / previous.tvl_wei) * 100
 
@@ -573,7 +505,7 @@ class HistoricalTVLTracker:
                     )
                 )
 
-        # 2. Check deviation from 24h baseline
+        # deviation from 24h baseline
         if avg_24h and avg_24h.average_tvl > 0:
             baseline_change = ((latest.tvl_wei - avg_24h.average_tvl) / avg_24h.average_tvl) * 100
 
@@ -604,7 +536,7 @@ class HistoricalTVLTracker:
                     )
                 )
 
-        # 3. Check for flash drain (rapid drop within window)
+        # flash drain: rapid drop within detection window
         window_start = now - self._thresholds.flash_drain_window_seconds
         window_snapshots = self._memory_store.get_snapshots(
             protocol_address, since_timestamp=window_start
@@ -632,19 +564,16 @@ class HistoricalTVLTracker:
         return anomalies
 
     def close(self) -> None:
-        """Close any open resources."""
         if self._sqlite_store:
             self._sqlite_store.close()
 
 
-# ============ Factory Functions ============
 
 
 _default_tracker: HistoricalTVLTracker | None = None
 
 
 def get_tvl_tracker(db_path: str | Path | None = None) -> HistoricalTVLTracker:
-    """Get or create the default TVL tracker."""
     global _default_tracker
     if _default_tracker is None:
         _default_tracker = HistoricalTVLTracker(db_path)
@@ -652,7 +581,6 @@ def get_tvl_tracker(db_path: str | Path | None = None) -> HistoricalTVLTracker:
 
 
 def reset_tvl_tracker() -> None:
-    """Reset the default tracker (useful for testing)."""
     global _default_tracker
     if _default_tracker:
         _default_tracker.close()

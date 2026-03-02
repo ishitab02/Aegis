@@ -1,7 +1,4 @@
-"""Tests for consensus algorithms.
-
-Ported from packages/agents/test/consensus.test.ts
-"""
+"""Tests for consensus algorithms."""
 
 import time
 

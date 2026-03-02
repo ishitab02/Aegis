@@ -91,7 +91,6 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // Demo endpoints
   getDemoScenarios: () => apiFetch<unknown>("/demo/scenarios"),
   startEulerReplay: () => apiFetch<unknown>("/demo/euler-replay", { method: "POST" }),
   getEulerReplayStep: (stepNumber: number) =>

@@ -9,13 +9,6 @@ import "../src/core/ReputationTracker.sol";
 
 /**
  * @title IntegrateProtocol
- * @notice Registers a protocol with AEGIS and grants CRE workflow permissions.
- *
- * This script:
- *   1. Registers the MockProtocol in CircuitBreaker (if not already registered)
- *   2. Grants CRE_WORKFLOW_ROLE to the CRE workflow address
- *   3. Registers 3 sentinel agents in SentinelRegistry (if not already done)
- *   4. Authorizes the CRE workflow in ReputationTracker
  *
  * Usage:
  *   CRE_WORKFLOW_ADDRESS=0x... forge script script/IntegrateProtocol.s.sol:IntegrateProtocol \
@@ -24,8 +17,6 @@ import "../src/core/ReputationTracker.sol";
  *     --broadcast
  */
 contract IntegrateProtocol is Script {
-    // ============ Deployed Contract Addresses (Base Sepolia) ============
-
     address constant SENTINEL_REGISTRY = 0xd34FC1ee378F342EFb92C0D334362B9E577b489f;
     address constant CIRCUIT_BREAKER = 0xa0eE49660252B353830ADe5de0Ca9385647F85b5;
     address constant THREAT_REPORT = 0x3f01beefA5b7F5931B5545BbCFCF0a72c7131499;
@@ -38,7 +29,7 @@ contract IntegrateProtocol is Script {
 
         vm.startBroadcast(deployerKey);
 
-        // ---- 1. Register MockProtocol in CircuitBreaker ----
+        // Register MockProtocol in CircuitBreaker
         CircuitBreaker breaker = CircuitBreaker(CIRCUIT_BREAKER);
 
         if (!breaker.isRegistered(MOCK_PROTOCOL)) {
@@ -48,7 +39,7 @@ contract IntegrateProtocol is Script {
             console.log("[SKIP] MockProtocol already registered");
         }
 
-        // ---- 2. Grant CRE_WORKFLOW_ROLE ----
+        // Grant CRE_WORKFLOW_ROLE
         if (creWorkflow != address(0)) {
             bytes32 creRole = breaker.CRE_WORKFLOW_ROLE();
 
@@ -62,7 +53,7 @@ contract IntegrateProtocol is Script {
             console.log("[SKIP] CRE_WORKFLOW_ADDRESS not set - skipping role grant");
         }
 
-        // ---- 3. Register 3 sentinel agents in SentinelRegistry ----
+        // Register sentinel agents in SentinelRegistry
         SentinelRegistry registry = SentinelRegistry(SENTINEL_REGISTRY);
         address operator = vm.addr(deployerKey);
 
@@ -91,7 +82,7 @@ contract IntegrateProtocol is Script {
             console.log("[SKIP] Sentinels already registered, count:", existing.length);
         }
 
-        // ---- 4. Authorize CRE workflow in ReputationTracker ----
+        // Authorize CRE workflow in ReputationTracker
         ReputationTracker reputation = ReputationTracker(REPUTATION_TRACKER);
 
         if (creWorkflow != address(0) && !reputation.authorizedUpdaters(creWorkflow)) {
@@ -101,7 +92,6 @@ contract IntegrateProtocol is Script {
 
         vm.stopBroadcast();
 
-        // ---- Summary ----
         console.log("");
         console.log("=== Integration Summary ===");
         console.log("CircuitBreaker:     ", CIRCUIT_BREAKER);
@@ -116,7 +106,6 @@ contract IntegrateProtocol is Script {
 
 /**
  * @title ConfigureCircuitBreaker
- * @notice Standalone helper to configure CircuitBreaker parameters.
  *
  * Usage:
  *   forge script script/IntegrateProtocol.s.sol:ConfigureCircuitBreaker \

@@ -103,7 +103,6 @@ function extractFeedItems(payload: unknown): FeedItem[] {
     .sort((a, b) => b.timestamp - a.timestamp);
 }
 
-/** Convert /alerts response items into feed items. */
 function extractAlertFeedItems(payload: unknown): FeedItem[] {
   const root = ((payload as Record<string, unknown>) ?? {}) as Record<string, unknown>;
   const items = Array.isArray(root.items) ? root.items : Array.isArray(root) ? root : [];
@@ -198,7 +197,6 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
         className,
       )}
     >
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle px-5 py-4">
         <div>
           <h3 className="text-base font-semibold text-text-primary">Live Threat Feed</h3>
@@ -229,7 +227,6 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-2 overflow-x-auto border-b border-border-subtle px-5 py-3 scrollbar-hide">
         <Filter className="h-3.5 w-3.5 flex-shrink-0 text-text-muted" />
         {LEVEL_FILTERS.map((level) => (
@@ -249,7 +246,6 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
         ))}
       </div>
 
-      {/* Content */}
       <div className="p-4">
         {isLoading && (
           <div className="space-y-3">
@@ -308,7 +304,6 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                         highlightedIds.has(item.id) && "ring-1 ring-accent/50",
                       )}
                     >
-                      {/* Left border indicator */}
                       <div
                         className={clsx(
                           "absolute left-0 top-0 h-full w-1 rounded-l-lg",
@@ -355,7 +350,6 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
               )}
             </AnimatePresence>
 
-            {/* Load more */}
             {!compact && items.length > visibleCount && (
               <div className="mt-4 text-center">
                 <button
@@ -371,7 +365,6 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
         )}
       </div>
 
-      {/* Footer */}
       <div className="border-t border-border-subtle px-5 py-3">
         <p className="text-xs text-text-muted">
           {paused ? (

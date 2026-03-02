@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# AEGIS Protocol — Pre-PR Check Script
-# Run this before pushing a PR to catch CI failures locally.
-# Usage: bash scripts/pre-pr.sh
-# ==============================================================================
+# pre-pr checks: run before pushing to catch CI failures locally
+# usage: bash scripts/pre-pr.sh
 
 set -euo pipefail
 
@@ -11,7 +8,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m' # no color
 BOLD='\033[1m'
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -30,24 +27,21 @@ step() {
 pass() {
   echo -e "  ${GREEN}✓ $1${NC}"
   RESULTS+=("${GREEN}✓${NC} $1")
-  ((PASS++))
+  PASS=$((PASS + 1))
 }
 
 fail() {
   echo -e "  ${RED}✗ $1${NC}"
   RESULTS+=("${RED}✗${NC} $1")
-  ((FAIL++))
+  FAIL=$((FAIL + 1))
 }
 
 skip() {
   echo -e "  ${YELLOW}⊘ $1 (skipped)${NC}"
   RESULTS+=("${YELLOW}⊘${NC} $1 (skipped)")
-  ((SKIP++))
+  SKIP=$((SKIP + 1))
 }
 
-# ==============================================================================
-# 1. Solidity — forge fmt + forge test
-# ==============================================================================
 step "1/6  Solidity formatting (forge fmt)"
 
 if command -v forge &>/dev/null; then
@@ -74,9 +68,6 @@ else
   skip "Solidity tests — forge not installed"
 fi
 
-# ==============================================================================
-# 2. Python — ruff lint + pytest
-# ==============================================================================
 step "3/6  Python linting (ruff)"
 
 cd "$ROOT/packages/agents-py"
@@ -103,9 +94,6 @@ else
   fail "Python tests — run: cd packages/agents-py && python -m pytest tests/ -v"
 fi
 
-# ==============================================================================
-# 3. TypeScript — prettier + typecheck + frontend build
-# ==============================================================================
 step "5/6  TypeScript formatting (prettier)"
 
 cd "$ROOT"
@@ -153,9 +141,6 @@ else
   fail "TypeScript typecheck + frontend build"
 fi
 
-# ==============================================================================
-# Summary
-# ==============================================================================
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}  RESULTS${NC}"

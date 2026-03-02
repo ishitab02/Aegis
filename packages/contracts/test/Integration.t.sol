@@ -8,11 +8,7 @@ import "../src/core/ThreatReport.sol";
 import "../src/core/ReputationTracker.sol";
 import "../src/mocks/MockProtocol.sol";
 
-/**
- * @title IntegrationTest
- * @notice End-to-end test of the full AEGIS flow:
- *         Register sentinels → Detect threat → Trigger circuit breaker → Submit report → Update reputation
- */
+/// @notice end-to-end test: register sentinels -> detect threat -> trigger circuit breaker -> submit report -> update reputation
 contract IntegrationTest is Test {
     SentinelRegistry public registry;
     CircuitBreaker public breaker;

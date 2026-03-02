@@ -1,11 +1,3 @@
-/**
- * Alert routes — CRUD for persisted detection alerts.
- *
- * GET  /              — paginated list  (?page=1&limit=20&protocol=0x…)
- * GET  /:id           — single alert
- * POST /              — create alert (internal, after detection)
- */
-
 import { Hono } from "hono";
 import { insertAlert, getAlert, listAlerts } from "../db/index.js";
 import { randomUUID } from "node:crypto";
@@ -14,7 +6,6 @@ import { broadcast } from "./ws.js";
 
 const alerts = new Hono();
 
-// GET / — paginated alert list
 alerts.get("/", (c) => {
   const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "20", 10)));
@@ -24,14 +15,12 @@ alerts.get("/", (c) => {
   return c.json(result);
 });
 
-// GET /:id — single alert
 alerts.get("/:id", (c) => {
   const row = getAlert(c.req.param("id"));
   if (!row) return c.json({ error: "Alert not found" }, 404);
   return c.json(row);
 });
 
-// POST / — create alert (called internally after detection)
 alerts.post("/", async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: "Invalid JSON body" }, 400);
@@ -54,10 +43,9 @@ alerts.post("/", async (c) => {
     consensus_data: consensus_data ? JSON.stringify(consensus_data) : null,
   });
 
-  // Push to all SSE subscribers in real-time
   broadcast(row);
 
-  // Fire-and-forget Telegram notification for HIGH / CRITICAL alerts
+  // telegram notification for HIGH/CRITICAL (fire-and-forget)
   if (threat_level === "CRITICAL" || threat_level === "HIGH") {
     sendAlert(row).catch(() => {
       /* swallow – notifications are best-effort */

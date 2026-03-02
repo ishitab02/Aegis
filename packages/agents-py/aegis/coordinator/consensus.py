@@ -1,7 +1,4 @@
-"""Consensus algorithms for AEGIS sentinel voting.
-
-Ported from packages/agents/src/coordinator/consensus.ts
-"""
+"""Consensus algorithms for sentinel voting."""
 
 from collections import Counter
 
@@ -23,10 +20,7 @@ THREAT_ORDER = [
 
 
 def reach_consensus(votes: list[SentinelVote]) -> ConsensusResult:
-    """Reach consensus among sentinel votes using 2/3 majority rule.
-
-    Exact port of the TypeScript implementation.
-    """
+    # 2/3 majority rule
     if len(votes) < SENTINEL_CONFIG["min_votes_for_consensus"]:
         return ConsensusResult(
             consensus_reached=False,
@@ -36,18 +30,15 @@ def reach_consensus(votes: list[SentinelVote]) -> ConsensusResult:
             action_recommended=ActionRecommendation.NONE,
         )
 
-    # Count votes by threat level
     threat_counts: Counter[ThreatLevel] = Counter()
     for vote in votes:
         threat_counts[vote.threat_level] += 1
 
-    # Find majority
     majority_threat, max_count = threat_counts.most_common(1)[0]
 
     agreement_ratio = max_count / len(votes)
     consensus_reached = agreement_ratio >= SENTINEL_CONFIG["consensus_threshold"]
 
-    # Determine recommended action
     action_recommended = ActionRecommendation.NONE
     if consensus_reached:
         if majority_threat == ThreatLevel.CRITICAL:
@@ -65,11 +56,6 @@ def reach_consensus(votes: list[SentinelVote]) -> ConsensusResult:
 
 
 def weighted_consensus(votes: list[SentinelVote]) -> ConsensusResult:
-    """Calculate a weighted threat level considering confidence scores.
-
-    Higher confidence votes carry more weight. Exact port of the TypeScript
-    implementation.
-    """
     if len(votes) < SENTINEL_CONFIG["min_votes_for_consensus"]:
         return ConsensusResult(
             consensus_reached=False,
@@ -79,7 +65,6 @@ def weighted_consensus(votes: list[SentinelVote]) -> ConsensusResult:
             action_recommended=ActionRecommendation.NONE,
         )
 
-    # Weight each vote by confidence
     weighted_scores: dict[ThreatLevel, float] = {}
     total_weight = 0.0
 
@@ -90,7 +75,6 @@ def weighted_consensus(votes: list[SentinelVote]) -> ConsensusResult:
             weighted_scores.get(vote.threat_level, 0.0) + weight
         )
 
-    # Find the threat level with highest weighted score
     majority_threat = max(weighted_scores, key=weighted_scores.get)  # type: ignore[arg-type]
     max_weight = weighted_scores[majority_threat]
 

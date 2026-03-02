@@ -37,7 +37,6 @@ export function PageWrapper({ children, title, subtitle, actions }: PageWrapperP
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="mx-auto max-w-7xl"
         >
-          {/* Page header */}
           {(title || actions) && (
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>

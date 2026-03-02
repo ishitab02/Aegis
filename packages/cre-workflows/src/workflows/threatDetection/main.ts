@@ -1,18 +1,5 @@
-/**
- * AEGIS Threat Detection Workflow
- *
- * Primary CRE workflow that orchestrates the full detection cycle:
- *  1. Cron trigger (every 60s via Chainlink Automation) or HTTP trigger
- *  2. Read on-chain data (MockProtocol TVL, Chainlink ETH/USD price)
- *  3. Call Python agent API for AI threat detection (3 sentinels + consensus)
- *  4. If CRITICAL → trigger CircuitBreaker via CRE signed report
- *  5. Submit ThreatReport on-chain with sentinel votes
- *
- * Chainlink services demonstrated:
- *  - CRE (this workflow)
- *  - Data Feeds (Chainlink ETH/USD read)
- *  - Automation (cron trigger)
- */
+// threat detection: cron trigger -> read TVL + price -> AI detection -> circuit breaker + on-chain report
+// chainlink services: CRE, Data Feeds (ETH/USD), Automation
 
 import {
   cre,
@@ -46,14 +33,10 @@ import {
 } from "../../types/abis";
 import { configSchema, type Config, type DetectionResponse, THREAT_LEVEL_UINT8 } from "../../types";
 
-// ============ Cron Trigger Callback ============
-
 const onCronTrigger = (runtime: Runtime<Config>): string => {
   runtime.log("AEGIS: Cron-triggered detection cycle starting...");
   return runDetectionCycle(runtime);
 };
-
-// ============ Core Detection Logic ============
 
 function runDetectionCycle(runtime: Runtime<Config>): string {
   const evm = runtime.config.evms[0];
@@ -66,7 +49,6 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
-  // ---- Step 1: Read on-chain TVL from MockProtocol ----
   runtime.log("Step 1: Reading on-chain TVL...");
   const tvlCallData = encodeFunctionData({
     abi: mockProtocolAbi,
@@ -88,7 +70,6 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
   }) as bigint;
   runtime.log(`  TVL: ${tvl.toString()} wei`);
 
-  // ---- Step 2: Read Chainlink ETH/USD price (Data Feeds) ----
   runtime.log("Step 2: Reading Chainlink ETH/USD...");
   const priceCallData = encodeFunctionData({
     abi: chainlinkAggregatorAbi,
@@ -111,7 +92,6 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
   const ethPrice = Number(answer) / 1e8;
   runtime.log(`  ETH/USD: $${ethPrice.toFixed(2)}`);
 
-  // ---- Step 3: Call Python agent API for threat detection ----
   runtime.log("Step 3: Calling AI agent detection API...");
   const httpClient = new cre.capabilities.HTTPClient();
 
@@ -152,7 +132,6 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
     `  Consensus: ${consensus.final_threat_level} (${consensus.agreement_ratio.toFixed(2)}) — reached: ${consensus.consensus_reached}`,
   );
 
-  // ---- Step 4: If CRITICAL → trigger CircuitBreaker ----
   if (consensus.consensus_reached && consensus.action_recommended === "CIRCUIT_BREAKER") {
     runtime.log("Step 4: CRITICAL threat — triggering CircuitBreaker...");
 
@@ -160,7 +139,6 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
     const threatLevelUint8 = THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
     const reason = `AEGIS consensus: ${consensus.final_threat_level} (${consensus.agreement_ratio.toFixed(2)} agreement). ${detection.assessments.map((a) => a.details).join("; ")}`;
 
-    // Encode report payload for CRE signed report
     const reportData = encodeAbiParameters(
       parseAbiParameters("address protocol, bytes32 threatId, uint8 threatLevel, string reason"),
       [evm.mockProtocolAddress as Address, threatId as `0x${string}`, threatLevelUint8, reason],
@@ -197,14 +175,12 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
     runtime.log("Step 4: No consensus reached or no threat detected.");
   }
 
-  // ---- Step 5: Submit ThreatReport on-chain ----
   runtime.log("Step 5: Submitting ThreatReport on-chain...");
   const threatLevelUint8 = THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
   const consensusHash = keccak256(toHex(JSON.stringify(consensus)));
   const actionTaken =
     consensus.action_recommended === "CIRCUIT_BREAKER" && consensus.consensus_reached;
 
-  // Encode the submitReport call
   const votes = consensus.votes.map((v, i) => ({
     sentinelId: BigInt(i),
     threatLevel: THREAT_LEVEL_UINT8[v.threat_level] ?? 0,
@@ -219,7 +195,7 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
       evm.mockProtocolAddress as Address,
       threatLevelUint8,
       consensusHash as `0x${string}`,
-      "", // ipfsHash — empty for now
+      "", // no ipfs hash yet
       actionTaken,
       votes,
     ],
@@ -263,18 +239,11 @@ function runDetectionCycle(runtime: Runtime<Config>): string {
   });
 }
 
-// ============ Workflow Initialization ============
-
 const initWorkflow = (config: Config) => {
   const cronCap = new cre.capabilities.CronCapability();
 
-  return [
-    // Cron trigger — runs every minute (Chainlink Automation)
-    cre.handler(cronCap.trigger({ schedule: config.schedule }), onCronTrigger),
-  ];
+  return [cre.handler(cronCap.trigger({ schedule: config.schedule }), onCronTrigger)];
 };
-
-// ============ Entry Point ============
 
 export async function main() {
   const runner = await Runner.newRunner<Config>({ configSchema });

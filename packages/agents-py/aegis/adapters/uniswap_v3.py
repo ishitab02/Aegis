@@ -1,8 +1,4 @@
-"""Uniswap V3 Protocol Adapter.
-
-Reads TVL, token balances, and events from Uniswap V3 Pool contracts.
-Supports Base, Ethereum, Arbitrum, and other EVM chains.
-"""
+"""Uniswap V3 adapter."""
 
 from __future__ import annotations
 
@@ -23,7 +19,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ============ Uniswap V3 Contract Addresses ============
 
 UNISWAP_V3_ADDRESSES = {
     # Base Mainnet
@@ -52,18 +47,14 @@ UNISWAP_V3_ADDRESSES = {
     },
 }
 
-# Common pool fee tiers (in basis points * 100)
 FEE_TIERS = [100, 500, 3000, 10000]  # 0.01%, 0.05%, 0.3%, 1%
 
-# Popular token pairs on Base
 BASE_POPULAR_PAIRS = [
-    # WETH, USDC
     ("0x4200000000000000000000000000000000000006", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
-    # WETH, USDbC (bridged USDC)
+    # bridged USDC
     ("0x4200000000000000000000000000000000000006", "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA"),
 ]
 
-# ============ Uniswap V3 ABIs (Minimal) ============
 
 FACTORY_ABI = [
     {
@@ -195,18 +186,6 @@ ERC20_ABI = [
 
 
 class UniswapV3Adapter(BaseProtocolAdapter):
-    """Adapter for Uniswap V3 protocol.
-
-    Can monitor:
-    - Specific pool by address
-    - Factory to track multiple pools
-
-    Monitors:
-    - Pool liquidity (TVL)
-    - Token balances in pools
-    - Swap, Mint, Burn events
-    - Large swaps (> threshold)
-    """
 
     PROTOCOL_TYPE = "uniswap_v3"
 
@@ -218,19 +197,9 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         tracked_pools: list[str] | None = None,
         cache_ttl: int | None = None,
     ):
-        """Initialize Uniswap V3 adapter.
-
-        Args:
-            web3: Web3 instance
-            protocol_address: Factory address (auto-detected by chain)
-            pool_address: Single pool to monitor (alternative to factory)
-            tracked_pools: List of pool addresses to monitor
-            cache_ttl: Cache TTL in seconds (default: 60)
-        """
         chain_id = web3.eth.chain_id
         addresses = UNISWAP_V3_ADDRESSES.get(chain_id, UNISWAP_V3_ADDRESSES[8453])
 
-        # Use pool address if provided, otherwise factory
         if pool_address:
             main_address = pool_address
             self._is_pool_mode = True
@@ -247,7 +216,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
 
     @property
     def factory_contract(self) -> Contract:
-        """Get or create the Factory contract instance."""
         if self._factory_contract is None:
             self._factory_contract = self._web3.eth.contract(
                 address=self._web3.to_checksum_address(self._factory_address),
@@ -256,7 +224,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         return self._factory_contract
 
     def _get_pool_contract(self, pool_address: str) -> Contract:
-        """Get or create a Pool contract instance."""
         if pool_address not in self._pool_contracts:
             self._pool_contracts[pool_address] = self._web3.eth.contract(
                 address=self._web3.to_checksum_address(pool_address),
@@ -270,7 +237,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         token_b: str,
         fee: int = 3000,
     ) -> str | None:
-        """Get pool address for a token pair and fee tier."""
         loop = asyncio.get_event_loop()
 
         try:
@@ -292,10 +258,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
             return None
 
     async def discover_pools(self) -> list[str]:
-        """Discover popular pools on this chain.
-
-        Returns list of pool addresses.
-        """
         if self._tracked_pools:
             return self._tracked_pools
 
@@ -313,7 +275,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         return discovered
 
     async def _get_token_info(self, token_address: str) -> dict[str, Any]:
-        """Get token symbol and decimals."""
         cache_key = f"token_info:{token_address}"
 
         async def fetch():
@@ -338,11 +299,7 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def _get_pool_tvl(self, pool_address: str) -> int:
-        """Get TVL for a single pool.
-
-        TVL = token0 balance + token1 balance (in respective units)
-        For simplicity, we sum raw balances. In production, convert to USD.
-        """
+        # sums raw token balances, not usd-converted
         loop = asyncio.get_event_loop()
         pool = self._get_pool_contract(pool_address)
 
@@ -370,7 +327,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
                 ),
             )
 
-            # Return sum of balances (simplified TVL)
             return balance0 + balance1
 
         except Exception as e:
@@ -378,22 +334,15 @@ class UniswapV3Adapter(BaseProtocolAdapter):
             return 0
 
     async def _fetch_tvl(self) -> int:
-        """Fetch total TVL across all tracked pools.
-
-        If in pool mode (single pool), returns that pool's TVL.
-        Otherwise, sums TVL across all discovered/tracked pools.
-        """
         if self._is_pool_mode:
             return await self._get_pool_tvl(self._protocol_address)
 
-        # Discover pools if not tracked
         pools = await self.discover_pools()
 
         if not pools:
             logger.warning("No pools to track for TVL")
             return 0
 
-        # Fetch TVL for all pools in parallel
         tvls = await asyncio.gather(
             *[self._get_pool_tvl(pool) for pool in pools]
         )
@@ -403,7 +352,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         return total_tvl
 
     async def get_pool_info(self, pool_address: str) -> dict[str, Any]:
-        """Get detailed info for a pool."""
         loop = asyncio.get_event_loop()
         pool = self._get_pool_contract(pool_address)
 
@@ -430,7 +378,7 @@ class UniswapV3Adapter(BaseProtocolAdapter):
                     "decimals": token1_info["decimals"],
                 },
                 "fee": fee,
-                "fee_percent": fee / 10000,  # Convert to percentage
+                "fee_percent": fee / 10000,
                 "liquidity": liquidity,
                 "sqrt_price_x96": slot0[0],
                 "tick": slot0[1],
@@ -440,13 +388,12 @@ class UniswapV3Adapter(BaseProtocolAdapter):
             return {}
 
     async def _fetch_token_balances(self) -> list[TokenBalance]:
-        """Fetch token balances across all tracked pools."""
         if self._is_pool_mode:
             pools = [self._protocol_address]
         else:
             pools = await self.discover_pools()
 
-        balances: dict[str, TokenBalance] = {}  # keyed by token address
+        balances: dict[str, TokenBalance] = {}
         loop = asyncio.get_event_loop()
 
         for pool_addr in pools:
@@ -469,7 +416,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
                     )
 
                     if token_addr in balances:
-                        # Add to existing balance
                         balances[token_addr].balance_raw += balance
                         balances[token_addr].balance_formatted = (
                             balances[token_addr].balance_raw
@@ -495,10 +441,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         from_block: int | None = None,
         limit: int = 100,
     ) -> list[ProtocolEvent]:
-        """Fetch recent Uniswap V3 events from tracked pools.
-
-        Supported events: Swap, Mint, Burn
-        """
         loop = asyncio.get_event_loop()
 
         current_block = await loop.run_in_executor(
@@ -544,7 +486,6 @@ class UniswapV3Adapter(BaseProtocolAdapter):
                 except Exception as ex:
                     logger.debug("Failed to fetch %s events from %s: %s", name, pool_addr, ex)
 
-        # Sort by block number descending
         events.sort(key=lambda x: x.block_number, reverse=True)
         return events[:limit]
 
@@ -553,19 +494,14 @@ class UniswapV3Adapter(BaseProtocolAdapter):
         threshold_usd: float = 100_000,
         from_block: int | None = None,
     ) -> list[ProtocolEvent]:
-        """Get swaps above a USD threshold.
-
-        Note: This is simplified. In production, we'd need price data.
-        """
+        # simplified, would need real price data in production
         events = await self._fetch_events(
             event_name="Swap",
             from_block=from_block,
             limit=500,
         )
 
-        # Filter for large amounts (simplified)
-        # In production, multiply by token price from Chainlink
-        threshold_raw = int(threshold_usd * 10**18 / 2000)  # Rough ETH price estimate
+        threshold_raw = int(threshold_usd * 10**18 / 2000)
 
         large_swaps = []
         for e in events:
@@ -582,7 +518,6 @@ def get_uniswap_v3_adapter(
     pool_address: str | None = None,
     factory_address: str | None = None,
 ) -> UniswapV3Adapter:
-    """Factory function to create a Uniswap V3 adapter."""
     return UniswapV3Adapter(
         web3,
         protocol_address=factory_address,

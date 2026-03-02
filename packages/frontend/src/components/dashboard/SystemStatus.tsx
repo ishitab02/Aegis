@@ -65,7 +65,6 @@ export function SystemStatus() {
 
   return (
     <section className="card">
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4">
         <div>
           <h3 className="text-base font-semibold text-text-primary">System Status</h3>
@@ -82,7 +81,6 @@ export function SystemStatus() {
         </button>
       </div>
 
-      {/* Services list */}
       <div className="divide-y divide-border-subtle">
         {services.map((service, index) => {
           const status = getServiceStatus(service.status);
@@ -135,7 +133,6 @@ export function SystemStatus() {
         })}
       </div>
 
-      {/* Footer */}
       <div className="border-t border-border-subtle px-5 py-3">
         <p className="text-xs text-text-muted">
           Last checked: {health?.timestamp ? new Date(health.timestamp).toLocaleTimeString() : "—"}

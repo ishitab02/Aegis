@@ -1,17 +1,5 @@
-/**
- * x402 Payment Middleware for Hono.
- *
- * Implements HTTP 402 Payment Required flow:
- * 1. Client sends request without payment
- * 2. Server responds 402 with payment requirements
- * 3. Client pays via x402 facilitator
- * 4. Client retries with X-402-Payment header
- * 5. Server verifies payment and processes request
- *
- * For the hackathon demo, this middleware checks for the
- * X-402-Payment header. In production it would verify the
- * payment receipt via the x402 facilitator.
- */
+// x402 payment gate. for the hackathon demo we only check for the
+// X-402-Payment header; production would verify via the facilitator.
 
 import type { Context, Next } from "hono";
 import { config } from "../config.js";
@@ -60,7 +48,7 @@ export async function x402PaymentMiddleware(c: Context, next: Next) {
     );
   }
 
-  // In production: verify payment receipt via facilitator
-  // For demo: accept any non-empty payment header
+  // in production: verify payment receipt via facilitator
+  // for demo: accept any non-empty payment header
   return next();
 }

@@ -7,17 +7,13 @@ import "../interfaces/ICircuitBreaker.sol";
 
 /**
  * @title CircuitBreaker
- * @notice Emergency pause controller for DeFi protocols
- * @dev Can be triggered by CRE workflows with consensus verification
+ * @notice emergency pause controller for DeFi protocols
+ * @dev can be triggered by CRE workflows with consensus verification
  */
 contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
-    // ============ Roles ============
-
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
     bytes32 public constant CRE_WORKFLOW_ROLE = keccak256("CRE_WORKFLOW_ROLE");
-
-    // ============ State Variables ============
 
     mapping(address => BreakerState) public protocolStates;
     address[] public registeredProtocols;
@@ -29,8 +25,6 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
     mapping(address => uint256) public recentHighAlerts;
     mapping(address => uint256) public lastAlertTimestamp;
 
-    // ============ Errors ============
-
     error AlreadyRegistered(address protocol);
     error NotRegistered(address protocol);
     error AlreadyPaused(address protocol);
@@ -38,15 +32,11 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
     error ThreatLevelTooLow(ThreatLevel provided);
     error CooldownNotFinished(uint256 cooldownEnds);
 
-    // ============ Constructor ============
-
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UNPAUSER_ROLE, msg.sender);
     }
-
-    // ============ External Functions ============
 
     /// @inheritdoc ICircuitBreaker
     function registerProtocol(address protocol) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -136,30 +126,18 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
         return protocolStates[protocol];
     }
 
-    /**
-     * @notice Get all registered protocols
-     */
     function getRegisteredProtocols() external view returns (address[] memory) {
         return registeredProtocols;
     }
 
-    /**
-     * @notice Update cooldown period
-     * @param newCooldown New cooldown duration in seconds
-     */
     function setCooldownPeriod(uint256 newCooldown) external onlyRole(DEFAULT_ADMIN_ROLE) {
         cooldownPeriod = newCooldown;
     }
 
-    /**
-     * @notice Update auto-pause threshold
-     * @param newThreshold Number of HIGH alerts before auto-pause
-     */
+    /// @param newThreshold number of HIGH alerts before auto-pause
     function setAutoPauseThreshold(uint256 newThreshold) external onlyRole(DEFAULT_ADMIN_ROLE) {
         autoPauseThreshold = newThreshold;
     }
-
-    // ============ Internal Functions ============
 
     function _autoPause(address protocol, bytes32 threatId) internal {
         if (!protocolStates[protocol].paused) {
@@ -179,7 +157,7 @@ contract CircuitBreaker is ICircuitBreaker, AccessControl, ReentrancyGuard {
     }
 
     function _attemptProtocolPause(address protocol) internal {
-        // Best-effort call — protocol must grant us permission
+        // Best-effort call - protocol must grant us permission
         (bool success,) = protocol.call(abi.encodeWithSignature("pause()"));
         // Silence unused variable warning
         success;

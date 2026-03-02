@@ -5,7 +5,6 @@ import { injected, coinbaseWallet, walletConnect } from "wagmi/connectors";
 
 const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | undefined;
 
-// Build connectors array
 const connectors = [
   injected(),
   coinbaseWallet({
@@ -14,7 +13,6 @@ const connectors = [
   }),
 ];
 
-// Add WalletConnect if project ID is configured
 if (walletConnectProjectId) {
   connectors.push(
     walletConnect({

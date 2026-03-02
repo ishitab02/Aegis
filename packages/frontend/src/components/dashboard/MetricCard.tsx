@@ -86,7 +86,6 @@ export function MetricCard({
         className,
       )}
     >
-      {/* Header row */}
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
           {Icon && (
@@ -130,12 +129,10 @@ export function MetricCard({
         )}
       </div>
 
-      {/* Value */}
       <p className="text-3xl font-bold tracking-tight text-text-primary">
         {isNumeric ? <AnimatedNumber value={numericValue} /> : value}
       </p>
 
-      {/* Subvalue */}
       {subvalue && <p className="mt-2 text-sm text-text-muted">{subvalue}</p>}
     </motion.article>
   );

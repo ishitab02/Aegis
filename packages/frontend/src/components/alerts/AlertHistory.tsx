@@ -59,7 +59,6 @@ export function AlertHistory({
         className,
       )}
     >
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle px-5 py-4">
         <div>
           <h3 className="text-base font-semibold text-text-primary">{title}</h3>
@@ -108,7 +107,6 @@ export function AlertHistory({
         </div>
       </div>
 
-      {/* Loading state */}
       {isLoading && (
         <div className="overflow-x-auto">
           <table className="min-w-full">
@@ -132,7 +130,6 @@ export function AlertHistory({
         </div>
       )}
 
-      {/* Error state */}
       {error && !isLoading && (
         <div className="p-5">
           <div className="rounded-lg border border-red-500/40 bg-red-500/20 px-4 py-3">
@@ -148,7 +145,6 @@ export function AlertHistory({
         </div>
       )}
 
-      {/* Table */}
       {!isLoading && !error && (
         <>
           <div className="overflow-x-auto">
@@ -188,7 +184,6 @@ export function AlertHistory({
             </table>
           </div>
 
-          {/* Pagination */}
           {tableRows.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border-subtle px-5 py-3">
               <p className="text-sm text-text-secondary">

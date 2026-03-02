@@ -7,22 +7,16 @@ import "../interfaces/ISentinelRegistry.sol";
 
 /**
  * @title SentinelRegistry
- * @notice Registry for AEGIS sentinel agents, ERC-8004 compatible
- * @dev Each sentinel is represented as an NFT with metadata URI
+ * @notice registry for AEGIS sentinel agents, ERC-8004 compatible
+ * @dev each sentinel is represented as an NFT with metadata URI
  */
 contract SentinelRegistry is ISentinelRegistry, ERC721URIStorage, Ownable {
-    // ============ State Variables ============
-
     uint256 private _nextTokenId;
 
     mapping(uint256 => Sentinel) public sentinels;
     mapping(address => uint256[]) public operatorSentinels;
 
-    // ============ Constructor ============
-
     constructor() ERC721("AEGIS Sentinel", "AEGIS") Ownable(msg.sender) {}
-
-    // ============ External Functions ============
 
     /// @inheritdoc ISentinelRegistry
     function registerSentinel(SentinelType sentinelType, address operator, string calldata metadataUri)
@@ -65,10 +59,6 @@ contract SentinelRegistry is ISentinelRegistry, ERC721URIStorage, Ownable {
         emit SentinelDeactivated(tokenId);
     }
 
-    /**
-     * @notice Reactivate a previously deactivated sentinel
-     * @param tokenId The sentinel's token ID
-     */
     function reactivate(uint256 tokenId) external onlyOwner {
         require(!sentinels[tokenId].active, "Already active");
         sentinels[tokenId].active = true;
@@ -100,17 +90,10 @@ contract SentinelRegistry is ISentinelRegistry, ERC721URIStorage, Ownable {
         return s.active && (block.timestamp - s.lastActiveAt <= maxInactivity);
     }
 
-    /**
-     * @notice Get all sentinel IDs for an operator
-     * @param operator The operator address
-     */
     function getOperatorSentinels(address operator) external view returns (uint256[] memory) {
         return operatorSentinels[operator];
     }
 
-    /**
-     * @notice Get total number of registered sentinels
-     */
     function totalSentinels() external view returns (uint256) {
         return _nextTokenId;
     }

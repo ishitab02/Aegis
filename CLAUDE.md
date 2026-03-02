@@ -2690,466 +2690,1039 @@ curl -X POST http://localhost:3000/api/v1/sentinel/detect \
 
 ---
 
-## 23. FINAL SPRINT — PARALLEL AGENTS (March 2-8, 2026)
+## 23. FINAL SPRINT — MAKE IT REAL (March 2-8, 2026)
 
-> **STATUS**: All core code is COMPLETE. This sprint focuses on polish, testing, documentation, and demo preparation for hackathon submission on March 8, 2026.
+> **GOAL**: Transform AEGIS from "working demo" to "real system" before March 8 submission.
+>
+> **THE PROBLEM**: Right now, AEGIS is threshold-based detection with optional AI. Judges will see through this. We need to make the AI actually analyze data, connect to real protocols, and demonstrate real Chainlink service usage.
 
-### What's Done (DO NOT REDO)
+### Current State (Honest Assessment)
 
-| Component | Status | Tests |
-|-----------|--------|-------|
-| Python Agents (`packages/agents-py/`) | ✅ Complete | 96 passing |
-| Smart Contracts (`packages/contracts/`) | ✅ Deployed | 21 passing |
-| CRE Workflows (`packages/cre-workflows/`) | ✅ Code complete | Compiles |
-| TypeScript API (`packages/api/`) | ✅ v1.2.0 | Running |
-| Frontend (`packages/frontend/`) | ✅ 6 components | Running |
-| Integration | ✅ Services communicate | Verified |
+| Component | Code Status | Reality |
+|-----------|-------------|---------|
+| AI Detection | ✅ Code exists | ❌ Just thresholds (`if tvl_drop >= 20%`) |
+| Protocol Adapters | ✅ Aave/Uniswap/Compound | ❌ Not used in main detection flow |
+| CRE Workflows | ✅ Written | ❌ Not deployed to Chainlink |
+| CCIP Alerts | ✅ Written | ❌ Never sent a real message |
+| Circuit Breaker | ✅ Deployed | ❌ Never triggered by real threat |
 
-### Agent Assignment (Final Sprint)
+### What We're Fixing
 
-| Agent | Focus Area | Directory Ownership |
-|-------|------------|---------------------|
-| **Agent A** | Demo & Documentation | `scripts/`, `README.md`, `docs/` |
-| **Agent B** | Python Enhancements | `packages/agents-py/` |
-| **Agent C** | Frontend Polish | `packages/frontend/` |
-| **Agent D** | Integration & Testing | `packages/api/`, `scripts/` |
-
----
-
-### AGENT A: Demo & Documentation
-
-**Mission**: Create compelling demo materials and documentation for hackathon submission.
-
-**Your Files**: `scripts/`, `docs/`, `README.md`, root-level markdown files
-
-#### Tasks
-
-**Task A.1: Create Demo Video Script**
-```
-File: docs/VIDEO_SCRIPT.md
-
-Create a 3-minute video script with:
-- 0:00-0:15 — Hook: "In 2024, DeFi lost $3B to exploits. AEGIS stops them in seconds."
-- 0:15-0:45 — Problem: Show Euler hack timeline (attack → detection → loss)
-- 0:45-1:30 — Solution: AEGIS architecture diagram + Chainlink services
-- 1:30-2:30 — Live Demo:
-  1. Show dashboard with 3 healthy sentinels
-  2. Simulate attack (curl command with TVL drop)
-  3. Watch CRITICAL alert appear in real-time
-  4. Show Telegram notification
-  5. Show forensic report
-- 2:30-3:00 — Wrap: "AEGIS: The immune system for DeFi"
-
-Include exact timestamps, what to show on screen, and voiceover text.
-```
-
-**Task A.2: Create Demo Guide**
-```
-File: docs/DEMO_GUIDE.md
-
-Step-by-step instructions for running the demo:
-1. Prerequisites (node, python, env vars)
-2. Start services (bash scripts/run-demo.sh)
-3. Verify health endpoints
-4. Demo scenario 1: Normal monitoring (no threat)
-5. Demo scenario 2: Simulate TVL drop attack
-6. Demo scenario 3: Simulate oracle manipulation
-7. Demo scenario 4: Show forensic analysis
-8. Troubleshooting common issues
-```
-
-**Task A.3: Update README.md**
-```
-File: README.md
-
-Polish the README with:
-- Clear project description (2-3 sentences)
-- Architecture diagram (ASCII or link to image)
-- Quick start (5 commands to run everything)
-- Chainlink Services section with code links:
-  - CRE: packages/cre-workflows/src/workflows/threatDetection/main.ts
-  - Data Feeds: packages/agents-py/aegis/blockchain/chainlink_feeds.py
-  - CCIP: packages/cre-workflows/src/workflows/ccipAlert/main.ts
-  - VRF: packages/cre-workflows/src/workflows/vrfTieBreaker/main.ts
-  - Automation: Cron trigger in CRE workflows
-- Deployed contracts table with Base Sepolia explorer links
-- Test commands
-- License
-```
-
-**Task A.4: Create Devpost Content**
-```
-File: docs/DEVPOST.md
-
-Draft all Devpost submission fields:
-- Project name: AEGIS Protocol
-- Tagline (140 chars max)
-- Short description (300 words)
-- Long description (full writeup)
-- How it's built (technologies used)
-- Challenges faced
-- What we learned
-- What's next
-- Chainlink services used (with explanations)
-- Links: GitHub, Demo video, Live demo
-```
-
-**Task A.5: Create Judge Q&A Document**
-```
-File: docs/JUDGE_QA.md
-
-20 likely judge questions with compelling answers:
-1. "Why Risk & Compliance track?"
-2. "How does CRE add value vs centralized monitoring?"
-3. "What happens if AI makes a wrong prediction?"
-4. "How do you prevent false positives?"
-5. "What's the latency from attack to detection?"
-6. "How would real protocols integrate this?"
-7. "What's the business model?"
-... etc
-```
-
-#### Boundaries
-- ✅ You own: `docs/`, `README.md`, root markdown files
-- ✅ Can create: `scripts/demo-*.sh` helper scripts
-- ❌ Do NOT touch: `packages/*/` source code
-
-#### Execution Status (Updated: 2026-03-02)
-
-**Completed**
-- [x] Task A.1 — `docs/VIDEO_SCRIPT.md` — 3-minute video script with timestamps, visuals, and voiceover text
-- [x] Task A.2 — `docs/DEMO_GUIDE.md` — Step-by-step demo instructions with 6 scenarios and troubleshooting
-- [x] Task A.3 — `README.md` — Polished with architecture diagram, Chainlink services table with code links, quick start
-- [x] Task A.4 — `docs/DEVPOST.md` — Complete Devpost submission content (tagline, descriptions, tech stack, Q&A)
-- [x] Task A.5 — `docs/JUDGE_QA.md` — 20 judge questions with compelling answers
-
-**Files Created**
-- `docs/VIDEO_SCRIPT.md` — ~350 lines
-- `docs/DEMO_GUIDE.md` — ~400 lines
-- `docs/DEVPOST.md` — ~450 lines
-- `docs/JUDGE_QA.md` — ~500 lines
-- `README.md` — Rewritten (~260 lines)
+| Agent | Task | Impact |
+|-------|------|--------|
+| **Agent 1** | Wire up CrewAI for real AI analysis | "AI-powered" becomes actually true |
+| **Agent 2** | Monitor real Aave V3 on Base Mainnet | Proves real-world capability |
+| **Agent 3** | Send real CCIP message on testnet | Shows cross-chain working |
+| **Agent 4** | Deploy TestVault + trigger circuit breaker | End-to-end demo flow |
 
 ---
 
-### AGENT B: Python Enhancements
+### AGENT 1: Make AI Actually Think
 
-**Mission**: Add more protocol adapters and data feeds to demonstrate extensibility.
+**Mission**: When thresholds trigger, use CrewAI to analyze context and confirm/adjust the threat level.
 
 **Your Directory**: `packages/agents-py/` only
 
+#### The Problem
+
+Current detection is just thresholds:
+```python
+# This is NOT AI:
+if change_percent <= -20:
+    threat_level = ThreatLevel.CRITICAL
+```
+
+#### The Solution
+
+Use CrewAI to analyze WHY the TVL dropped:
+```python
+# This IS AI:
+# 1. Threshold triggers investigation
+# 2. AI analyzes recent events to determine if malicious
+# 3. AI can CONFIRM, DOWNGRADE, or add CONTEXT
+```
+
 #### Tasks
 
-**Task B.1: Add Compound V3 Adapter**
+**Task 1.1: Create AI Analysis Function**
 ```
-File: packages/agents-py/aegis/adapters/compound_v3.py
+File: packages/agents-py/aegis/sentinels/ai_analyzer.py (NEW)
 
-Implement Compound V3 (Comet) adapter:
-- Read TVL from Comet contract (totalSupply of cToken)
-- Track Supply, Withdraw, Absorb (liquidation) events
-- get_utilization_rate() — borrows / (supply + borrows)
-- get_liquidation_risk() — check accounts near liquidation
-- Add to KNOWN_PROTOCOLS in __init__.py
+Create a function that uses CrewAI for contextual analysis:
 
-Comet addresses:
-- Base: 0x46e6b214b524310239732D51387075E0e70970bf (USDC)
-- Ethereum: 0xc3d688B66703497DAA19211EEdff47f25384cdc3 (USDC)
-```
+from crewai import Task
 
-**Task B.2: Add More Chainlink Data Feeds**
-```
-File: packages/agents-py/aegis/blockchain/chainlink_feeds.py
+def analyze_anomaly_with_ai(
+    sentinel_type: str,  # "liquidity", "oracle", "governance"
+    context: dict,       # Current state, recent events, etc.
+) -> dict:
+    """Use AI to analyze an anomaly and determine if it's malicious."""
 
-Add support for more price feeds:
-- BTC/USD: 0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298 (Base Sepolia)
-- LINK/USD: 0xb113F5A928BCfF189C998ab20d753a47F9dE5A61 (Base Sepolia)
-- USDC/USD: 0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165 (Base Sepolia)
+    agent = get_sentinel_agent(sentinel_type)
 
-Create get_multiple_prices() function that fetches all feeds in parallel.
-Add staleness check for each feed (warn if > 1 hour old).
-```
+    prompt = f"""
+    Analyze this {sentinel_type} anomaly:
 
-**Task B.3: Enhance Known Attacker Database**
-```
-File: packages/agents-py/aegis/sherlock/tracer.py
+    {format_context(context)}
 
-Expand KNOWN_ATTACKERS and KNOWN_ADDRESSES:
-- Add 20+ real attacker addresses from past exploits:
-  - Euler attacker
-  - Ronin attacker
-  - Wormhole attacker
-  - Nomad attackers
-  - Curve exploiter
-- Add major mixer addresses (Tornado Cash contracts)
-- Add CEX hot wallets (Binance, Coinbase, Kraken)
-- Add bridge contracts (Stargate, Across, Hop)
-```
+    Consider:
+    1. Is this normal market behavior or a potential exploit?
+    2. Are there signs of flash loan activity?
+    3. Does this match known attack patterns (reentrancy, oracle manipulation)?
+    4. What is your confidence level?
 
-**Task B.4: Add Demo Mode Endpoint**
-```
-File: packages/agents-py/aegis/api/routes/demo.py
+    Respond with JSON:
+    {{
+        "threat_level": "NONE|LOW|MEDIUM|HIGH|CRITICAL",
+        "confidence": 0.0-1.0,
+        "reasoning": "Brief explanation",
+        "attack_type": "flash_loan|reentrancy|rugpull|oracle_manipulation|legitimate|unknown"
+    }}
+    """
 
-Create /api/v1/demo/euler-replay endpoint:
-- Simulates the Euler Finance hack scenario
-- Step 1: Normal state (TVL: $200M)
-- Step 2: Flash loan detected
-- Step 3: TVL drops 25% ($150M)
-- Step 4: Price deviation 8%
-- Step 5: CRITICAL consensus
-- Step 6: Circuit breaker triggered
-- Returns timeline with all steps and timestamps
-- Designed for video recording
+    task = Task(
+        description=prompt,
+        expected_output="JSON threat assessment",
+        agent=agent,
+    )
+
+    result = agent.execute_task(task)
+    return parse_ai_response(result)
 ```
 
-**Task B.5: Add Curve Finance Adapter (Bonus)**
+**Task 1.2: Integrate AI into Liquidity Sentinel**
 ```
-File: packages/agents-py/aegis/adapters/curve.py
+File: packages/agents-py/aegis/sentinels/liquidity_sentinel.py
 
-If time permits:
-- Read TVL from Curve pools
-- Track AddLiquidity, RemoveLiquidity events
-- get_pool_imbalance() — detect manipulation
-- Add to KNOWN_PROTOCOLS
+Modify monitor_tvl() to use AI when threat_level >= HIGH:
+
+def monitor_tvl(...) -> ThreatAssessment:
+    # ... existing threshold check ...
+
+    # If threshold triggered HIGH or CRITICAL, get AI confirmation
+    if threat_level in (ThreatLevel.HIGH, ThreatLevel.CRITICAL):
+        try:
+            # Get recent events for context
+            events = []
+            if adapter:
+                events = adapter.get_recent_events_sync(limit=20)
+
+            ai_result = analyze_anomaly_with_ai(
+                sentinel_type="liquidity",
+                context={
+                    "protocol_address": protocol_address,
+                    "current_tvl": current_tvl,
+                    "previous_tvl": prev,
+                    "change_percent": change_percent,
+                    "recent_events": events,
+                }
+            )
+
+            # AI can downgrade if it sees legitimate activity
+            if ai_result["threat_level"] == "NONE" and ai_result["confidence"] > 0.8:
+                logger.info("AI downgraded threat: %s", ai_result["reasoning"])
+                threat_level = ThreatLevel.MEDIUM  # Downgrade but don't dismiss
+
+            # Add AI reasoning to indicators
+            indicators.append(f"AI: {ai_result['reasoning']}")
+            indicators.append(f"Attack type: {ai_result['attack_type']}")
+
+        except Exception as e:
+            logger.warning("AI analysis failed, using threshold only: %s", e)
+
+    # ... rest of function ...
 ```
+
+**Task 1.3: Integrate AI into Oracle Sentinel**
+```
+File: packages/agents-py/aegis/sentinels/oracle_sentinel.py
+
+Same pattern as liquidity:
+- When price deviation >= HIGH threshold, call AI
+- AI analyzes if this is manipulation or market movement
+- Include Chainlink price, protocol price, and recent swap events
+```
+
+**Task 1.4: Add AI Analysis Logging**
+```
+File: packages/agents-py/aegis/coordinator/crew.py
+
+Add logging so we can show AI reasoning in demo:
+
+logger.info("=== AI ANALYSIS START ===")
+logger.info("Sentinel: %s", sentinel_type)
+logger.info("Context: %s", json.dumps(context, indent=2))
+logger.info("AI Response: %s", json.dumps(ai_result, indent=2))
+logger.info("=== AI ANALYSIS END ===")
+```
+
+**Task 1.5: Test AI Integration**
+```
+File: packages/agents-py/tests/test_ai_analyzer.py (NEW)
+
+Write tests for:
+- AI correctly identifies flash loan pattern
+- AI correctly identifies legitimate withdrawal
+- AI downgrades false positive
+- AI handles API errors gracefully
+- AI response parsing works
+```
+
+#### Environment Requirements
+- ANTHROPIC_API_KEY must be set
+- CrewAI will call Claude API
 
 #### Testing
-Run after changes: `python -m pytest tests/ -v` — must stay at 96+ tests
+```bash
+cd packages/agents-py
+source venv/bin/activate
+export ANTHROPIC_API_KEY=sk-ant-...
+python -m pytest tests/test_ai_analyzer.py -v
+python -m pytest tests/ -v  # All tests must pass
+```
+
+#### Success Criteria
+- [ ] AI analysis function exists and works
+- [ ] Liquidity sentinel calls AI on HIGH/CRITICAL
+- [ ] Oracle sentinel calls AI on HIGH/CRITICAL
+- [ ] AI reasoning appears in logs
+- [ ] Tests pass (including new tests)
 
 #### Boundaries
 - ✅ You own: `packages/agents-py/`
-- ❌ Do NOT touch: `packages/api/`, `packages/frontend/`, `packages/cre-workflows/`
-
-#### Execution Status (Updated: 2026-03-02)
-
-**Completed**
-- [x] Task B.1 — `packages/agents-py/aegis/adapters/compound_v3.py` — Full Compound V3 Comet adapter with TVL, borrows, collateral, events, utilization, liquidation risk
-- [x] Task B.1 — `packages/agents-py/aegis/adapters/__init__.py` — Added to KNOWN_PROTOCOLS for 4 chains, auto-detection, registry integration
-- [x] Task B.2 — `packages/agents-py/aegis/blockchain/chainlink_feeds.py` — get_multiple_prices(), get_multiple_prices_async(), staleness checking, PriceFeedStatus, network helpers
-- [x] Task B.2 — `packages/agents-py/aegis/config.py` — Added USDC/USD, CHAINLINK_FEEDS_MAINNET (10 feeds), CHAINLINK_FEEDS_BASE (6 feeds)
-- [x] Task B.3 — `packages/agents-py/aegis/sherlock/tracer.py` — Expanded KNOWN_ATTACKERS to 45+ addresses, KNOWN_ADDRESSES to 90+ (CEX, bridges, mixers)
-- [x] Task B.4 — `packages/agents-py/aegis/api/routes/demo.py` — Euler Finance replay demo with 9 steps, wired up in server.py
-- [x] Task B.5 (Bonus) — `packages/agents-py/aegis/adapters/curve.py` — Full Curve Finance adapter with pool TVL, imbalance detection, manipulation detection, events
-- [x] Tests — All 96 tests still passing
-
-**Files Created/Modified**
-- `packages/agents-py/aegis/adapters/compound_v3.py` — NEW (~500 lines)
-- `packages/agents-py/aegis/adapters/curve.py` — NEW (~600 lines, Curve Finance adapter)
-- `packages/agents-py/aegis/adapters/__init__.py` — MODIFIED (added CompoundV3Adapter, CurveAdapter, KNOWN_PROTOCOLS for 5 chains)
-- `packages/agents-py/aegis/blockchain/chainlink_feeds.py` — REWRITTEN (~450 lines with new functions)
-- `packages/agents-py/aegis/config.py` — MODIFIED (added feed configs)
-- `packages/agents-py/aegis/sherlock/tracer.py` — MODIFIED (expanded databases)
-- `packages/agents-py/aegis/api/routes/demo.py` — NEW (~500 lines)
-- `packages/agents-py/aegis/api/server.py` — MODIFIED (added demo router)
-
-**All Tasks Complete** — No remaining work for Agent B
+- ❌ Do NOT touch: `packages/api/`, `packages/frontend/`, `packages/contracts/`
 
 ---
 
-### AGENT C: Frontend Polish
+### AGENT 2: Monitor Real Aave V3
 
-**Mission**: Polish UI, add error handling, connect SSE for real-time updates.
+**Mission**: Create an endpoint that monitors real Aave V3 on Base Mainnet, proving AEGIS works with real protocols.
 
-**Your Directory**: `packages/frontend/` only
+**Your Directory**: `packages/agents-py/` only
+
+#### The Problem
+
+Current detection uses mock data or simulation parameters. Judges want to see real TVL monitoring.
 
 #### Tasks
 
-**Task C.1: Add Real-Time SSE Connection**
+**Task 2.1: Create Live Monitoring Endpoint**
 ```
-File: packages/frontend/src/hooks/useAlertStream.ts
+File: packages/agents-py/aegis/api/routes/monitor.py (NEW)
 
-Connect to SSE endpoint for real-time alerts:
-- Connect to http://localhost:3000/api/v1/ws
-- Parse incoming alert events
-- Show toast notification on new alert
-- Update alert list without refresh
-- Handle reconnection on disconnect
+from fastapi import APIRouter
+from web3 import Web3
+
+router = APIRouter(prefix="/api/v1/monitor", tags=["monitor"])
+
+# Base Mainnet RPC (free, public)
+BASE_MAINNET_RPC = "https://mainnet.base.org"
+
+# Aave V3 Pool on Base Mainnet
+AAVE_V3_POOL_BASE = "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5"
+
+@router.get("/aave")
+async def monitor_aave_live():
+    """Monitor real Aave V3 on Base Mainnet.
+
+    This endpoint proves AEGIS can monitor real DeFi protocols.
+    """
+    from aegis.adapters.aave_v3 import AaveV3Adapter
+    from aegis.coordinator.crew import run_detection_cycle
+
+    # Connect to Base Mainnet
+    w3 = Web3(Web3.HTTPProvider(BASE_MAINNET_RPC))
+
+    # Create adapter
+    adapter = AaveV3Adapter(
+        web3=w3,
+        pool_address=AAVE_V3_POOL_BASE,
+    )
+
+    # Get real TVL
+    tvl = await adapter.get_tvl()
+    events = await adapter.get_recent_events(limit=10)
+    balances = await adapter.get_token_balances()
+
+    # Run detection cycle with real data
+    result = run_detection_cycle(
+        protocol_address=AAVE_V3_POOL_BASE,
+        protocol_name="Aave V3 (Base Mainnet)",
+        adapter=adapter,
+    )
+
+    return {
+        "status": "live",
+        "protocol": "Aave V3",
+        "chain": "Base Mainnet",
+        "chain_id": 8453,
+        "pool_address": AAVE_V3_POOL_BASE,
+        "tvl_wei": str(tvl),
+        "tvl_eth": tvl / 10**18,
+        "token_balances": [
+            {"symbol": b.symbol, "balance": str(b.balance)}
+            for b in balances[:5]  # Top 5 tokens
+        ],
+        "recent_events": [
+            {"type": e.event_type, "tx": e.transaction_hash[:10] + "..."}
+            for e in events[:5]
+        ],
+        "threat_assessment": {
+            "threat_level": result.consensus.final_threat_level.value,
+            "confidence": result.consensus.agreement_ratio,
+            "action": result.consensus.action_recommended.value,
+        },
+        "timestamp": int(time.time()),
+    }
+
+@router.get("/uniswap")
+async def monitor_uniswap_live():
+    """Monitor real Uniswap V3 on Base Mainnet."""
+    # Similar implementation for Uniswap
+    pass
+
+@router.get("/compound")
+async def monitor_compound_live():
+    """Monitor real Compound V3 on Base Mainnet."""
+    # Similar implementation for Compound
+    pass
 ```
 
-**Task C.2: Add Error States to All Components**
+**Task 2.2: Wire Up Router**
 ```
-Files: packages/frontend/src/components/*
+File: packages/agents-py/aegis/api/server.py
 
-For each component, add:
-- Loading skeleton while fetching
-- Error state with retry button
-- Empty state with helpful message
-- Handle API timeouts gracefully
+Add the monitor router:
 
-Components to update:
-- AlertHistory.tsx
-- ThreatFeed.tsx
-- CircuitBreakerCard.tsx
-- ReportViewer.tsx
+from aegis.api.routes.monitor import router as monitor_router
+
+app.include_router(monitor_router)
 ```
 
-**Task C.3: Add Toast Notifications**
+**Task 2.3: Add Scheduled Monitoring**
 ```
-File: packages/frontend/src/components/common/Toast.tsx
+File: packages/agents-py/aegis/api/routes/monitor.py
 
-Create toast notification system:
-- Success (green): "Protocol registered successfully"
-- Error (red): "Failed to connect to API"
-- Warning (yellow): "HIGH threat detected"
-- Critical (red pulsing): "CRITICAL threat - Circuit breaker triggered"
-- Auto-dismiss after 5 seconds
-- Stack multiple toasts
-```
+Add a background task that monitors continuously:
 
-**Task C.4: Polish Dashboard Layout**
-```
-File: packages/frontend/src/App.tsx
+import asyncio
+from collections import deque
 
-Improve dashboard layout:
-- Add header with AEGIS logo and navigation
-- Show system status indicator (green/red dot)
-- Add "Last scan: X seconds ago" timestamp
-- Responsive layout for mobile
-- Dark mode only (consistent with bg-gray-900)
-```
+# Store recent readings
+_aave_history: deque = deque(maxlen=100)
 
-**Task C.5: Add Protocol List Page**
-```
-File: packages/frontend/src/pages/Protocols.tsx
+@router.get("/aave/history")
+async def get_aave_history():
+    """Get recent Aave TVL readings."""
+    return {"readings": list(_aave_history)}
 
-Create protocols management page:
-- Table of registered protocols
-- Columns: Name, Address, Status, Alert Threshold, Last Alert
-- Click row to expand CircuitBreakerCard
-- "Register New Protocol" button opens modal
-- Filter by status (active/paused)
+async def monitor_aave_background():
+    """Background task: Monitor Aave every 30 seconds."""
+    while True:
+        try:
+            reading = await monitor_aave_live()
+            _aave_history.append(reading)
+            logger.info("Aave TVL: %s ETH", reading["tvl_eth"])
+        except Exception as e:
+            logger.error("Aave monitoring error: %s", e)
+        await asyncio.sleep(30)
+
+# Start on app startup
+@app.on_event("startup")
+async def start_monitoring():
+    asyncio.create_task(monitor_aave_background())
 ```
 
-#### Styling
-Use only TailwindCSS. Color scheme:
-- Background: `bg-gray-900`
-- Cards: `bg-gray-800`
-- Text: `text-white`, `text-gray-400`
-- CRITICAL: `bg-red-500/20 text-red-400 border-red-500`
-- HIGH: `bg-orange-500/20 text-orange-400 border-orange-500`
-- MEDIUM: `bg-yellow-500/20 text-yellow-400 border-yellow-500`
+**Task 2.4: Add ETH Price from Chainlink**
+```
+File: packages/agents-py/aegis/api/routes/monitor.py
+
+Include Chainlink price in the response:
+
+from aegis.blockchain.chainlink_feeds import get_eth_usd_price
+
+@router.get("/aave")
+async def monitor_aave_live():
+    # ... existing code ...
+
+    # Get ETH price from Chainlink
+    chainlink_price = await get_eth_usd_price_async()
+
+    return {
+        # ... existing fields ...
+        "chainlink_eth_usd": chainlink_price.price,
+        "chainlink_updated_at": chainlink_price.updated_at,
+        "tvl_usd": (tvl / 10**18) * chainlink_price.price,
+    }
+```
+
+**Task 2.5: Test Live Monitoring**
+```
+File: packages/agents-py/tests/test_monitor.py (NEW)
+
+Test the live monitoring endpoint:
+- Endpoint returns valid response
+- TVL is a reasonable number (> 0)
+- Events are returned
+- Chainlink price is included
+
+Note: These tests require network access.
+```
+
+#### Testing
+```bash
+# Start the server
+uvicorn aegis.api.server:app --port 8000
+
+# Test the endpoint
+curl http://localhost:8000/api/v1/monitor/aave | jq
+```
+
+#### Success Criteria
+- [ ] `/api/v1/monitor/aave` returns real Aave TVL
+- [ ] Response includes Chainlink ETH/USD price
+- [ ] Response includes recent events
+- [ ] Background monitoring runs every 30s
+- [ ] History endpoint works
 
 #### Boundaries
-- ✅ You own: `packages/frontend/`
-- ❌ Do NOT touch: `packages/api/`, `packages/agents-py/`
+- ✅ You own: `packages/agents-py/`
+- ❌ Do NOT touch: `packages/api/`, `packages/frontend/`, `packages/contracts/`
 
 ---
 
-### AGENT D: Integration & Testing
+### AGENT 3: Test CCIP on Testnet
 
-**Mission**: Create bash-based E2E test scripts to verify all services work together.
+**Mission**: Send a real CCIP message from Base Sepolia to Arbitrum Sepolia, proving cross-chain alerts work.
 
-**Your Directories**: `scripts/`, `docs/`
+**Your Directory**: `scripts/`, `packages/contracts/`
 
-**Testing Approach**: Use `curl` and bash scripts only. No vitest/jest — existing pytest (96 tests) and foundry (21 tests) provide sufficient unit coverage.
+#### The Problem
+
+CCIP code exists but has never been tested. Judges will ask "did you actually send a cross-chain message?"
 
 #### Tasks
 
-**Task D.1: Create Smoke Test**
+**Task 3.1: Create CCIP Test Script**
 ```
-File: scripts/smoke-test.sh
+File: scripts/test-ccip-alert.ts (NEW)
 
-Quick validation script (< 30 seconds):
-#!/bin/bash
-set -e
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+dotenv.config();
 
-echo "=== AEGIS Smoke Test ==="
+// CCIP Router on Base Sepolia
+const CCIP_ROUTER_BASE_SEPOLIA = "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93";
 
-# Check Python Agent API
-echo -n "Python API (8000)... "
-curl -sf http://localhost:8000/api/v1/health > /dev/null && echo "OK" || echo "FAIL"
+// Arbitrum Sepolia chain selector
+const ARBITRUM_SEPOLIA_SELECTOR = "3478487238524512106";
 
-# Check TypeScript API
-echo -n "TS API (3000)... "
-curl -sf http://localhost:3000/api/v1/health > /dev/null && echo "OK" || echo "FAIL"
+// Minimal CCIP Router ABI
+const CCIP_ROUTER_ABI = [
+  "function ccipSend(uint64 destinationChainSelector, tuple(bytes receiver, bytes data, tuple(address token, uint256 amount)[] tokenAmounts, address feeToken, bytes extraArgs) message) external payable returns (bytes32)",
+  "function getFee(uint64 destinationChainSelector, tuple(bytes receiver, bytes data, tuple(address token, uint256 amount)[] tokenAmounts, address feeToken, bytes extraArgs) message) external view returns (uint256)",
+];
 
-# Check Frontend
-echo -n "Frontend (5173)... "
-curl -sf http://localhost:5173 > /dev/null && echo "OK" || echo "FAIL"
+async function main() {
+  console.log("=== AEGIS CCIP Alert Test ===\n");
 
-# Check sentinel aggregate
-echo -n "Sentinel Aggregate... "
-curl -sf http://localhost:3000/api/v1/sentinel/aggregate > /dev/null && echo "OK" || echo "FAIL"
+  // Setup provider and wallet
+  const provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
+  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+  console.log("Sender:", wallet.address);
 
-echo "=== All services healthy ==="
+  // Connect to CCIP Router
+  const router = new ethers.Contract(CCIP_ROUTER_BASE_SEPOLIA, CCIP_ROUTER_ABI, wallet);
+
+  // Encode alert message
+  const alertData = ethers.AbiCoder.defaultAbiCoder().encode(
+    ["string", "uint8", "address", "uint256", "string"],
+    [
+      "AEGIS_THREAT_ALERT",
+      4, // CRITICAL
+      "0x11887863b89F1bE23A650909135ffaCFab666803", // MockProtocol
+      Math.floor(Date.now() / 1000),
+      "Flash loan attack detected - TVL dropped 25%",
+    ]
+  );
+
+  // Prepare CCIP message
+  // Receiver is just a dummy address for demo (no contract needed to receive)
+  const receiver = ethers.zeroPadValue(wallet.address, 32);
+
+  const message = {
+    receiver: receiver,
+    data: alertData,
+    tokenAmounts: [],
+    feeToken: ethers.ZeroAddress, // Pay in native ETH
+    extraArgs: "0x",
+  };
+
+  // Get fee estimate
+  console.log("Estimating CCIP fee...");
+  const fee = await router.getFee(ARBITRUM_SEPOLIA_SELECTOR, message);
+  console.log("Fee:", ethers.formatEther(fee), "ETH");
+
+  // Send CCIP message
+  console.log("\nSending CCIP message...");
+  const tx = await router.ccipSend(ARBITRUM_SEPOLIA_SELECTOR, message, {
+    value: fee,
+  });
+  console.log("Transaction hash:", tx.hash);
+  console.log("Explorer: https://sepolia.basescan.org/tx/" + tx.hash);
+
+  // Wait for confirmation
+  console.log("\nWaiting for confirmation...");
+  const receipt = await tx.wait();
+  console.log("Confirmed in block:", receipt.blockNumber);
+
+  // Get message ID from events
+  const ccipSendEvent = receipt.logs.find(
+    (log: any) => log.topics[0] === ethers.id("CCIPSendRequested(bytes32)")
+  );
+
+  if (ccipSendEvent) {
+    const messageId = ccipSendEvent.topics[1];
+    console.log("\nCCIP Message ID:", messageId);
+    console.log("Track at: https://ccip.chain.link/msg/" + messageId);
+  }
+
+  console.log("\n=== CCIP Alert Sent Successfully ===");
+  console.log("The message will arrive on Arbitrum Sepolia in ~5-15 minutes.");
+}
+
+main().catch(console.error);
 ```
 
-**Task D.2: Create E2E Test Script**
+**Task 3.2: Create CCIP Receiver Contract (Optional)**
 ```
-File: scripts/e2e-test.sh
+File: packages/contracts/src/ccip/AlertReceiver.sol (NEW)
 
-Full integration test (~2 minutes):
-1. Run smoke test first
-2. Register a test protocol: POST /api/v1/protocols
-3. Run normal detection (no simulation params) → expect NONE
-4. Simulate 25% TVL drop → expect CRITICAL
-5. Verify alert was created: GET /api/v1/alerts
-6. Simulate oracle manipulation (6% deviation) → expect CRITICAL
-7. Check forensics endpoint responds: GET /api/v1/forensics
-8. Print summary: X/Y tests passed
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
 
-Use colors: GREEN for pass, RED for fail
-Exit 0 if all pass, exit 1 if any fail
+import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
+import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+
+/**
+ * @title AlertReceiver
+ * @notice Receives AEGIS threat alerts from other chains via CCIP
+ */
+contract AlertReceiver is CCIPReceiver {
+
+    event AlertReceived(
+        bytes32 indexed messageId,
+        uint64 sourceChainSelector,
+        address sender,
+        string alertType,
+        uint8 threatLevel,
+        address protocol,
+        uint256 timestamp,
+        string description
+    );
+
+    struct Alert {
+        string alertType;
+        uint8 threatLevel;
+        address protocol;
+        uint256 timestamp;
+        string description;
+    }
+
+    mapping(bytes32 => Alert) public alerts;
+    bytes32[] public alertIds;
+
+    constructor(address router) CCIPReceiver(router) {}
+
+    function _ccipReceive(Client.Any2EVMMessage memory message) internal override {
+        // Decode alert data
+        (
+            string memory alertType,
+            uint8 threatLevel,
+            address protocol,
+            uint256 timestamp,
+            string memory description
+        ) = abi.decode(message.data, (string, uint8, address, uint256, string));
+
+        // Store alert
+        alerts[message.messageId] = Alert({
+            alertType: alertType,
+            threatLevel: threatLevel,
+            protocol: protocol,
+            timestamp: timestamp,
+            description: description
+        });
+        alertIds.push(message.messageId);
+
+        emit AlertReceived(
+            message.messageId,
+            message.sourceChainSelector,
+            abi.decode(message.sender, (address)),
+            alertType,
+            threatLevel,
+            protocol,
+            timestamp,
+            description
+        );
+    }
+
+    function getAlertCount() external view returns (uint256) {
+        return alertIds.length;
+    }
+
+    function getLatestAlert() external view returns (Alert memory) {
+        require(alertIds.length > 0, "No alerts");
+        return alerts[alertIds[alertIds.length - 1]];
+    }
+}
 ```
 
-**Task D.3: Create Demo Reset Script**
+**Task 3.3: Deploy Receiver to Arbitrum Sepolia**
 ```
-File: scripts/demo-reset.sh
+File: packages/contracts/script/DeployCCIPReceiver.s.sol (NEW)
 
-Reset state for clean demo:
-1. Clear SQLite database (rm packages/api/data/aegis.db)
-2. Restart services (optional, print instructions)
-3. Register default MockProtocol
-4. Verify clean state
-```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
 
-**Task D.4: Document API Response Shapes**
-```
-File: docs/API_SHAPES.md
+import "forge-std/Script.sol";
+import "../src/ccip/AlertReceiver.sol";
 
-Document actual response shapes from each endpoint:
-- Capture real responses using curl
-- Format as JSON examples
-- Note any fields frontend depends on
-- This helps Agent C align frontend expectations
+contract DeployCCIPReceiver is Script {
+    // Arbitrum Sepolia CCIP Router
+    address constant ARBITRUM_SEPOLIA_ROUTER = 0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165;
 
-Endpoints to document:
-- GET /api/v1/health
-- GET /api/v1/sentinel/aggregate
-- POST /api/v1/sentinel/detect
-- GET /api/v1/alerts
-- GET /api/v1/protocols
-- GET /api/v1/protocols/:address/status
+    function run() external {
+        uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        vm.startBroadcast(deployerKey);
+
+        AlertReceiver receiver = new AlertReceiver(ARBITRUM_SEPOLIA_ROUTER);
+        console.log("AlertReceiver deployed to:", address(receiver));
+
+        vm.stopBroadcast();
+    }
+}
 ```
 
-**Task D.5: Create Test Scenarios File**
+**Task 3.4: Add CCIP Dependencies**
 ```
-File: scripts/test-scenarios.sh
+File: packages/contracts/foundry.toml
 
-Reusable curl commands for common test scenarios:
+Add Chainlink CCIP:
 
-# Normal state (no threat)
-test_normal() { ... }
-
-# TVL drop attack (CRITICAL)
-test_tvl_attack() { ... }
-
-# Oracle manipulation (CRITICAL)
-test_oracle_attack() { ... }
-
-# Governance attack (HIGH)
-test_governance_attack() { ... }
-
-# Combined attack (flash loan + oracle)
-test_combined_attack() { ... }
-
-Each function prints the curl command and response.
-Useful for demo recording.
+[dependencies]
+chainlink = "smartcontractkit/chainlink"
 ```
+
+```bash
+cd packages/contracts
+forge install smartcontractkit/chainlink --no-commit
+```
+
+**Task 3.5: Document CCIP Test Results**
+```
+File: docs/CCIP_TEST_RESULTS.md (NEW)
+
+# CCIP Cross-Chain Alert Test
+
+## Test Date: [DATE]
+
+## Transaction Details
+- Source Chain: Base Sepolia (84532)
+- Destination Chain: Arbitrum Sepolia (421614)
+- Transaction Hash: [HASH]
+- Message ID: [MESSAGE_ID]
+- CCIP Explorer: [LINK]
+
+## Message Content
+- Alert Type: AEGIS_THREAT_ALERT
+- Threat Level: CRITICAL (4)
+- Protocol: 0x11887863b89F1bE23A650909135ffaCFab666803
+- Description: Flash loan attack detected - TVL dropped 25%
+
+## Timeline
+- Message sent: [TIME]
+- Message received: [TIME]
+- Total latency: ~X minutes
+
+## Screenshots
+[Include screenshots from CCIP explorer showing message status]
+```
+
+#### Prerequisites
+```bash
+# Need ETH on Base Sepolia for gas + CCIP fees
+# Get from faucet: https://www.alchemy.com/faucets/base-sepolia
+```
+
+#### Testing
+```bash
+cd scripts
+npx tsx test-ccip-alert.ts
+```
+
+#### Success Criteria
+- [ ] CCIP message sent from Base Sepolia
+- [ ] Transaction confirmed on-chain
+- [ ] Message ID obtained
+- [ ] Message visible on ccip.chain.link
+- [ ] (Optional) Receiver contract deployed and receives message
 
 #### Boundaries
-- ✅ You own: `scripts/`, `docs/API_SHAPES.md`
-- ✅ Can read: All packages (to verify responses)
-- ❌ Do NOT modify: `packages/*/` source code
+- ✅ You own: `scripts/`, `packages/contracts/src/ccip/`
+- ❌ Do NOT touch: `packages/agents-py/`, `packages/api/`, `packages/frontend/`
+
+---
+
+### AGENT 4: End-to-End Circuit Breaker Demo
+
+**Mission**: Deploy a simple TestVault that AEGIS can actually pause, demonstrating the full detection → circuit breaker flow.
+
+**Your Directory**: `packages/contracts/`, `scripts/`
+
+#### The Problem
+
+CircuitBreaker contract exists but has never actually paused a real protocol. We need to show the full flow.
+
+#### Tasks
+
+**Task 4.1: Create TestVault Contract**
+```
+File: packages/contracts/src/mocks/TestVault.sol (NEW)
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+/**
+ * @title TestVault
+ * @notice A simple vault that AEGIS can pause via CircuitBreaker
+ * @dev Used for demo purposes to show end-to-end circuit breaker flow
+ */
+contract TestVault is Pausable, Ownable {
+
+    // AEGIS CircuitBreaker address (can call pause)
+    address public circuitBreaker;
+
+    // User deposits
+    mapping(address => uint256) public deposits;
+
+    // Total value locked
+    uint256 public totalDeposits;
+
+    // Events
+    event Deposited(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event CircuitBreakerSet(address indexed circuitBreaker);
+    event EmergencyPaused(address indexed triggeredBy);
+
+    constructor(address _circuitBreaker) Ownable(msg.sender) {
+        circuitBreaker = _circuitBreaker;
+        emit CircuitBreakerSet(_circuitBreaker);
+    }
+
+    /**
+     * @notice Deposit ETH into the vault
+     */
+    function deposit() external payable whenNotPaused {
+        require(msg.value > 0, "Must deposit something");
+        deposits[msg.sender] += msg.value;
+        totalDeposits += msg.value;
+        emit Deposited(msg.sender, msg.value);
+    }
+
+    /**
+     * @notice Withdraw ETH from the vault
+     * @dev This will FAIL when paused - demonstrating circuit breaker
+     */
+    function withdraw(uint256 amount) external whenNotPaused {
+        require(deposits[msg.sender] >= amount, "Insufficient balance");
+        deposits[msg.sender] -= amount;
+        totalDeposits -= amount;
+        payable(msg.sender).transfer(amount);
+        emit Withdrawn(msg.sender, amount);
+    }
+
+    /**
+     * @notice Emergency pause - called by AEGIS CircuitBreaker
+     */
+    function pause() external {
+        require(msg.sender == circuitBreaker || msg.sender == owner(), "Not authorized");
+        _pause();
+        emit EmergencyPaused(msg.sender);
+    }
+
+    /**
+     * @notice Unpause - only owner (manual recovery)
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
+     * @notice Update circuit breaker address
+     */
+    function setCircuitBreaker(address _circuitBreaker) external onlyOwner {
+        circuitBreaker = _circuitBreaker;
+        emit CircuitBreakerSet(_circuitBreaker);
+    }
+
+    /**
+     * @notice Get TVL (for monitoring)
+     */
+    function getTVL() external view returns (uint256) {
+        return totalDeposits;
+    }
+
+    /**
+     * @notice Check if vault is paused
+     */
+    function isPaused() external view returns (bool) {
+        return paused();
+    }
+}
+```
+
+**Task 4.2: Deploy TestVault**
+```
+File: packages/contracts/script/DeployTestVault.s.sol (NEW)
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "forge-std/Script.sol";
+import "../src/mocks/TestVault.sol";
+
+contract DeployTestVault is Script {
+    // Existing CircuitBreaker on Base Sepolia
+    address constant CIRCUIT_BREAKER = 0xa0eE49660252B353830ADe5de0Ca9385647F85b5;
+
+    function run() external {
+        uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        vm.startBroadcast(deployerKey);
+
+        TestVault vault = new TestVault(CIRCUIT_BREAKER);
+        console.log("TestVault deployed to:", address(vault));
+
+        // Deposit some initial ETH for demo
+        vault.deposit{value: 0.1 ether}();
+        console.log("Deposited 0.1 ETH");
+        console.log("TVL:", vault.getTVL());
+
+        vm.stopBroadcast();
+    }
+}
+```
+
+**Task 4.3: Create E2E Demo Script**
+```
+File: scripts/demo-circuit-breaker.ts (NEW)
+
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+dotenv.config();
+
+const TEST_VAULT_ABI = [
+  "function deposit() external payable",
+  "function withdraw(uint256 amount) external",
+  "function getTVL() external view returns (uint256)",
+  "function isPaused() external view returns (bool)",
+  "function pause() external",
+];
+
+const CIRCUIT_BREAKER_ABI = [
+  "function triggerBreaker(address protocol, bytes32 threatId, uint8 threatLevel, string reason) external",
+  "function isPaused(address protocol) external view returns (bool)",
+];
+
+async function main() {
+  console.log("=== AEGIS Circuit Breaker E2E Demo ===\n");
+
+  const provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
+  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+
+  // Contract addresses (update after deployment)
+  const TEST_VAULT = process.env.TEST_VAULT_ADDRESS!;
+  const CIRCUIT_BREAKER = "0xa0eE49660252B353830ADe5de0Ca9385647F85b5";
+
+  const vault = new ethers.Contract(TEST_VAULT, TEST_VAULT_ABI, wallet);
+  const breaker = new ethers.Contract(CIRCUIT_BREAKER, CIRCUIT_BREAKER_ABI, wallet);
+
+  // Step 1: Show initial state
+  console.log("Step 1: Initial State");
+  console.log("  TVL:", ethers.formatEther(await vault.getTVL()), "ETH");
+  console.log("  Paused:", await vault.isPaused());
+
+  // Step 2: Deposit works normally
+  console.log("\nStep 2: Normal Deposit");
+  const depositTx = await vault.deposit({ value: ethers.parseEther("0.01") });
+  await depositTx.wait();
+  console.log("  Deposited 0.01 ETH");
+  console.log("  New TVL:", ethers.formatEther(await vault.getTVL()), "ETH");
+
+  // Step 3: Simulate AEGIS detecting a threat
+  console.log("\nStep 3: AEGIS Detects CRITICAL Threat");
+  console.log("  Running detection cycle...");
+
+  // Call the Python API to simulate detection
+  const response = await fetch("http://localhost:8000/api/v1/detect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      protocol_address: TEST_VAULT,
+      simulate_tvl_drop_percent: 25,
+    }),
+  });
+  const detection = await response.json();
+  console.log("  Threat Level:", detection.consensus.final_threat_level);
+  console.log("  Action:", detection.consensus.action_recommended);
+
+  // Step 4: Trigger circuit breaker
+  console.log("\nStep 4: Triggering Circuit Breaker");
+  const threatId = ethers.keccak256(ethers.toUtf8Bytes("demo-threat-" + Date.now()));
+  const triggerTx = await breaker.triggerBreaker(
+    TEST_VAULT,
+    threatId,
+    4, // CRITICAL
+    "AEGIS detected 25% TVL drop - potential exploit"
+  );
+  await triggerTx.wait();
+  console.log("  Circuit breaker triggered!");
+  console.log("  Vault paused:", await vault.isPaused());
+
+  // Step 5: Show withdrawal now fails
+  console.log("\nStep 5: Attempting Withdrawal (should fail)");
+  try {
+    await vault.withdraw(ethers.parseEther("0.001"));
+    console.log("  ERROR: Withdrawal succeeded (should have failed)");
+  } catch (error: any) {
+    console.log("  ✓ Withdrawal blocked: Pausable: paused");
+  }
+
+  console.log("\n=== Demo Complete ===");
+  console.log("Circuit breaker successfully protected the vault!");
+}
+
+main().catch(console.error);
+```
+
+**Task 4.4: Register TestVault in CircuitBreaker**
+```
+File: scripts/register-test-vault.ts (NEW)
+
+// Register TestVault with the existing CircuitBreaker
+// This grants CircuitBreaker permission to pause the vault
+
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+dotenv.config();
+
+const CIRCUIT_BREAKER_ABI = [
+  "function registerProtocol(address protocol) external",
+  "function isRegistered(address protocol) external view returns (bool)",
+];
+
+async function main() {
+  const provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
+  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+
+  const CIRCUIT_BREAKER = "0xa0eE49660252B353830ADe5de0Ca9385647F85b5";
+  const TEST_VAULT = process.env.TEST_VAULT_ADDRESS!;
+
+  const breaker = new ethers.Contract(CIRCUIT_BREAKER, CIRCUIT_BREAKER_ABI, wallet);
+
+  console.log("Registering TestVault with CircuitBreaker...");
+  const tx = await breaker.registerProtocol(TEST_VAULT);
+  await tx.wait();
+  console.log("Registered!");
+  console.log("Is registered:", await breaker.isRegistered(TEST_VAULT));
+}
+
+main().catch(console.error);
+```
+
+**Task 4.5: Document Demo Flow**
+```
+File: docs/CIRCUIT_BREAKER_DEMO.md (NEW)
+
+# Circuit Breaker E2E Demo
+
+## Overview
+This demo shows AEGIS detecting a simulated attack and triggering a circuit breaker to protect funds.
+
+## Contracts
+- TestVault: [ADDRESS] ([BaseScan](https://sepolia.basescan.org/address/ADDRESS))
+- CircuitBreaker: 0xa0eE49660252B353830ADe5de0Ca9385647F85b5
+
+## Demo Steps
+
+### 1. Start Services
+```bash
+bash scripts/run-demo.sh
+```
+
+### 2. Show Normal State
+```bash
+# Check vault TVL
+cast call $TEST_VAULT "getTVL()" --rpc-url https://sepolia.base.org
+# Check vault is not paused
+cast call $TEST_VAULT "isPaused()" --rpc-url https://sepolia.base.org
+```
+
+### 3. Make Normal Deposit
+```bash
+cast send $TEST_VAULT "deposit()" --value 0.01ether --private-key $DEPLOYER_PRIVATE_KEY --rpc-url https://sepolia.base.org
+```
+
+### 4. Simulate Attack Detection
+```bash
+curl -X POST http://localhost:8000/api/v1/detect \
+  -H "Content-Type: application/json" \
+  -d '{"protocol_address": "'$TEST_VAULT'", "simulate_tvl_drop_percent": 25}'
+```
+
+### 5. Trigger Circuit Breaker
+```bash
+npx tsx scripts/trigger-circuit-breaker.ts
+```
+
+### 6. Show Withdrawal Blocked
+```bash
+# This should fail with "Pausable: paused"
+cast send $TEST_VAULT "withdraw(uint256)" 1000000000000000 --private-key $DEPLOYER_PRIVATE_KEY --rpc-url https://sepolia.base.org
+```
+
+## Video Recording Notes
+- Show terminal with clear text
+- Pause on each step to explain
+- Highlight "Pausable: paused" error as the money shot
+```
+
+#### Testing
+```bash
+# Deploy TestVault
+cd packages/contracts
+forge script script/DeployTestVault.s.sol --rpc-url https://sepolia.base.org --broadcast
+
+# Register with CircuitBreaker
+npx tsx scripts/register-test-vault.ts
+
+# Run E2E demo
+npx tsx scripts/demo-circuit-breaker.ts
+```
+
+#### Success Criteria
+- [ ] TestVault deployed to Base Sepolia
+- [ ] TestVault registered with CircuitBreaker
+- [ ] Can deposit to TestVault normally
+- [ ] AEGIS detection triggers circuit breaker
+- [ ] Withdrawal blocked after pause
+- [ ] Demo script runs end-to-end
+
+#### Boundaries
+- ✅ You own: `packages/contracts/`, `scripts/`
+- ❌ Do NOT touch: `packages/agents-py/`, `packages/api/`, `packages/frontend/`
 
 ---
 
@@ -3157,12 +3730,10 @@ Useful for demo recording.
 
 | Resource | Owner | Rule |
 |----------|-------|------|
-| `docs/*` | Agent A | New documentation |
-| `README.md` | Agent A | Final polish |
-| `packages/agents-py/` | Agent B | Python code |
-| `packages/frontend/` | Agent C | React code |
-| `packages/api/` | Agent D | API code |
-| `scripts/` | Agent A + D | Demo + test scripts |
+| `packages/agents-py/` | Agent 1, Agent 2 | Python code only |
+| `packages/contracts/` | Agent 3, Agent 4 | Solidity code |
+| `scripts/` | Agent 3, Agent 4 | Test scripts |
+| `docs/` | All | Documentation |
 | `CLAUDE.md` | All | Update when done |
 
 ### After Completing Tasks
@@ -3272,4 +3843,4 @@ TESTNET: Base Sepolia (84532)
 ---
 
 *Last Updated: March 2, 2026*
-*Version: 3.3.0 — Agent B all tasks complete including bonus: Compound V3 adapter, Curve Finance adapter (pools, imbalance detection, manipulation detection), extended Chainlink data feeds (4 pairs + parallel fetch), expanded attacker database (45+ addresses, 90+ known addresses), Euler replay demo endpoint (9 steps). 96 tests passing.*
+*Version: 4.0.0 — New 4-agent sprint to make AEGIS real: (1) Wire up AI analysis, (2) Monitor real Aave V3, (3) Test CCIP on testnet, (4) Deploy TestVault + circuit breaker demo. Previous work preserved in §20 Completed.*

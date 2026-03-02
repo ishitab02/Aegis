@@ -1,7 +1,4 @@
-"""Governance Sentinel - analyzes proposals for malicious intent.
-
-Ported from packages/agents/src/sentinels/GovernanceSentinel/actions/analyzeProposal.ts
-"""
+"""Governance sentinel."""
 
 import logging
 
@@ -19,7 +16,7 @@ from aegis.utils import now_seconds
 
 logger = logging.getLogger(__name__)
 
-# Known suspicious function signatures in governance proposals
+# suspicious function signatures
 SUSPICIOUS_SIGNATURES = [
     "transferOwnership(address)",
     "upgradeTo(address)",
@@ -29,24 +26,18 @@ SUSPICIOUS_SIGNATURES = [
     "pause()",
 ]
 
-# Pre-compute 4-byte selectors
+# pre-computed 4-byte selectors
 SUSPICIOUS_SELECTORS = [
     Web3.keccak(text=sig)[:4].hex() for sig in SUSPICIOUS_SIGNATURES
 ]
 
 
 def analyze_proposal(proposal: GovernanceProposal) -> ThreatAssessment:
-    """Analyze a governance proposal for malicious intent.
-
-    Checks for:
-    - Suspicious function calls (transferOwnership, upgradeTo, etc.)
-    - Unusually short voting periods (< 100 blocks)
-    """
+    # checks suspicious calldata + short voting periods
     indicators: list[str] = []
     threat_level = ThreatLevel.NONE
     confidence = 0.7
 
-    # Check for suspicious function calls
     for calldata in proposal.calldatas:
         for i, selector in enumerate(SUSPICIOUS_SELECTORS):
             if calldata.startswith(selector) or selector in calldata[:10]:
@@ -56,7 +47,6 @@ def analyze_proposal(proposal: GovernanceProposal) -> ThreatAssessment:
                 threat_level = ThreatLevel.HIGH
                 confidence = 0.85
 
-    # Check if voting period is unusually short
     voting_period = proposal.end_block - proposal.start_block
     if voting_period < 100 and voting_period > 0:
         indicators.append(f"Unusually short voting period: {voting_period} blocks")
@@ -85,13 +75,11 @@ def analyze_proposal(proposal: GovernanceProposal) -> ThreatAssessment:
     )
 
 
-# ============ CrewAI Agent ============
 
 _governance_sentinel: Agent | None = None
 
 
 def get_governance_sentinel() -> Agent:
-    """Lazy-load the CrewAI agent (requires LLM API key at runtime)."""
     global _governance_sentinel
     if _governance_sentinel is None:
         _governance_sentinel = Agent(

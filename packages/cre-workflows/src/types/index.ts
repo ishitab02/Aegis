@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// ============ Config Schema ============
-
 const evmConfigSchema = z.object({
   chainSelectorName: z.string().min(1),
   circuitBreakerAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/u),
@@ -12,7 +10,7 @@ const evmConfigSchema = z.object({
   chainlinkFeeds: z.object({
     ethUsd: z.string().regex(/^0x[a-fA-F0-9]{40}$/u),
   }),
-  // CCIP (optional — only needed for ccipAlert workflow)
+  // ccip config (only needed for ccipAlert workflow)
   ccipRouter: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/u)
@@ -26,7 +24,7 @@ const evmConfigSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/u)
     .optional(),
-  // VRF (optional — only needed for vrfTieBreaker workflow)
+  // vrf config (only needed for vrfTieBreaker workflow)
   vrfCoordinator: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/u)
@@ -42,8 +40,6 @@ export const configSchema = z.object({
 });
 
 export type Config = z.infer<typeof configSchema>;
-
-// ============ Agent API Response Types ============
 
 export type ThreatLevel = "NONE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -86,8 +82,6 @@ export type HealthResponse = {
   sentinels: { active: number; total: number };
   last_check: number;
 };
-
-// ============ Threat Level Mapping (Solidity enum uint8) ============
 
 export const THREAT_LEVEL_UINT8: Record<ThreatLevel, number> = {
   NONE: 0,

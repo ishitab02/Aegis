@@ -1,34 +1,21 @@
-/**
- * Protocol management routes — register, list, update monitored protocols.
- *
- * GET   /                  — list all protocols
- * GET   /:address          — get protocol details
- * POST  /                  — register new protocol
- * PATCH /:address          — update thresholds / name / active
- * GET   /:address/status   — circuit breaker status (on-chain read)
- */
-
 import { Hono } from "hono";
 import { insertProtocol, getProtocol, listProtocols, updateProtocol } from "../db/index.js";
 import { getCircuitBreakerState } from "../services/contractReader.js";
 
 const protocols = new Hono();
 
-// GET / — list all protocols
 protocols.get("/", (c) => {
   const activeOnly = c.req.query("active") === "true";
   const rows = listProtocols(activeOnly);
   return c.json({ protocols: rows });
 });
 
-// GET /:address — single protocol
 protocols.get("/:address", (c) => {
   const row = getProtocol(c.req.param("address"));
   if (!row) return c.json({ error: "Protocol not found" }, 404);
   return c.json(row);
 });
 
-// POST / — register a new protocol
 protocols.post("/", async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: "Invalid JSON body" }, 400);
@@ -39,7 +26,6 @@ protocols.post("/", async (c) => {
     return c.json({ error: "address and name are required" }, 400);
   }
 
-  // Prevent duplicates
   if (getProtocol(address)) {
     return c.json({ error: "Protocol already registered" }, 409);
   }
@@ -48,7 +34,6 @@ protocols.post("/", async (c) => {
   return c.json(row, 201);
 });
 
-// PATCH /:address — partial update
 protocols.patch("/:address", async (c) => {
   const address = c.req.param("address");
 
@@ -69,7 +54,6 @@ protocols.patch("/:address", async (c) => {
   return c.json(updated);
 });
 
-// GET /:address/status — circuit breaker status (live on-chain)
 protocols.get("/:address/status", async (c) => {
   const address = c.req.param("address");
   const protocol = getProtocol(address);

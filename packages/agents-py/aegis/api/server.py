@@ -1,7 +1,4 @@
-"""FastAPI application for the AEGIS Agent API.
-
-This server is called by CRE workflows and the TypeScript API service.
-"""
+"""FastAPI server."""
 
 import logging
 
@@ -17,10 +14,7 @@ logging.basicConfig(
 
 app = FastAPI(
     title="AEGIS Agent API",
-    description=(
-        "AI-Enhanced Guardian Intelligence System — "
-        "Sentinel orchestration and forensic analysis API"
-    ),
+    description="Sentinel orchestration and forensic analysis API",
     version="0.1.0",
 )
 

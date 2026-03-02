@@ -1,7 +1,3 @@
-/**
- * HTTP proxy to the Python FastAPI agent service (port 8000).
- */
-
 import { config } from "../config.js";
 
 const AGENT_BASE = config.agentApiUrl;
@@ -17,8 +13,6 @@ async function agentFetch(path: string, init?: RequestInit): Promise<Response> {
   });
   return res;
 }
-
-// ---- Detection ----
 
 export interface DetectionParams {
   protocol_address: string;
@@ -36,8 +30,6 @@ export async function runDetection(params: DetectionParams) {
   return res.json();
 }
 
-// ---- Sentinel ----
-
 export async function getSentinelAggregate() {
   const res = await agentFetch("/api/v1/sentinel/aggregate");
   return res.json();
@@ -48,8 +40,6 @@ export async function getSentinelById(id: string) {
   if (!res.ok) return null;
   return res.json();
 }
-
-// ---- Forensics ----
 
 export async function runForensics(txHash: string, protocol: string, description = "") {
   const res = await agentFetch("/api/v1/forensics", {
@@ -70,8 +60,6 @@ export async function listForensicReports() {
   return res.json();
 }
 
-// ---- Health ----
-
 export async function getAgentHealth() {
   try {
     const res = await agentFetch("/api/v1/health");
@@ -80,8 +68,6 @@ export async function getAgentHealth() {
     return { status: "UNHEALTHY", error: "Agent API unreachable" };
   }
 }
-
-// ---- Demo ----
 
 export async function getDemoScenarios() {
   const res = await agentFetch("/api/v1/demo/scenarios");

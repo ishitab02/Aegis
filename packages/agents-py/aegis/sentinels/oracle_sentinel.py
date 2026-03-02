@@ -1,7 +1,4 @@
-"""Oracle Sentinel - monitors price feeds for manipulation or staleness.
-
-Ported from packages/agents/src/sentinels/OracleSentinel/actions/monitorPriceFeeds.ts
-"""
+"""Oracle sentinel."""
 
 import logging
 
@@ -24,19 +21,11 @@ def monitor_price_feeds(
     protocol_price: float,
     chainlink_data: PriceFeedData,
 ) -> ThreatAssessment:
-    """Monitor price feeds for manipulation or staleness.
-
-    Compares protocol's internal price against Chainlink Data Feeds (source of truth).
-    Same thresholds as TypeScript:
-    - > 5% deviation -> CRITICAL
-    - > 2% deviation -> HIGH
-    - Feed age > 1 hour -> HIGH
-    - Feed age > 30 min -> MEDIUM
-    """
+    # deviation: >5% -> CRITICAL, >2% -> HIGH
+    # staleness: >1hr -> HIGH, >30min -> MEDIUM
     chainlink_price = chainlink_data.price
     feed_age = now_seconds() - chainlink_data.updated_at
 
-    # Calculate deviation
     if chainlink_price == 0:
         deviation_percent = 0.0
     else:
@@ -55,7 +44,6 @@ def monitor_price_feeds(
         f"Feed age: {feed_age}s"
     )
 
-    # Check price deviation
     if deviation_percent > ORACLE_THRESHOLDS["critical_deviation"]:
         threat_level = ThreatLevel.CRITICAL
         confidence = 0.95
@@ -72,14 +60,14 @@ def monitor_price_feeds(
         )
         recommendation = ActionRecommendation.ALERT
 
-    # Check staleness (only escalate if not already higher)
+    # staleness, only escalate if not already higher
     if (
         feed_age > ORACLE_THRESHOLDS["high_staleness"]
         and ThreatLevel.severity(threat_level) < ThreatLevel.severity(ThreatLevel.HIGH)
     ):
         threat_level = ThreatLevel.HIGH
         indicators.append(
-            f"Feed is {feed_age}s old — exceeds staleness "
+            f"Feed is {feed_age}s old - exceeds staleness "
             f"threshold {ORACLE_THRESHOLDS['high_staleness']}s"
         )
         recommendation = ActionRecommendation.ALERT
@@ -89,7 +77,7 @@ def monitor_price_feeds(
     ):
         threat_level = ThreatLevel.MEDIUM
         indicators.append(
-            f"Feed is {feed_age}s old — exceeds medium staleness "
+            f"Feed is {feed_age}s old - exceeds medium staleness "
             f"threshold {ORACLE_THRESHOLDS['medium_staleness']}s"
         )
         recommendation = ActionRecommendation.ALERT
@@ -106,13 +94,11 @@ def monitor_price_feeds(
     )
 
 
-# ============ CrewAI Agent ============
 
 _oracle_sentinel: Agent | None = None
 
 
 def get_oracle_sentinel() -> Agent:
-    """Lazy-load the CrewAI agent (requires LLM API key at runtime)."""
     global _oracle_sentinel
     if _oracle_sentinel is None:
         _oracle_sentinel = Agent(
