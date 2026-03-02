@@ -8,7 +8,6 @@ import {
   Settings,
   ShieldAlert,
   X,
-  AlertTriangle,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -44,18 +43,14 @@ export function Sidebar({ open, onClose, alertCount = 0 }: SidebarProps) {
             to={item.path}
             onClick={isMobile ? onClose : undefined}
             className={clsx(
-              "group relative flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+              "group relative flex items-center justify-between overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
               isActive
                 ? "bg-white/[0.06] text-text-primary"
                 : "text-text-secondary hover:bg-white/[0.03] hover:text-text-primary"
             )}
           >
             {isActive && (
-              <motion.div
-                layoutId={isMobile ? "sidebar-indicator-mobile" : "sidebar-indicator"}
-                className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <span className="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r-full bg-accent" />
             )}
 
             <span className="flex items-center gap-3">

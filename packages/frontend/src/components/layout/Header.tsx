@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Menu, Shield, X } from "lucide-react";
+import { Bell, CheckCheck, Menu, Shield, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAlerts, formatRelativeTime, isEscalatedThreat } from "../../hooks/useAlerts";
 import { ThreatBadge } from "../common/ThreatBadge";
@@ -13,6 +13,7 @@ interface HeaderProps {
 
 export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [readAlertIds, setReadAlertIds] = useState<Set<string>>(new Set());
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const { data: alerts } = useAlerts({ page: 1, limit: 10, refetchInterval: 10_000 });
@@ -22,7 +23,20 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
     [alerts]
   );
 
-  const unreadCount = recentEscalated.length;
+  const unreadCount = useMemo(
+    () => recentEscalated.filter((alert) => !readAlertIds.has(alert.id)).length,
+    [recentEscalated, readAlertIds]
+  );
+
+  function markAllAsRead() {
+    setReadAlertIds((current) => {
+      const next = new Set(current);
+      for (const alert of recentEscalated) {
+        next.add(alert.id);
+      }
+      return next;
+    });
+  }
 
   // Close notifications on outside click
   useEffect(() => {
@@ -91,11 +105,23 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
                 >
                   <div className="flex items-center justify-between px-3 py-2.5">
                     <h3 className="text-sm font-semibold text-text-primary">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <span className="rounded-full bg-threat-critical-muted/50 px-2 py-0.5 text-2xs font-medium text-red-300">
-                        {unreadCount} new
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <span className="rounded-full bg-threat-critical-muted/50 px-2 py-0.5 text-2xs font-medium text-red-300">
+                          {unreadCount} new
+                        </span>
+                      )}
+                      {recentEscalated.length > 0 && unreadCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={markAllAsRead}
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-2xs font-medium text-text-secondary transition hover:bg-white/[0.05] hover:text-text-primary"
+                        >
+                          <CheckCheck className="h-3.5 w-3.5" />
+                          Mark as read
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="max-h-80 overflow-y-auto">
@@ -113,7 +139,10 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
                           <Link
                             key={alert.id}
                             to={`/alerts?id=${alert.id}`}
-                            onClick={() => setNotificationsOpen(false)}
+                            onClick={() => {
+                              setReadAlertIds((current) => new Set(current).add(alert.id));
+                              setNotificationsOpen(false);
+                            }}
                             className="block rounded-lg p-3 transition hover:bg-white/[0.03]"
                           >
                             <div className="mb-2 flex items-center justify-between">

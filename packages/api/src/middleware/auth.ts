@@ -17,6 +17,8 @@ const PUBLIC_PATHS = new Set([
   "/api/v1/ws",
   "/api/v1/docs",
   "/api/v1/openapi",
+  "/api/v1/demo/scenarios",
+  "/api/v1/demo/euler-replay",
 ]);
 
 let _validKeys: Set<string> | null = null;
@@ -42,6 +44,9 @@ export async function authMiddleware(c: Context, next: Next) {
   // Always allow public routes
   const pathname = new URL(c.req.url).pathname;
   if (PUBLIC_PATHS.has(pathname)) return next();
+
+  // Allow all demo routes (for hackathon presentation)
+  if (pathname.startsWith("/api/v1/demo/")) return next();
 
   const apiKey = c.req.header("X-API-Key");
   if (!apiKey || !keys.has(apiKey)) {

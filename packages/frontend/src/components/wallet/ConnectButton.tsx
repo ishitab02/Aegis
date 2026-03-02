@@ -29,7 +29,14 @@ export function ConnectButton() {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const availableConnectors = useMemo(() => connectors.filter((connector) => connector.ready), [connectors]);
+  const availableConnectors = useMemo(
+    () =>
+      connectors.map((connector) => ({
+        connector,
+        isReady: (connector as { ready?: boolean }).ready ?? true,
+      })),
+    [connectors]
+  );
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -71,21 +78,25 @@ export function ConnectButton() {
 
         {isConnectMenuOpen && (
           <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-overlay)] p-2 shadow-2xl">
-            {availableConnectors.map((connector) => (
+            {availableConnectors.map(({ connector, isReady }) => (
               <button
                 key={connector.uid}
                 type="button"
-                className="mb-1 flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-[var(--text-secondary)] transition hover:bg-white/[0.02] hover:text-[var(--text-primary)]"
+                className="mb-1 flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-[var(--text-secondary)] transition hover:bg-white/[0.02] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!isReady || isConnecting}
                 onClick={() => {
                   connect({ connector });
                   setIsConnectMenuOpen(false);
                 }}
               >
-                {connector.name}
+                <span>{connector.name}</span>
+                {!isReady && (
+                  <span className="text-2xs text-[var(--text-muted)]">Not available</span>
+                )}
               </button>
             ))}
             {availableConnectors.length === 0 && (
-              <p className="px-3 py-2 text-xs text-[var(--text-muted)]">No wallet connector detected.</p>
+              <p className="px-3 py-2 text-xs text-[var(--text-muted)]">No wallet connector configured.</p>
             )}
             {connectError && <p className="px-3 py-2 text-xs text-[#fca5a5]">{connectError.message}</p>}
           </div>

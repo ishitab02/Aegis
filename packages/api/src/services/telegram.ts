@@ -69,10 +69,12 @@ export async function sendAlert(alert: AlertRow): Promise<void> {
   const confidence = (alert.confidence * 100).toFixed(1);
   const time = new Date(alert.created_at * 1000).toISOString();
 
+  const proto = alert.protocol_name || alert.protocol;
   const text = [
     `${emoji} *${alert.threat_level} ALERT*`,
     "",
-    `*Protocol:* \`${alert.protocol}\``,
+    `*Protocol:* ${proto}`,
+    `*Address:* \`${alert.protocol}\``,
     `*Threat Level:* ${alert.threat_level}`,
     `*Confidence:* ${confidence}%`,
     `*Action:* ${alert.action}`,

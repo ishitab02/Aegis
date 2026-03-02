@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Link as LinkIcon, Sparkles } from "lu
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 import { api } from "../../lib/api";
+import { useToast } from "../common/Toast";
 
 const ENS_CLIENT = createPublicClient({
   chain: mainnet,
@@ -59,6 +60,7 @@ interface RegisterProtocolProps {
 
 export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
 
   const [step, setStep] = useState(0);
   const [isResolvingEns, setIsResolvingEns] = useState(false);
@@ -101,6 +103,10 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
       }),
     onSuccess: async () => {
       setBanner({ type: "success", message: "Protocol registered successfully." });
+      pushToast({
+        variant: "success",
+        message: "Protocol registered successfully",
+      });
       setStep(0);
       setForm({
         address: "",
@@ -117,6 +123,13 @@ export function RegisterProtocol({ onSuccess }: RegisterProtocolProps = {}) {
     },
     onError: (error: Error) => {
       setBanner({ type: "error", message: error.message || "Failed to register protocol." });
+      pushToast({
+        variant: "error",
+        message:
+          error.message.toLowerCase().includes("timed out")
+            ? "Failed to connect to API"
+            : error.message || "Failed to connect to API",
+      });
     },
   });
 

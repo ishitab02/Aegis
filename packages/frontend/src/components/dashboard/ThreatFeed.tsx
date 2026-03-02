@@ -21,6 +21,18 @@ type FeedItem = {
 
 const LEVEL_FILTERS: Array<ThreatLevel | "ALL"> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
+function getErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Failed to load threat feed.";
+  }
+
+  if (error.message.toLowerCase().includes("timed out")) {
+    return "Threat feed request timed out. Please retry.";
+  }
+
+  return error.message || "Failed to load threat feed.";
+}
+
 function normalizeThreat(level: unknown): ThreatLevel {
   if (typeof level !== "string") return "NONE";
   const upper = level.toUpperCase();
@@ -89,6 +101,36 @@ function extractFeedItems(payload: unknown): FeedItem[] {
     .sort((a, b) => b.timestamp - a.timestamp);
 }
 
+/** Convert /alerts response items into feed items. */
+function extractAlertFeedItems(payload: unknown): FeedItem[] {
+  const root = ((payload as Record<string, unknown>) ?? {}) as Record<string, unknown>;
+  const items = Array.isArray(root.items) ? root.items : Array.isArray(root) ? root : [];
+
+  return items.map((entry: unknown, index: number) => {
+    const alert = ((entry ?? {}) as Record<string, unknown>) ?? {};
+    const timestamp = normalizeTimestamp(alert.created_at ?? alert.timestamp);
+
+    return {
+      id:
+        (typeof alert.id === "string" && alert.id) ||
+        `alert-${timestamp}-${index}`,
+      protocolName:
+        (typeof alert.protocol_name === "string" && alert.protocol_name) ||
+        (typeof alert.protocol === "string" && alert.protocol) ||
+        "Unknown Protocol",
+      threatLevel: normalizeThreat(alert.threat_level),
+      details:
+        (typeof alert.details === "string" && alert.details) ||
+        `${normalizeThreat(alert.threat_level)} threat detected — ${(typeof alert.action === "string" && alert.action) || "ALERT"}`,
+      confidence: normalizeConfidence(alert.confidence),
+      action:
+        (typeof alert.action === "string" && alert.action) ||
+        "ALERT",
+      timestamp,
+    };
+  });
+}
+
 interface ThreatFeedProps {
   compact?: boolean;
   className?: string;
@@ -106,8 +148,30 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
     queryFn: () => api.getSentinelAggregate() as Promise<unknown>,
     refetchInterval: paused ? false : 5_000,
   });
+  const errorMessage = getErrorMessage(error);
 
-  const items = useMemo(() => extractFeedItems(data), [data]);
+  // Also fetch recent alerts for historical feed items
+  const { data: alertsData } = useQuery({
+    queryKey: ["live-threat-feed-alerts"],
+    queryFn: () => api.getAlerts(1, 10) as Promise<unknown>,
+    refetchInterval: paused ? false : 15_000,
+  });
+
+  const items = useMemo(() => {
+    const liveItems = extractFeedItems(data);
+    const historyItems = extractAlertFeedItems(alertsData);
+    // Merge: live first, then history — deduplicate by timestamp+protocol
+    const seen = new Set(liveItems.map((i) => `${i.timestamp}-${i.protocolName}`));
+    const merged = [...liveItems];
+    for (const item of historyItems) {
+      const key = `${item.timestamp}-${item.protocolName}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(item);
+      }
+    }
+    return merged.sort((a, b) => b.timestamp - a.timestamp);
+  }, [data, alertsData]);
   const filteredItems = useMemo(
     () => items
       .filter((item) => filter === "ALL" ? true : item.threatLevel === filter)
@@ -129,7 +193,12 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
   }, [items]);
 
   return (
-    <section className={clsx("card overflow-hidden", className)}>
+    <section
+      className={clsx(
+        "overflow-hidden rounded-lg border border-border-subtle bg-bg-surface",
+        className
+      )}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle px-5 py-4">
         <div>
@@ -192,13 +261,14 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
         )}
 
         {error && (
-          <div className="rounded-lg border border-threat-critical-muted bg-threat-critical-muted/20 px-4 py-3">
-            <p className="text-sm text-red-300">Failed to load threat feed</p>
+          <div className="rounded-lg border border-red-500/40 bg-red-500/20 px-4 py-3">
+            <p className="text-sm text-red-300">{errorMessage}</p>
             <button
+              type="button"
               onClick={() => refetch()}
-              className="mt-2 text-xs text-accent hover:underline"
+              className="mt-2 rounded border border-red-500/50 px-2 py-1 text-xs text-red-200 transition hover:bg-red-500/20"
             >
-              Try again
+              Retry
             </button>
           </div>
         )}
@@ -212,7 +282,16 @@ export function ThreatFeed({ compact = false, className }: ThreatFeedProps) {
                   animate={{ opacity: 1 }}
                   className="rounded-lg border border-border-subtle bg-bg-elevated px-4 py-8 text-center"
                 >
-                  <p className="text-sm text-text-muted">No threats match this filter</p>
+                  <p className="text-sm text-text-secondary">
+                    {items.length === 0
+                      ? "No threat activity yet."
+                      : "No threats match the selected filter."}
+                  </p>
+                  <p className="mt-1 text-xs text-text-disabled">
+                    {items.length === 0
+                      ? "Live alerts will appear here as new assessments arrive."
+                      : "Try a different severity filter."}
+                  </p>
                 </motion.div>
               ) : (
                 <ul className="space-y-2">

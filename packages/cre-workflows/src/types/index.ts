@@ -25,7 +25,7 @@ const evmConfigSchema = z.object({
 
 export const configSchema = z.object({
   schedule: z.string(),
-  agentApiUrl: z.string().url(),
+  agentApiUrl: z.string().min(1),
   evms: z.array(evmConfigSchema).min(1),
 });
 

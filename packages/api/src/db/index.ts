@@ -42,6 +42,7 @@ function migrate(db: Database.Database): void {
     CREATE TABLE IF NOT EXISTS alerts (
       id          TEXT PRIMARY KEY,
       protocol    TEXT NOT NULL,
+      protocol_name TEXT DEFAULT '',
       threat_level TEXT NOT NULL,
       confidence  REAL NOT NULL,
       action      TEXT NOT NULL,
@@ -70,6 +71,12 @@ function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_alerts_created_at   ON alerts(created_at);
     CREATE INDEX IF NOT EXISTS idx_forensic_protocol   ON forensic_reports(protocol);
   `);
+
+  // Add protocol_name column if missing (for existing databases)
+  const cols = db.prepare("PRAGMA table_info(alerts)").all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === "protocol_name")) {
+    db.exec("ALTER TABLE alerts ADD COLUMN protocol_name TEXT DEFAULT ''");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +86,7 @@ function migrate(db: Database.Database): void {
 export interface AlertRow {
   id: string;
   protocol: string;
+  protocol_name: string;
   threat_level: string;
   confidence: number;
   action: string;
@@ -89,17 +97,33 @@ export interface AlertRow {
 export function insertAlert(alert: Omit<AlertRow, "created_at">): AlertRow {
   const db = getDb();
   const stmt = db.prepare(`
-    INSERT INTO alerts (id, protocol, threat_level, confidence, action, consensus_data)
-    VALUES (@id, @protocol, @threat_level, @confidence, @action, @consensus_data)
+    INSERT INTO alerts (id, protocol, protocol_name, threat_level, confidence, action, consensus_data)
+    VALUES (@id, @protocol, @protocol_name, @threat_level, @confidence, @action, @consensus_data)
   `);
-  stmt.run(alert);
+  stmt.run({
+    ...alert,
+    protocol_name: alert.protocol_name || lookupProtocolName(db, alert.protocol),
+  });
   return db.prepare("SELECT * FROM alerts WHERE id = ?").get(alert.id) as AlertRow;
 }
 
+/** Look up protocol name from the protocols table, falling back to the address. */
+function lookupProtocolName(db: Database.Database, address: string): string {
+  const row = db
+    .prepare("SELECT name FROM protocols WHERE address = ?")
+    .get(address) as { name: string } | undefined;
+  return row?.name || address;
+}
+
 export function getAlert(id: string): AlertRow | undefined {
-  return getDb().prepare("SELECT * FROM alerts WHERE id = ?").get(id) as
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM alerts WHERE id = ?").get(id) as
     | AlertRow
     | undefined;
+  if (row && !row.protocol_name) {
+    row.protocol_name = lookupProtocolName(db, row.protocol);
+  }
+  return row;
 }
 
 export function listAlerts(
@@ -124,6 +148,13 @@ export function listAlerts(
       `SELECT * FROM alerts ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     )
     .all(...params, limit, offset) as AlertRow[];
+
+  // Enrich items that have an empty protocol_name (legacy rows)
+  for (const item of items) {
+    if (!item.protocol_name) {
+      item.protocol_name = lookupProtocolName(db, item.protocol);
+    }
+  }
 
   return { items, total, page, limit };
 }

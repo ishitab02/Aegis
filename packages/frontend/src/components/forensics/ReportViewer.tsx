@@ -170,7 +170,7 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
     recommendations: true,
   });
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["forensics-report", reportId],
     queryFn: () => api.getForensicsById(reportId || "") as Promise<unknown>,
     enabled: Boolean(reportId),
@@ -182,22 +182,28 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
     setOpenSections((current) => ({ ...current, [section]: !current[section] }));
   }
 
+  const errorMessage = error instanceof Error
+    ? error.message.toLowerCase().includes("timed out")
+      ? "Forensics request timed out. Please retry."
+      : error.message
+    : "Failed to load forensic report.";
+
   if (!reportId) {
     return (
-      <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6">
-        <p className="text-sm text-[var(--text-muted)]">Select a report to inspect forensic details.</p>
+      <section className="rounded-lg border border-border-subtle bg-bg-surface p-6">
+        <p className="text-sm text-text-muted">Select a report to inspect forensic details.</p>
       </section>
     );
   }
 
   return (
     <section className="space-y-4">
-      <header className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
+      <header className="rounded-lg border border-border-subtle bg-bg-surface p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">Forensics Report</p>
-            <h2 className="mt-1 text-xl font-semibold text-[var(--text-primary)]">{report.reportId}</h2>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            <p className="text-xs uppercase tracking-[0.12em] text-text-muted">Forensics Report</p>
+            <h2 className="mt-1 text-xl font-semibold text-white">{report.reportId}</h2>
+            <p className="mt-1 text-sm text-text-secondary">
               {report.protocol} • {new Date(report.timestamp * 1000).toLocaleString()}
             </p>
           </div>
@@ -206,7 +212,7 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
             <ThreatBadge level={report.severity} />
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:border-[var(--border-muted)]"
+              className="inline-flex items-center gap-1 rounded-lg border border-border-subtle bg-bg-elevated px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-elevated"
               onClick={() => window.print()}
             >
               <Download className="h-4 w-4" />
@@ -217,140 +223,156 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
       </header>
 
       {isLoading && (
-        <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
+        <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
           <LoadingSkeleton lines={8} />
         </section>
       )}
 
       {error && (
-        <section className="rounded-xl border border-[#7f1d1d] bg-[#7f1d1d]/30 p-4">
-          <p className="text-sm text-[#fecaca]">Failed to load report from `/api/v1/forensics/{reportId}`.</p>
+        <section className="rounded-lg border border-red-500/40 bg-red-500/20 p-4">
+          <p className="text-sm text-red-200">{errorMessage}</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-2 inline-flex items-center gap-1 rounded border border-red-500/50 px-2 py-1 text-xs text-red-200 transition hover:bg-red-500/20"
+            disabled={isFetching}
+          >
+            Retry
+          </button>
         </section>
       )}
 
       {!isLoading && !error && (
         <>
-          <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <section className="rounded-lg border border-border-subtle bg-bg-surface">
             <button
               type="button"
               className="flex w-full items-center justify-between px-4 py-3 text-left"
               onClick={() => toggleSection("summary")}
             >
-              <span className="text-base font-semibold text-[var(--text-primary)]">1. Executive Summary</span>
-              <ChevronDown className={`h-4 w-4 text-[var(--text-muted)] transition ${openSections.summary ? "rotate-180" : ""}`} />
+              <span className="text-base font-semibold text-white">1. Executive Summary</span>
+              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.summary ? "rotate-180" : ""}`} />
             </button>
             {openSections.summary && (
-              <div className="grid gap-3 border-t border-[var(--border-subtle)] px-4 py-3 sm:grid-cols-3">
-                <article className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Attack Type</p>
-                  <p className="mt-1 text-sm text-[var(--text-primary)]">{report.attackType}</p>
+              <div className="grid gap-3 border-t border-border-subtle px-4 py-3 sm:grid-cols-3">
+                <article className="rounded-md border border-border-subtle bg-bg-elevated p-3">
+                  <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Attack Type</p>
+                  <p className="mt-1 text-sm text-white">{report.attackType}</p>
                 </article>
-                <article className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Estimated Loss</p>
-                  <p className="mt-1 text-sm text-[var(--text-primary)]">{report.estimatedLoss}</p>
+                <article className="rounded-md border border-border-subtle bg-bg-elevated p-3">
+                  <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Estimated Loss</p>
+                  <p className="mt-1 text-sm text-white">{report.estimatedLoss}</p>
                 </article>
-                <article className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
-                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Protocol</p>
-                  <p className="mt-1 text-sm text-[var(--text-primary)]">{report.address}</p>
+                <article className="rounded-md border border-border-subtle bg-bg-elevated p-3">
+                  <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Protocol</p>
+                  <p className="mt-1 text-sm text-white">{report.address}</p>
                 </article>
-                <p className="sm:col-span-3 text-sm text-[var(--text-secondary)]">{report.summaryText}</p>
+                <p className="sm:col-span-3 text-sm text-text-secondary">{report.summaryText}</p>
               </div>
             )}
           </section>
 
-          <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <section className="rounded-lg border border-border-subtle bg-bg-surface">
             <button
               type="button"
               className="flex w-full items-center justify-between px-4 py-3 text-left"
               onClick={() => toggleSection("flow")}
             >
-              <span className="text-base font-semibold text-[var(--text-primary)]">2. Attack Flow</span>
-              <ChevronDown className={`h-4 w-4 text-[var(--text-muted)] transition ${openSections.flow ? "rotate-180" : ""}`} />
+              <span className="text-base font-semibold text-white">2. Attack Flow</span>
+              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.flow ? "rotate-180" : ""}`} />
             </button>
             {openSections.flow && (
-              <div className="border-t border-[var(--border-subtle)] px-4 py-3">
-                <AttackFlowDiagram nodes={report.flow} />
+              <div className="border-t border-border-subtle px-4 py-3">
+                {report.flow.length > 0 ? (
+                  <AttackFlowDiagram nodes={report.flow} />
+                ) : (
+                  <p className="text-sm text-text-muted">No attack flow graph available for this report.</p>
+                )}
               </div>
             )}
           </section>
 
-          <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <section className="rounded-lg border border-border-subtle bg-bg-surface">
             <button
               type="button"
               className="flex w-full items-center justify-between px-4 py-3 text-left"
               onClick={() => toggleSection("destinations")}
             >
-              <span className="text-base font-semibold text-[var(--text-primary)]">3. Fund Destinations</span>
-              <ChevronDown className={`h-4 w-4 text-[var(--text-muted)] transition ${openSections.destinations ? "rotate-180" : ""}`} />
+              <span className="text-base font-semibold text-white">3. Fund Destinations</span>
+              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.destinations ? "rotate-180" : ""}`} />
             </button>
             {openSections.destinations && (
-              <div className="border-t border-[var(--border-subtle)] px-4 py-3">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse">
-                    <thead>
-                      <tr className="border-b border-[var(--border-subtle)] text-left text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                        <th className="px-2 py-2">Address</th>
-                        <th className="px-2 py-2">Amount</th>
-                        <th className="px-2 py-2">Status</th>
-                        <th className="px-2 py-2">Explorer</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.destinations.map((destination) => (
-                        <tr key={`${destination.address}-${destination.amount}`} className="border-b border-[var(--border-subtle)] text-sm">
-                          <td className="px-2 py-2 font-mono text-[var(--text-secondary)]">{destination.address}</td>
-                          <td className="px-2 py-2 text-[var(--text-secondary)]">{destination.amount}</td>
-                          <td className="px-2 py-2">
-                            <span
-                              className={`rounded px-2 py-1 text-xs font-medium ${
-                                destination.status === "TRACED"
-                                  ? "bg-[#14532d]/40 text-[#86efac]"
-                                  : "bg-[#7f1d1d]/40 text-[#fca5a5]"
-                              }`}
-                            >
-                              {destination.status}
-                            </span>
-                          </td>
-                          <td className="px-2 py-2">
-                            <a
-                              href={`https://basescan.org/address/${destination.address}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-[var(--accent)] hover:text-[var(--accent-hover)]"
-                            >
-                              Open
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </td>
+              <div className="border-t border-border-subtle px-4 py-3">
+                {report.destinations.length === 0 ? (
+                  <p className="text-sm text-text-muted">No destination data available.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse">
+                      <thead>
+                        <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-[0.1em] text-text-muted">
+                          <th className="px-2 py-2">Address</th>
+                          <th className="px-2 py-2">Amount</th>
+                          <th className="px-2 py-2">Status</th>
+                          <th className="px-2 py-2">Explorer</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {report.destinations.map((destination) => (
+                          <tr key={`${destination.address}-${destination.amount}`} className="border-b border-border-subtle text-sm">
+                            <td className="px-2 py-2 font-mono text-text-secondary">{destination.address}</td>
+                            <td className="px-2 py-2 text-text-secondary">{destination.amount}</td>
+                            <td className="px-2 py-2">
+                              <span
+                                className={`rounded px-2 py-1 text-xs font-medium ${
+                                  destination.status === "TRACED"
+                                    ? "bg-green-500/20 text-green-300"
+                                    : "bg-red-500/20 text-red-300"
+                                }`}
+                              >
+                                {destination.status}
+                              </span>
+                            </td>
+                            <td className="px-2 py-2">
+                              <a
+                                href={`https://basescan.org/address/${destination.address}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-blue-300 hover:text-blue-200"
+                              >
+                                Open
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </section>
 
-          <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <section className="rounded-lg border border-border-subtle bg-bg-surface">
             <button
               type="button"
               className="flex w-full items-center justify-between px-4 py-3 text-left"
               onClick={() => toggleSection("technical")}
             >
-              <span className="text-base font-semibold text-[var(--text-primary)]">4. Technical Details</span>
-              <ChevronDown className={`h-4 w-4 text-[var(--text-muted)] transition ${openSections.technical ? "rotate-180" : ""}`} />
+              <span className="text-base font-semibold text-white">4. Technical Details</span>
+              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.technical ? "rotate-180" : ""}`} />
             </button>
             {openSections.technical && (
-              <div className="space-y-3 border-t border-[var(--border-subtle)] px-4 py-3">
+              <div className="space-y-3 border-t border-border-subtle px-4 py-3">
                 <article>
-                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Vulnerability</p>
-                  <p className="text-sm text-[var(--text-secondary)]">{report.technicalDetails.vulnerability}</p>
+                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-muted">Vulnerability</p>
+                  <p className="text-sm text-text-secondary">{report.technicalDetails.vulnerability}</p>
                 </article>
 
                 <article>
-                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Affected Functions</p>
+                  <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-muted">Affected Functions</p>
                   {report.technicalDetails.affectedFunctions.length > 0 ? (
-                    <ul className="space-y-1 text-sm text-[var(--text-secondary)]">
+                    <ul className="space-y-1 text-sm text-text-secondary">
                       {report.technicalDetails.affectedFunctions.map((func) => (
                         <li key={func} className="font-mono">
                           {func}
@@ -358,16 +380,16 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-[var(--text-muted)]">No function list available.</p>
+                    <p className="text-sm text-text-muted">No function list available.</p>
                   )}
                 </article>
 
                 <article>
-                  <p className="mb-1 inline-flex items-center gap-1 text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                  <p className="mb-1 inline-flex items-center gap-1 text-xs uppercase tracking-[0.08em] text-text-muted">
                     <FileSearch className="h-3.5 w-3.5" />
                     Code Snippet
                   </p>
-                  <pre className="overflow-x-auto rounded-md border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3 text-xs text-[var(--text-secondary)]">
+                  <pre className="overflow-x-auto rounded-md border border-border-subtle bg-bg-elevated p-3 text-xs text-text-secondary">
                     <code>{report.technicalDetails.codeSnippet}</code>
                   </pre>
                 </article>
@@ -375,38 +397,42 @@ export function ReportViewer({ reportId }: { reportId?: string }) {
             )}
           </section>
 
-          <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <section className="rounded-lg border border-border-subtle bg-bg-surface">
             <button
               type="button"
               className="flex w-full items-center justify-between px-4 py-3 text-left"
               onClick={() => toggleSection("recommendations")}
             >
-              <span className="text-base font-semibold text-[var(--text-primary)]">5. Recommendations</span>
-              <ChevronDown className={`h-4 w-4 text-[var(--text-muted)] transition ${openSections.recommendations ? "rotate-180" : ""}`} />
+              <span className="text-base font-semibold text-white">5. Recommendations</span>
+              <ChevronDown className={`h-4 w-4 text-text-muted transition ${openSections.recommendations ? "rotate-180" : ""}`} />
             </button>
             {openSections.recommendations && (
-              <div className="space-y-2 border-t border-[var(--border-subtle)] px-4 py-3">
-                {report.recommendations.map((recommendation, index) => (
-                  <article
-                    key={`${recommendation.text}-${index}`}
-                    className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-2"
-                  >
-                    <div className="mb-1 flex items-center justify-between">
-                      <span
-                        className={`rounded px-2 py-0.5 text-xs font-medium ${
-                          recommendation.priority === "HIGH"
-                            ? "bg-[#7f1d1d]/45 text-[#fca5a5]"
-                            : recommendation.priority === "LOW"
-                              ? "bg-[#14532d]/45 text-[#86efac]"
-                              : "bg-[#713f12]/45 text-[#fde047]"
-                        }`}
-                      >
-                        {recommendation.priority}
-                      </span>
-                    </div>
-                    <p className="text-sm text-[var(--text-secondary)]">{recommendation.text}</p>
-                  </article>
-                ))}
+              <div className="space-y-2 border-t border-border-subtle px-4 py-3">
+                {report.recommendations.length === 0 ? (
+                  <p className="text-sm text-text-muted">No recommendations provided.</p>
+                ) : (
+                  report.recommendations.map((recommendation, index) => (
+                    <article
+                      key={`${recommendation.text}-${index}`}
+                      className="rounded-md border border-border-subtle bg-bg-elevated px-3 py-2"
+                    >
+                      <div className="mb-1 flex items-center justify-between">
+                        <span
+                          className={`rounded px-2 py-0.5 text-xs font-medium ${
+                            recommendation.priority === "HIGH"
+                              ? "bg-red-500/20 text-red-300"
+                              : recommendation.priority === "LOW"
+                                ? "bg-green-500/20 text-green-300"
+                                : "bg-yellow-500/20 text-yellow-300"
+                          }`}
+                        >
+                          {recommendation.priority}
+                        </span>
+                      </div>
+                      <p className="text-sm text-text-secondary">{recommendation.text}</p>
+                    </article>
+                  ))
+                )}
               </div>
             )}
           </section>

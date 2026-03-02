@@ -70,14 +70,22 @@ function getThreatBorder(level: ThreatLevel): string {
   }
 }
 
+type VoteEntry = {
+  sentinel_id?: string;
+  threat_level?: string;
+  confidence?: number;
+};
+
 export function ThreatDashboard({
   threatLevel,
   consensusReached,
   agreementRatio,
+  votes,
 }: {
   threatLevel: ThreatLevel;
   consensusReached: boolean;
   agreementRatio: number;
+  votes?: VoteEntry[];
 }) {
   const Icon = ICONS[threatLevel];
   const isCritical = threatLevel === "CRITICAL";
@@ -179,7 +187,15 @@ export function ThreatDashboard({
             <>
               <span className="h-4 w-px bg-border-subtle" />
               <span className="text-sm font-medium text-text-primary">
-                {(agreementRatio * 100).toFixed(0)}% agreement
+                {(() => {
+                  if (!votes || votes.length === 0) {
+                    return `${(agreementRatio * 100).toFixed(0)}% agreement`;
+                  }
+                  const agreeing = votes.filter(
+                    (v) => v.threat_level?.toUpperCase() === threatLevel
+                  ).length;
+                  return `${agreeing}/${votes.length} sentinels agree`;
+                })()}
               </span>
             </>
           )}

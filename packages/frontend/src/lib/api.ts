@@ -1,21 +1,43 @@
 const API_BASE = "/api/v1";
+const REQUEST_TIMEOUT_MS = 8000;
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    const payload = await response.text().catch(() => "");
-    const message = payload ? `${response.status} ${response.statusText}: ${payload}` : `${response.status} ${response.statusText}`;
-    throw new Error(message);
+  if (init?.signal) {
+    if (init.signal.aborted) {
+      controller.abort();
+    } else {
+      init.signal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
   }
 
-  return response.json() as Promise<T>;
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const payload = await response.text().catch(() => "");
+      const message = payload ? `${response.status} ${response.statusText}: ${payload}` : `${response.status} ${response.statusText}`;
+      throw new Error(message);
+    }
+
+    return response.json() as Promise<T>;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out. Please retry.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 export const api = {
@@ -67,4 +89,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  // Demo endpoints
+  getDemoScenarios: () => apiFetch<unknown>("/demo/scenarios"),
+  startEulerReplay: () =>
+    apiFetch<unknown>("/demo/euler-replay", { method: "POST" }),
+  getEulerReplayStep: (stepNumber: number) =>
+    apiFetch<unknown>(`/demo/euler-replay/step/${stepNumber}`),
 };

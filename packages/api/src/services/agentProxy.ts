@@ -84,3 +84,23 @@ export async function getAgentHealth() {
     return { status: "UNHEALTHY", error: "Agent API unreachable" };
   }
 }
+
+// ---- Demo ----
+
+export async function getDemoScenarios() {
+  const res = await agentFetch("/api/v1/demo/scenarios");
+  return res.json();
+}
+
+export async function startEulerReplay() {
+  const res = await agentFetch("/api/v1/demo/euler-replay", {
+    method: "POST",
+  });
+  return res.json();
+}
+
+export async function getEulerReplayStep(stepNumber: number) {
+  const res = await agentFetch(`/api/v1/demo/euler-replay/step/${stepNumber}`);
+  if (!res.ok) return null;
+  return res.json();
+}

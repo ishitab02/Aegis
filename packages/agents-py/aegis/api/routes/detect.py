@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 from aegis.coordinator.crew import run_detection_cycle
 from aegis.models import DetectionRequest, DetectionResponse
-from aegis.api.routes.sentinel import update_consensus, update_sentinel_assessment
+from aegis.api.routes.sentinel import update_consensus, update_protocol_info, update_sentinel_assessment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -46,6 +46,7 @@ async def trigger_detection(request: DetectionRequest) -> DetectionResponse:
         for assessment in result.assessments:
             update_sentinel_assessment(assessment)
         update_consensus(result.consensus.model_dump())
+        update_protocol_info(request.protocol_name, request.protocol_address)
 
         return result
 

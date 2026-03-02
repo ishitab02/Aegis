@@ -68,10 +68,12 @@ async def list_forensic_reports() -> dict:
     return {
         "reports": [
             {
+                "id": r.report_id,  # For frontend compatibility
                 "reportId": r.report_id,
                 "txHash": r.tx_hash,
                 "protocol": r.protocol,
                 "attackType": r.attack_classification.primary_type,
+                "severity": r.impact_assessment.severity.value,
                 "timestamp": r.timestamp,
             }
             for r in _reports.values()
