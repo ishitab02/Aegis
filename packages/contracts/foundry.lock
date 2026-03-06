@@ -1,0 +1,8 @@
+{
+  "lib/chainlink": {
+    "tag": {
+      "name": "v2.36.0",
+      "rev": "2d6c9a53491c5fc1869729516fb21deb8014fa56"
+    }
+  }
+}

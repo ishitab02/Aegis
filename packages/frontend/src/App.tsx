@@ -21,6 +21,7 @@ import { base, baseSepolia } from "wagmi/chains";
 import { PageWrapper } from "./components/layout/PageWrapper";
 import { AlertHistory } from "./components/alerts/AlertHistory";
 import { ThreatFeed } from "./components/dashboard/ThreatFeed";
+import { LiveMonitor } from "./components/dashboard/LiveMonitor";
 import { ReportViewer } from "./components/forensics/ReportViewer";
 import { ThreatDashboard } from "./components/dashboard/ThreatDashboard";
 import { SystemStatus } from "./components/dashboard/SystemStatus";
@@ -253,6 +254,7 @@ function DashboardPage({ stream }: { stream: StreamInfo }) {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          <LiveMonitor />
           <ThreatFeed />
         </div>
         <div className="space-y-6">

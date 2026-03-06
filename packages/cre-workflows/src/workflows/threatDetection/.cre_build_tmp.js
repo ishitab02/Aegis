@@ -30321,12 +30321,7 @@ function runDetectionCycle(runtime2) {
     const threatId = keccak256(toHex(`aegis-${Date.now()}-${consensus.final_threat_level}`));
     const threatLevelUint82 = THREAT_LEVEL_UINT8[consensus.final_threat_level] ?? 0;
     const reason = `AEGIS consensus: ${consensus.final_threat_level} (${consensus.agreement_ratio.toFixed(2)} agreement). ${detection.assessments.map((a) => a.details).join("; ")}`;
-    const reportData = encodeAbiParameters(parseAbiParameters("address protocol, bytes32 threatId, uint8 threatLevel, string reason"), [
-      evm.mockProtocolAddress,
-      threatId,
-      threatLevelUint82,
-      reason
-    ]);
+    const reportData = encodeAbiParameters(parseAbiParameters("address protocol, bytes32 threatId, uint8 threatLevel, string reason"), [evm.mockProtocolAddress, threatId, threatLevelUint82, reason]);
     const reportResponse = runtime2.report({
       encodedPayload: hexToBase64(reportData),
       encoderName: "evm",
@@ -30371,7 +30366,10 @@ function runDetectionCycle(runtime2) {
       votes
     ]
   });
-  const submitReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [evm.threatReportAddress, submitCallData]);
+  const submitReportData = encodeAbiParameters(parseAbiParameters("address to, bytes data"), [
+    evm.threatReportAddress,
+    submitCallData
+  ]);
   const reportResponse2 = runtime2.report({
     encodedPayload: hexToBase64(submitReportData),
     encoderName: "evm",
@@ -30399,9 +30397,7 @@ function runDetectionCycle(runtime2) {
 }
 var initWorkflow = (config2) => {
   const cronCap = new cre.capabilities.CronCapability;
-  return [
-    cre.handler(cronCap.trigger({ schedule: config2.schedule }), onCronTrigger)
-  ];
+  return [cre.handler(cronCap.trigger({ schedule: config2.schedule }), onCronTrigger)];
 };
 async function main() {
   const runner = await Runner.newRunner({ configSchema });

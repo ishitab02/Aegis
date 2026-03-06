@@ -11,7 +11,6 @@ pragma solidity ^0.8.24;
  * CCIP Router (Arbitrum Sepolia): 0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165
  */
 contract AlertReceiver {
-
     // ============ CCIP Structs (mirrored from Client.sol) ============
 
     struct EVMTokenAmount {
@@ -20,10 +19,10 @@ contract AlertReceiver {
     }
 
     struct Any2EVMMessage {
-        bytes32 messageId;          // unique CCIP message ID
-        uint64  sourceChainSelector; // source chain (e.g. Base Sepolia)
-        bytes   sender;              // ABI-encoded sender address
-        bytes   data;                // arbitrary payload
+        bytes32 messageId; // unique CCIP message ID
+        uint64 sourceChainSelector; // source chain (e.g. Base Sepolia)
+        bytes sender; // ABI-encoded sender address
+        bytes data; // arbitrary payload
         EVMTokenAmount[] destTokenAmounts;
     }
 
@@ -34,14 +33,14 @@ contract AlertReceiver {
 
     struct Alert {
         bytes32 messageId;
-        uint64  sourceChainSelector;
+        uint64 sourceChainSelector;
         address senderAddress;
-        string  alertType;
+        string alertType;
         address protocol;
         bytes32 threatId;
-        uint8   threatLevel;
+        uint8 threatLevel;
         uint256 alertTimestamp;
-        string  description;
+        string description;
         uint256 receivedAt;
     }
 
@@ -52,12 +51,12 @@ contract AlertReceiver {
 
     event AlertReceived(
         bytes32 indexed messageId,
-        uint64  indexed sourceChainSelector,
+        uint64 indexed sourceChainSelector,
         address indexed senderAddress,
-        string  alertType,
+        string alertType,
         address protocol,
-        uint8   threatLevel,
-        string  description
+        uint8 threatLevel,
+        string description
     );
 
     event CCIPRouterUpdated(address oldRouter, address newRouter);
@@ -94,12 +93,12 @@ contract AlertReceiver {
         //   abi.encode(string alertType, address protocol, bytes32 threatId,
         //              uint8 threatLevel, uint256 timestamp, string description)
         (
-            string  memory alertType,
-            address         protocol,
-            bytes32         threatId,
-            uint8           threatLevel,
-            uint256         alertTimestamp,
-            string  memory  description
+            string memory alertType,
+            address protocol,
+            bytes32 threatId,
+            uint8 threatLevel,
+            uint256 alertTimestamp,
+            string memory description
         ) = abi.decode(message.data, (string, address, bytes32, uint8, uint256, string));
 
         // Recover sender address (ABI-encoded as 32 bytes)
@@ -107,27 +106,21 @@ contract AlertReceiver {
 
         // Store alert
         alerts[message.messageId] = Alert({
-            messageId:           message.messageId,
+            messageId: message.messageId,
             sourceChainSelector: message.sourceChainSelector,
-            senderAddress:       senderAddress,
-            alertType:           alertType,
-            protocol:            protocol,
-            threatId:            threatId,
-            threatLevel:         threatLevel,
-            alertTimestamp:      alertTimestamp,
-            description:         description,
-            receivedAt:          block.timestamp
+            senderAddress: senderAddress,
+            alertType: alertType,
+            protocol: protocol,
+            threatId: threatId,
+            threatLevel: threatLevel,
+            alertTimestamp: alertTimestamp,
+            description: description,
+            receivedAt: block.timestamp
         });
         alertIds.push(message.messageId);
 
         emit AlertReceived(
-            message.messageId,
-            message.sourceChainSelector,
-            senderAddress,
-            alertType,
-            protocol,
-            threatLevel,
-            description
+            message.messageId, message.sourceChainSelector, senderAddress, alertType, protocol, threatLevel, description
         );
     }
 

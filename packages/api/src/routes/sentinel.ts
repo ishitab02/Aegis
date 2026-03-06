@@ -1,6 +1,12 @@
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
-import { getSentinelAggregate, getSentinelById, runDetection } from "../services/agentProxy.js";
+import {
+  getSentinelAggregate,
+  getSentinelById,
+  runDetection,
+  getLiveAaveMonitor,
+  getLiveProtocolMonitor,
+} from "../services/agentProxy.js";
 import { config } from "../config.js";
 import { insertAlert } from "../db/index.js";
 import { broadcast } from "./ws.js";
@@ -36,6 +42,7 @@ sentinel.post("/detect", async (c) => {
     simulate_tvl_drop_percent: body.simulate_tvl_drop_percent,
     simulate_price_deviation_percent: body.simulate_price_deviation_percent,
     simulate_short_voting_period: body.simulate_short_voting_period,
+    live_mode: body.live_mode ?? false,
   });
 
   // auto-persist alert on HIGH or CRITICAL consensus
@@ -64,6 +71,25 @@ sentinel.post("/detect", async (c) => {
   }
 
   return c.json(result);
+});
+
+sentinel.get("/monitor/aave", async (c) => {
+  try {
+    const data = await getLiveAaveMonitor();
+    return c.json(data);
+  } catch (e) {
+    return c.json({ error: "Failed to fetch live Aave monitor data" }, 500);
+  }
+});
+
+sentinel.get("/monitor/:address", async (c) => {
+  const address = c.req.param("address");
+  try {
+    const data = await getLiveProtocolMonitor(address);
+    return c.json(data);
+  } catch (e) {
+    return c.json({ error: "Failed to fetch live monitor data" }, 500);
+  }
 });
 
 export { sentinel };

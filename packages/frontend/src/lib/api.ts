@@ -45,6 +45,26 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 }
 
+export type LiveMonitorData = {
+  protocol_address: string;
+  protocol_name?: string;
+  tvl_wei?: number;
+  tvl_usd?: number | null;
+  previous_tvl_wei?: number | null;
+  tvl_change_percent?: number | null;
+  eth_usd_price?: number | null;
+  anomalies?: Array<{
+    anomaly_type: string;
+    severity: string;
+    deviation_percent: number;
+    message: string;
+  }>;
+  adapter_type?: string;
+  status?: string;
+  message?: string;
+  timestamp: number;
+};
+
 export const api = {
   getHealth: () => apiFetch<unknown>("/health"),
   getAlerts: (page = 1, limit = 20, protocol?: string) => {
@@ -78,6 +98,7 @@ export const api = {
     simulate_tvl_drop_percent?: number;
     simulate_price_deviation_percent?: number;
     simulate_short_voting_period?: boolean;
+    live_mode?: boolean;
   }) =>
     apiFetch<unknown>("/sentinel/detect", {
       method: "POST",
@@ -95,4 +116,9 @@ export const api = {
   startEulerReplay: () => apiFetch<unknown>("/demo/euler-replay", { method: "POST" }),
   getEulerReplayStep: (stepNumber: number) =>
     apiFetch<unknown>(`/demo/euler-replay/step/${stepNumber}`),
+
+  // Live monitoring
+  getLiveAaveMonitor: () => apiFetch<LiveMonitorData>("/sentinel/monitor/aave"),
+  getLiveProtocolMonitor: (address: string) =>
+    apiFetch<LiveMonitorData>(`/sentinel/monitor/${address}`),
 };

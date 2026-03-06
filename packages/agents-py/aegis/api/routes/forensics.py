@@ -7,12 +7,55 @@ from fastapi import APIRouter, HTTPException
 from aegis.blockchain.web3_client import get_web3
 from aegis.models import ForensicReport, ForensicsRequest
 from aegis.sherlock.chain_sherlock import analyze_trace, trace_transaction
+from aegis.sherlock.euler_analysis import (
+    EULER_ATTACK_FLOW,
+    EULER_BLOCK,
+    EULER_PROTOCOL,
+    EULER_STOLEN_TOKENS,
+    EULER_TRANSACTION_GRAPH,
+    EULER_TX_HASH,
+    get_euler_forensic_report,
+)
 from aegis.utils import now_seconds
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 _reports: dict[str, ForensicReport] = {}
+
+
+@router.get("/demo/euler")
+async def euler_demo() -> dict:
+    """Return a pre-computed forensic analysis of the Euler Finance hack.
+
+    The Euler Finance exploit (March 13, 2023, block 16818057) drained ~$197M
+    using a flash loan + donation attack on the donateToReserves() function.
+
+    This endpoint returns a cached analysis immediately — no archive node needed.
+    """
+    report = get_euler_forensic_report()
+
+    # Also store it so it shows in /forensics list
+    _reports[report.report_id] = report
+
+    return {
+        "reportId": report.report_id,
+        "status": "COMPLETE",
+        "timestamp": report.timestamp,
+        "exploit": {
+            "name": "Euler Finance Hack",
+            "date": "2023-03-13",
+            "block": EULER_BLOCK,
+            "txHash": EULER_TX_HASH,
+            "protocol": EULER_PROTOCOL,
+            "amountStolenUSD": 197_000_000,
+            "attackType": "FLASH_LOAN + DONATION_ATTACK",
+        },
+        "report": report.model_dump(),
+        "transactionGraph": EULER_TRANSACTION_GRAPH,
+        "attackFlow": EULER_ATTACK_FLOW,
+        "stolenTokens": EULER_STOLEN_TOKENS,
+    }
 
 
 @router.post("")
