@@ -3437,4 +3437,4 @@ TESTNET: Base Sepolia (84532)
 ---
 
 *Last Updated: March 6, 2026*
-*Version: 5.4.0 — Agent 3 complete: Demo video preparation finished. Created VIDEO_SCRIPT.md with proof links, DEMO_RUNBOOK.md with step-by-step commands, run-full-demo.ts E2E script, demo-assets/ with architecture diagrams, JUDGE_CHEATSHEET.md one-pager. Full demo tested: live Aave ~$12B TVL, 2/3 CRITICAL consensus, TestVault paused, CCIP/VRF proofs verified.*
+*Version: 5.4.1 — Agent 3 complete: Demo video preparation finished. Created VIDEO_SCRIPT.md with proof links, DEMO_RUNBOOK.md with step-by-step commands, run-full-demo.ts E2E script, demo-assets/ with architecture diagrams, JUDGE_CHEATSHEET.md one-pager. Full demo tested: live Aave ~$12B TVL, 2/3 CRITICAL consensus, TestVault paused, CCIP/VRF proofs verified.*
