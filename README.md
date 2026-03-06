@@ -129,12 +129,50 @@ Navigate to **http://localhost:5173**
 
 ## Demo: Simulate an Attack
 
+### Option 1: Visual Exploit Simulator (Recommended)
+
+Run the production-ready exploit simulator with ASCII art, progress bars, and real-time sentinel responses:
+
+```bash
+# Classic reentrancy attack (The DAO style)
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=reentrancy
+
+# Euler Finance flash loan exploit ($197M)
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=euler
+
+# Oracle manipulation attack (Mango Markets style)
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=oracle
+
+# Malicious governance attack (Beanstalk style)
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=governance
+
+# Bridge exploit (Ronin style)
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=bridge
+
+# Curve pool imbalance attack
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=curve
+
+# Run ALL scenarios sequentially
+pnpm exec tsx scripts/simulate-exploit.ts --all
+
+# Enable REAL on-chain circuit breaker (requires DEPLOYER_PRIVATE_KEY)
+pnpm exec tsx scripts/simulate-exploit.ts --scenario=euler --live
+```
+
+**Supported Protocols**: MockProtocol, Aave V3, Uniswap V3, Compound V3, Curve 3pool, Balancer V2, Stargate Bridge, Euler Finance
+
+### Option 2: Direct API Call
+
 ```bash
 # Simulate a reentrancy attack (25% TVL drop + 6% price deviation)
 curl -X POST http://localhost:3000/api/v1/sentinel/detect \
   -H "Content-Type: application/json" \
   -d '{"protocol_address":"0x1","simulate_tvl_drop_percent":25,"simulate_price_deviation_percent":6}'
 ```
+
+### Option 3: Interactive Euler Replay (Frontend)
+
+Navigate to **http://localhost:5173/demo** for a step-by-step visualization of the Euler Finance hack.
 
 **Expected result:**
 - Liquidity Sentinel → CRITICAL
@@ -229,6 +267,7 @@ Full API documentation: http://localhost:3000/api/v1/docs
 
 ## Documentation
 
+- [Deployment Guide](docs/DEPLOYMENT.md) — Deploy to Vercel + Railway
 - [Demo Guide](docs/DEMO_GUIDE.md) — Step-by-step demo instructions
 - [Video Script](docs/VIDEO_SCRIPT.md) — 3-minute demo video script
 - [Devpost](docs/DEVPOST.md) — Hackathon submission content
