@@ -1,7 +1,4 @@
-"""Pydantic models for the AEGIS Protocol agent system.
-
-Ported from packages/agents/src/shared/types.ts
-"""
+"""Pydantic models."""
 
 from __future__ import annotations
 
@@ -9,8 +6,6 @@ from enum import Enum
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
-
-# ============ Enums ============
 
 
 class ThreatLevel(str, Enum):
@@ -22,7 +17,6 @@ class ThreatLevel(str, Enum):
 
     @staticmethod
     def severity(level: "ThreatLevel") -> int:
-        """Return numeric severity for ordering comparisons."""
         return _THREAT_SEVERITY[level]
 
 
@@ -74,7 +68,6 @@ class FundDestinationType(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
-# ============ Sentinel Types ============
 
 
 class ThreatAssessment(BaseModel):
@@ -104,7 +97,6 @@ class ConsensusResult(BaseModel):
     action_recommended: ActionRecommendation
 
 
-# ============ Forensics Types ============
 
 
 class InternalCall(BaseModel):
@@ -188,7 +180,6 @@ class ForensicReport(BaseModel):
     timestamp: int
 
 
-# ============ Protocol Types ============
 
 
 class ProtocolMetrics(BaseModel):
@@ -208,7 +199,6 @@ class PriceFeedData(BaseModel):
     feed_address: str
 
 
-# ============ API Types ============
 
 
 class SentinelStatus(BaseModel):
@@ -225,10 +215,9 @@ class HealthStatus(BaseModel):
 class DetectionRequest(BaseModel):
     protocol_address: str
     protocol_name: str = "MockProtocol"
-    # Simulation parameters (optional) - use these to test threat detection
-    simulate_tvl_drop_percent: Optional[float] = None  # e.g. 25.0 for 25% drop
-    simulate_price_deviation_percent: Optional[float] = None  # e.g. 6.0 for 6% deviation
-    simulate_short_voting_period: bool = False  # Trigger governance alert
+    simulate_tvl_drop_percent: Optional[float] = None
+    simulate_price_deviation_percent: Optional[float] = None
+    simulate_short_voting_period: bool = False
 
 
 class DetectionResponse(BaseModel):

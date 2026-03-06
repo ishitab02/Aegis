@@ -1,11 +1,5 @@
-/**
- * AEGIS Forensic Analysis Workflow
- *
- * Triggered when CircuitBreaker fires (EVM log trigger on CircuitBreakerTriggered).
- * Calls ChainSherlock for deep forensic analysis and stores report on-chain.
- *
- * Chainlink services: CRE + Log Trigger (Automation)
- */
+// forensic analysis: log trigger on CircuitBreakerTriggered -> ChainSherlock analysis -> on-chain report
+// chainlink services: CRE, Automation (log trigger)
 
 import {
   cre,
@@ -34,8 +28,6 @@ import {
 import { circuitBreakerAbi, threatReportAbi } from "../../types/abis";
 import { configSchema, type Config, THREAT_LEVEL_UINT8 } from "../../types";
 
-// ============ Forensic Report Response ============
-
 type ForensicReportResponse = {
   report_id: string;
   tx_hash: string;
@@ -48,14 +40,11 @@ type ForensicReportResponse = {
   timestamp: number;
 };
 
-// ============ Log Trigger Callback ============
-
 const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): string => {
   runtime.log("AEGIS: CircuitBreakerTriggered event detected!");
 
   const evm = runtime.config.evms[0];
 
-  // Decode the event log
   const topics = log.topics.map((t) => bytesToHex(t)) as [`0x${string}`, ...`0x${string}`[]];
   const data = bytesToHex(log.data);
 
@@ -71,7 +60,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
   runtime.log(`  Protocol: ${protocol}`);
   runtime.log(`  ThreatId: ${threatId}`);
 
-  // ---- Call ChainSherlock forensics API ----
   runtime.log("Calling ChainSherlock forensic analysis...");
   const httpClient = new cre.capabilities.HTTPClient();
 
@@ -116,7 +104,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
   );
   runtime.log(`  Report ID: ${report.report_id}`);
 
-  // ---- Store forensic report hash on-chain via ThreatReport ----
   runtime.log("Submitting forensic report reference on-chain...");
   const network = getNetwork({
     chainFamily: "evm",
@@ -178,8 +165,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
   });
 };
 
-// ============ Workflow Initialization ============
-
 const initWorkflow = (config: Config) => {
   const evm = config.evms[0];
   const network = getNetwork({
@@ -191,7 +176,6 @@ const initWorkflow = (config: Config) => {
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
-  // Listen for CircuitBreakerTriggered events
   const eventSignature = "CircuitBreakerTriggered(address,bytes32,uint8,string)";
   const eventHash = keccak256(toHex(eventSignature));
 
@@ -206,8 +190,6 @@ const initWorkflow = (config: Config) => {
     ),
   ];
 };
-
-// ============ Entry Point ============
 
 export async function main() {
   const runner = await Runner.newRunner<Config>({ configSchema });

@@ -50,7 +50,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
         )}
         onClick={onToggle}
       >
-        {/* Status */}
         <td className="w-12 px-4 py-3.5">
           <StatusDot
             status={getStatusType(alert.threatLevel)}
@@ -59,7 +58,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
           />
         </td>
 
-        {/* Protocol */}
         <td className="px-4 py-3.5">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface text-text-muted transition group-hover:border-border-muted">
@@ -74,12 +72,10 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
           </div>
         </td>
 
-        {/* Threat Level */}
         <td className="px-4 py-3.5">
           <ThreatBadge level={alert.threatLevel} variant="compact" />
         </td>
 
-        {/* Action */}
         <td className="px-4 py-3.5">
           <span
             className={clsx(
@@ -95,7 +91,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
           </span>
         </td>
 
-        {/* Consensus */}
         <td className="px-4 py-3.5">
           {typeof alert.consensusPercent === "number" ? (
             <div className="flex items-center gap-2">
@@ -121,7 +116,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
           )}
         </td>
 
-        {/* Time */}
         <td className="px-4 py-3.5">
           <Tooltip content={new Date(alert.createdAt * 1000).toLocaleString()}>
             <time className="text-sm text-text-secondary">
@@ -130,7 +124,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
           </Tooltip>
         </td>
 
-        {/* Expand */}
         <td className="w-12 px-4 py-3.5 text-right">
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown className="h-4 w-4 text-text-muted" />
@@ -138,7 +131,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
         </td>
       </tr>
 
-      {/* Expanded details */}
       <AnimatePresence>
         {expanded && (
           <motion.tr
@@ -154,7 +146,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                 animate={{ y: 0 }}
                 className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
               >
-                {/* Alert ID */}
                 <div>
                   <p className="mb-1.5 text-2xs font-medium uppercase tracking-wider text-text-muted">
                     Alert ID
@@ -177,7 +168,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                   </div>
                 </div>
 
-                {/* Confidence */}
                 <div>
                   <p className="mb-1.5 text-2xs font-medium uppercase tracking-wider text-text-muted">
                     Confidence
@@ -189,7 +179,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                   </p>
                 </div>
 
-                {/* Protocol Address */}
                 <div>
                   <p className="mb-1.5 text-2xs font-medium uppercase tracking-wider text-text-muted">
                     Protocol Address
@@ -210,7 +199,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                   </div>
                 </div>
 
-                {/* Timestamp */}
                 <div>
                   <p className="mb-1.5 text-2xs font-medium uppercase tracking-wider text-text-muted">
                     Recorded At
@@ -221,7 +209,6 @@ export function AlertRow({ alert, expanded, onToggle }: AlertRowProps) {
                 </div>
               </motion.div>
 
-              {/* Consensus Data */}
               {alert.consensusData && (
                 <div className="mt-4 rounded-lg border border-border-subtle bg-bg-base p-3">
                   <p className="mb-2 text-2xs font-medium uppercase tracking-wider text-text-muted">

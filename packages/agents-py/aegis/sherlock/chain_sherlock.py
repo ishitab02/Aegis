@@ -1,7 +1,4 @@
-"""ChainSherlock - AI forensic analyst for blockchain exploits.
-
-Ported from packages/agents/src/sherlock/actions/traceTransaction.ts
-"""
+"""Forensic analysis for blockchain exploits."""
 
 import logging
 from typing import Any
@@ -29,16 +26,13 @@ from aegis.utils import generate_threat_id, now_seconds
 
 logger = logging.getLogger(__name__)
 
-# ERC-20 Transfer event topic
 TRANSFER_TOPIC = Web3.keccak(text="Transfer(address,address,uint256)").hex()
 
 
 def trace_transaction(tx_hash: str, w3: Web3) -> TransactionTrace:
-    """Trace a transaction to extract the full call graph and token transfers."""
     receipt = w3.eth.get_transaction_receipt(tx_hash)
     tx = w3.eth.get_transaction(tx_hash)
 
-    # Try debug_traceTransaction for internal calls
     internal_calls: list[InternalCall] = []
     try:
         trace = w3.provider.make_request(
@@ -52,7 +46,6 @@ def trace_transaction(tx_hash: str, w3: Web3) -> TransactionTrace:
             "debug_traceTransaction not available, skipping internal call trace"
         )
 
-    # Extract ERC-20 transfers from logs
     token_transfers = _extract_token_transfers(receipt.get("logs", []))
 
     return TransactionTrace(
@@ -67,17 +60,11 @@ def trace_transaction(tx_hash: str, w3: Web3) -> TransactionTrace:
 
 
 def analyze_trace(trace: TransactionTrace, protocol_address: str) -> ForensicReport:
-    """Analyze a transaction trace and produce a forensic report.
-
-    This provides a rule-based classification. In production,
-    Claude AI would be used for deeper analysis via the CrewAI agent.
-    """
-    # Classify attack type based on patterns
     attack_type = AttackType.OTHER
     description = "Unknown attack vector"
     attack_flow: list[AttackStep] = []
 
-    # Check for reentrancy patterns (repeated calls to same address)
+    # reentrancy detection
     call_targets = [c.to for c in trace.internal_calls]
     for target in set(call_targets):
         if call_targets.count(target) > 2:
@@ -88,7 +75,7 @@ def analyze_trace(trace: TransactionTrace, protocol_address: str) -> ForensicRep
             )
             break
 
-    # Check for flash loan patterns (large token transfers in/out)
+    # flash loan detection
     if len(trace.token_transfers) >= 4:
         first_transfer = trace.token_transfers[0]
         last_transfer = trace.token_transfers[-1]
@@ -99,7 +86,6 @@ def analyze_trace(trace: TransactionTrace, protocol_address: str) -> ForensicRep
             attack_type = AttackType.FLASH_LOAN
             description = "Flash loan attack pattern detected"
 
-    # Build attack flow
     for i, call in enumerate(trace.internal_calls[:10]):
         attack_flow.append(
             AttackStep(
@@ -109,10 +95,8 @@ def analyze_trace(trace: TransactionTrace, protocol_address: str) -> ForensicRep
             )
         )
 
-    # Estimate impact from token transfers
     total_value = sum(int(t.amount) for t in trace.token_transfers if t.amount.isdigit())
 
-    # Track fund destinations
     destinations: list[FundDestination] = []
     seen_addresses: set[str] = set()
     for transfer in trace.token_transfers:
@@ -157,7 +141,6 @@ def analyze_trace(trace: TransactionTrace, protocol_address: str) -> ForensicRep
 
 
 def _parse_internal_calls(trace: dict[str, Any], depth: int = 0) -> list[InternalCall]:
-    """Recursively parse internal calls from a call trace."""
     calls: list[InternalCall] = []
 
     if "calls" in trace:
@@ -179,7 +162,6 @@ def _parse_internal_calls(trace: dict[str, Any], depth: int = 0) -> list[Interna
 
 
 def _extract_token_transfers(logs: list[dict[str, Any]]) -> list[TokenTransfer]:
-    """Extract ERC-20 token transfers from transaction logs."""
     transfers: list[TokenTransfer] = []
 
     for log in logs:
@@ -205,13 +187,11 @@ def _extract_token_transfers(logs: list[dict[str, Any]]) -> list[TokenTransfer]:
     return transfers
 
 
-# ============ CrewAI Agent ============
 
 _chain_sherlock: Agent | None = None
 
 
 def get_chain_sherlock() -> Agent:
-    """Lazy-load the CrewAI agent (requires LLM API key at runtime)."""
     global _chain_sherlock
     if _chain_sherlock is None:
         _chain_sherlock = Agent(

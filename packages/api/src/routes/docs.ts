@@ -1,17 +1,7 @@
-/**
- * OpenAPI specification + Swagger UI for the AEGIS API.
- *
- * Serves:
- *   GET /docs     — Swagger UI
- *   GET /openapi  — raw OpenAPI 3.1 JSON
- */
-
 import { Hono } from "hono";
 import { swaggerUI } from "@hono/swagger-ui";
 
 const docs = new Hono();
-
-// ---- OpenAPI 3.1 spec (hand-written, kept in sync with routes) ----
 
 const openApiSpec = {
   openapi: "3.1.0",
@@ -394,8 +384,6 @@ const openApiSpec = {
   },
   security: [{ ApiKeyAuth: [] }],
 };
-
-// ---- Routes ----
 
 docs.get("/openapi", (c) => c.json(openApiSpec));
 

@@ -1,4 +1,7 @@
-const API_BASE = (import.meta.env.VITE_API_URL ?? "") + "/api/v1";
+// Use environment variable for production, fallback to relative path for local dev
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : "/api/v1";
 const REQUEST_TIMEOUT_MS = 8000;
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -88,7 +91,6 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // Demo endpoints
   getDemoScenarios: () => apiFetch<unknown>("/demo/scenarios"),
   startEulerReplay: () => apiFetch<unknown>("/demo/euler-replay", { method: "POST" }),
   getEulerReplayStep: (stepNumber: number) =>

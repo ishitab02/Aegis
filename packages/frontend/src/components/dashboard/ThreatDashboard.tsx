@@ -101,7 +101,6 @@ export function ThreatDashboard({
         "bg-bg-surface",
       )}
     >
-      {/* Animated gradient background */}
       <div
         className={clsx(
           "absolute inset-0 bg-gradient-to-b",
@@ -110,13 +109,11 @@ export function ThreatDashboard({
         )}
       />
 
-      {/* Radial glow for critical */}
       {isCritical && (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.15)_0%,transparent_70%)]" />
       )}
 
       <div className="relative">
-        {/* Icon */}
         <motion.div
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
@@ -133,7 +130,6 @@ export function ThreatDashboard({
           />
         </motion.div>
 
-        {/* Threat level label */}
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -143,7 +139,6 @@ export function ThreatDashboard({
           {LABELS[threatLevel]}
         </motion.h2>
 
-        {/* Sublabel */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -153,7 +148,6 @@ export function ThreatDashboard({
           {SUBLABELS[threatLevel]}
         </motion.p>
 
-        {/* Consensus indicator */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

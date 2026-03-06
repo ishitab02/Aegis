@@ -1,3 +1,3 @@
-"""AEGIS Protocol - AI-Enhanced Guardian Intelligence System"""
+"""AEGIS Protocol."""
 
 __version__ = "0.1.0"

@@ -1,16 +1,5 @@
-/**
- * Rate-limiting middleware.
- *
- * Uses an in-memory sliding-window counter keyed by client IP.
- * Defaults to 100 requests per 60-second window.
- *
- * Env overrides:
- *   RATE_LIMIT_MAX   — max requests per window (default 100)
- *   RATE_LIMIT_WINDOW_MS — window length in ms (default 60000)
- *
- * Returns 429 Too Many Requests when the limit is exceeded, with a
- * Retry-After header indicating how many seconds to wait.
- */
+// sliding-window rate limiter keyed by client IP.
+// defaults: 100 req / 60s. override via RATE_LIMIT_MAX & RATE_LIMIT_WINDOW_MS.
 
 import type { Context, Next } from "hono";
 
@@ -24,7 +13,7 @@ const WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? "60000", 10);
 
 const windows = new Map<string, WindowEntry>();
 
-// Prune stale entries every 5 minutes to avoid unbounded growth
+// prune stale entries every 5 min to prevent unbounded growth
 setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of windows) {
@@ -53,7 +42,6 @@ export async function rateLimitMiddleware(c: Context, next: Next) {
 
   entry.count++;
 
-  // Always send informational rate-limit headers
   c.header("X-RateLimit-Limit", String(MAX_REQUESTS));
   c.header("X-RateLimit-Remaining", String(Math.max(0, MAX_REQUESTS - entry.count)));
   c.header("X-RateLimit-Reset", String(Math.ceil(entry.resetAt / 1000)));

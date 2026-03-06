@@ -5,12 +5,9 @@ import "../interfaces/IThreatReport.sol";
 
 /**
  * @title ThreatReport
- * @notice Immutable storage for AEGIS threat reports
- * @dev Reports are submitted by CRE workflows with consensus verification
+ * @notice immutable storage for AEGIS threat reports
  */
 contract ThreatReport is IThreatReport {
-    // ============ State Variables ============
-
     mapping(bytes32 => Report) public reports;
     mapping(bytes32 => SentinelVote[]) internal _reportVotes;
     mapping(address => bytes32[]) public protocolReports;
@@ -19,26 +16,18 @@ contract ThreatReport is IThreatReport {
     address public creWorkflow;
     address public owner;
 
-    // ============ Errors ============
-
     error OnlyCREWorkflow();
     error ReportAlreadyExists(bytes32 reportId);
-
-    // ============ Modifiers ============
 
     modifier onlyCRE() {
         if (msg.sender != creWorkflow) revert OnlyCREWorkflow();
         _;
     }
 
-    // ============ Constructor ============
-
     constructor(address _creWorkflow) {
         creWorkflow = _creWorkflow;
         owner = msg.sender;
     }
-
-    // ============ External Functions ============
 
     /// @inheritdoc IThreatReport
     function submitReport(
@@ -92,17 +81,10 @@ contract ThreatReport is IThreatReport {
         return _reportVotes[reportId];
     }
 
-    /**
-     * @notice Get total number of reports
-     */
     function totalReports() external view returns (uint256) {
         return allReports.length;
     }
 
-    /**
-     * @notice Update the CRE workflow address
-     * @param newWorkflow New authorized workflow address
-     */
     function setCREWorkflow(address newWorkflow) external {
         require(msg.sender == owner, "Only owner");
         creWorkflow = newWorkflow;

@@ -12,22 +12,15 @@ router = APIRouter()
 
 @router.get("")
 async def health_check() -> dict:
-    """System health check.
-
-    Returns the status of all sentinels, blockchain connectivity,
-    and Chainlink service availability.
-    """
-    # Check blockchain connectivity
     blockchain_ok = True
     try:
         from aegis.blockchain.web3_client import get_web3
         w3 = get_web3()
-        w3.eth.block_number  # Quick connectivity check
+        w3.eth.block_number
     except Exception as e:
         logger.warning("Blockchain connectivity check failed: %s", e)
         blockchain_ok = False
 
-    # Check Chainlink feeds
     chainlink_ok = True
     try:
         from aegis.blockchain.chainlink_feeds import get_eth_usd_price
@@ -41,7 +34,6 @@ async def health_check() -> dict:
         logger.warning("Chainlink feed check failed: %s", e)
         chainlink_ok = False
 
-    # Determine overall status
     if blockchain_ok and chainlink_ok:
         status = "HEALTHY"
     elif blockchain_ok or chainlink_ok:

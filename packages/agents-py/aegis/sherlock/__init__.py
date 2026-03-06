@@ -21,13 +21,11 @@ from aegis.sherlock.tracer import (
 )
 
 __all__ = [
-    # chain_sherlock (legacy)
     "get_chain_sherlock",
     "trace_transaction",
     "analyze_trace",
     "FORENSIC_ANALYSIS_PROMPT",
     "REPORT_GENERATION_PROMPT",
-    # tracer (new)
     "AddressLabel",
     "ArchiveNodeClient",
     "ForensicTracer",

@@ -1,8 +1,4 @@
-"""Demo endpoints for video recording and presentations.
-
-Provides endpoints that simulate real-world exploit scenarios step-by-step,
-designed for recording demo videos and live presentations.
-"""
+"""Demo routes."""
 
 import logging
 from typing import Any
@@ -10,7 +6,6 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-# Import the forensics report store to add demo reports
 from aegis.api.routes.forensics import _reports as forensics_reports
 from aegis.models import (
     ActionRecommendation,
@@ -32,12 +27,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# ============ Data Models ============
 
 
 class SentinelAssessment(BaseModel):
-    """Simplified assessment model for demos."""
-
     sentinel_id: int
     sentinel_type: str
     threat_level: ThreatLevel
@@ -48,8 +40,6 @@ class SentinelAssessment(BaseModel):
 
 
 class ConsensusResult(BaseModel):
-    """Simplified consensus result model for demos."""
-
     consensus_reached: bool
     final_threat_level: ThreatLevel
     agreement_ratio: float
@@ -61,8 +51,6 @@ class ConsensusResult(BaseModel):
 
 
 class DemoStep(BaseModel):
-    """A single step in the demo scenario."""
-
     step_number: int
     timestamp_offset_seconds: float
     title: str
@@ -75,8 +63,6 @@ class DemoStep(BaseModel):
 
 
 class DemoScenario(BaseModel):
-    """Complete demo scenario with all steps."""
-
     scenario_id: str
     scenario_name: str
     description: str
@@ -87,12 +73,10 @@ class DemoScenario(BaseModel):
     estimated_duration_seconds: int
     steps: list[DemoStep] = Field(default_factory=list)
     created_at: int
-    status: str = "ready"  # ready, running, completed
+    status: str = "ready"
 
 
 class DemoRunResponse(BaseModel):
-    """Response from running a demo scenario."""
-
     scenario_id: str
     current_step: int
     total_steps: int
@@ -101,17 +85,11 @@ class DemoRunResponse(BaseModel):
     next_step_available: bool
 
 
-# ============ Demo State ============
-
-# Store active demo runs
 _active_demos: dict[str, dict] = {}
 
 
-# ============ Demo Forensic Reports ============
-
 
 def create_euler_forensic_report() -> ForensicReport:
-    """Create a sample forensic report for the Euler exploit."""
     return ForensicReport(
         report_id="AEGIS-2023-EULER-001",
         tx_hash="0x71a26e7f09f6e7d0c18fdcde31e3a31cd9b9b5c5c5a5a5a5a5a5a5a5a5a5a5a5",
@@ -163,18 +141,9 @@ def create_euler_forensic_report() -> ForensicReport:
     )
 
 
-# ============ Predefined Scenarios ============
-
-
 def create_euler_scenario() -> DemoScenario:
-    """Create the Euler Finance exploit replay scenario.
+    protocol_address = "0x27182842E098f60e3D576794A5bFFb0777E025d3"
 
-    Based on the March 2023 Euler Finance hack ($197M).
-    Simulates the attack flow with realistic timing and metrics.
-    """
-    protocol_address = "0x27182842E098f60e3D576794A5bFFb0777E025d3"  # Euler Pool
-
-    # Step 1: Normal state
     step_1 = DemoStep(
         step_number=1,
         timestamp_offset_seconds=0,
@@ -230,7 +199,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=False,
     )
 
-    # Step 2: Flash loan detected
     step_2 = DemoStep(
         step_number=2,
         timestamp_offset_seconds=30,
@@ -286,7 +254,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=False,
     )
 
-    # Step 3: Donation attack begins
     step_3 = DemoStep(
         step_number=3,
         timestamp_offset_seconds=45,
@@ -346,7 +313,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=False,
     )
 
-    # Step 4: TVL drop begins
     step_4 = DemoStep(
         step_number=4,
         timestamp_offset_seconds=60,
@@ -407,7 +373,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=True,
     )
 
-    # Step 5: Circuit breaker triggered
     step_5 = DemoStep(
         step_number=5,
         timestamp_offset_seconds=65,
@@ -463,7 +428,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=True,
     )
 
-    # Step 6: Forensics begins
     step_6 = DemoStep(
         step_number=6,
         timestamp_offset_seconds=70,
@@ -482,7 +446,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=False,
     )
 
-    # Step 7: Attacker identified
     step_7 = DemoStep(
         step_number=7,
         timestamp_offset_seconds=90,
@@ -503,7 +466,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=False,
     )
 
-    # Step 8: Report generated
     step_8 = DemoStep(
         step_number=8,
         timestamp_offset_seconds=120,
@@ -530,7 +492,6 @@ def create_euler_scenario() -> DemoScenario:
         is_critical=False,
     )
 
-    # Step 9: Summary
     step_9 = DemoStep(
         step_number=9,
         timestamp_offset_seconds=150,
@@ -572,12 +533,8 @@ def create_euler_scenario() -> DemoScenario:
     )
 
 
-# ============ Endpoints ============
-
-
 @router.get("/scenarios", response_model=list[dict])
 async def list_scenarios():
-    """List all available demo scenarios."""
     return [
         {
             "scenario_id": "euler-replay-2023",
@@ -592,12 +549,6 @@ async def list_scenarios():
 
 @router.post("/euler-replay", response_model=DemoScenario)
 async def start_euler_replay():
-    """Initialize the Euler Finance exploit replay demo.
-
-    Returns the full scenario with all steps. Use /euler-replay/{step} to
-    get individual steps for animation/timing purposes.
-    Also creates a sample forensic report for the Forensics page.
-    """
     scenario = create_euler_scenario()
     _active_demos[scenario.scenario_id] = {
         "scenario": scenario,
@@ -605,7 +556,6 @@ async def start_euler_replay():
         "current_step": 0,
     }
 
-    # Create sample forensic report for the demo
     forensic_report = create_euler_forensic_report()
     forensics_reports[forensic_report.report_id] = forensic_report
     logger.info("Created demo forensic report: %s", forensic_report.report_id)
@@ -616,14 +566,6 @@ async def start_euler_replay():
 
 @router.get("/euler-replay/step/{step_number}", response_model=DemoRunResponse)
 async def get_euler_replay_step(step_number: int):
-    """Get a specific step from the Euler replay demo.
-
-    Args:
-        step_number: Step number (1-9)
-
-    Returns:
-        The step data with context about position in the scenario
-    """
     scenario = create_euler_scenario()
 
     if step_number < 1 or step_number > scenario.total_steps:
@@ -643,7 +585,6 @@ async def get_euler_replay_step(step_number: int):
 
 @router.post("/euler-replay/reset")
 async def reset_euler_replay():
-    """Reset the Euler replay demo state."""
     if "euler-replay-2023" in _active_demos:
         del _active_demos["euler-replay-2023"]
     return {"status": "reset", "message": "Euler replay demo reset"}
@@ -651,5 +592,4 @@ async def reset_euler_replay():
 
 @router.get("/active", response_model=list[str])
 async def list_active_demos():
-    """List all currently active demo runs."""
     return list(_active_demos.keys())

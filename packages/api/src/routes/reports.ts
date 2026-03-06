@@ -9,7 +9,6 @@ import { config } from "../config.js";
 
 const reports = new Hono();
 
-// GET /protocol — protocol status (on-chain reads)
 reports.get("/protocol", async (c) => {
   const protocol = c.req.query("address") || config.protocolToMonitor;
   if (!protocol) {
@@ -33,7 +32,6 @@ reports.get("/protocol", async (c) => {
   });
 });
 
-// GET /reports — on-chain threat reports for protocol
 reports.get("/", async (c) => {
   const protocol = c.req.query("address") || config.protocolToMonitor;
   const limit = parseInt(c.req.query("limit") ?? "10", 10);

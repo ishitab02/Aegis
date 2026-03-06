@@ -1,8 +1,4 @@
-"""Compound V3 (Comet) Protocol Adapter.
-
-Reads TVL, token balances, and events from Compound V3 Comet contracts.
-Compound V3 is a simplified lending protocol with single base assets per Comet.
-"""
+"""Compound V3 adapter."""
 
 from __future__ import annotations
 
@@ -23,7 +19,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ============ Compound V3 Contract Addresses ============
 
 COMPOUND_V3_ADDRESSES = {
     # Base Mainnet
@@ -59,10 +54,8 @@ COMPOUND_V3_ADDRESSES = {
     },
 }
 
-# ============ Compound V3 ABIs (Minimal) ============
 
 COMET_ABI = [
-    # Core state functions
     {
         "inputs": [],
         "name": "baseToken",
@@ -152,7 +145,6 @@ COMET_ABI = [
         "stateMutability": "view",
         "type": "function",
     },
-    # Account functions
     {
         "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
         "name": "balanceOf",
@@ -176,7 +168,6 @@ COMET_ABI = [
     },
 ]
 
-# Events ABI
 COMET_EVENTS_ABI = [
     {
         "anonymous": False,
@@ -278,20 +269,6 @@ ERC20_ABI = [
 
 
 class CompoundV3Adapter(BaseProtocolAdapter):
-    """Adapter for Compound V3 (Comet) protocol.
-
-    Compound V3 uses a single asset per market (e.g., USDC, WETH).
-    Each Comet contract manages:
-    - Base asset supplies and borrows
-    - Multiple collateral assets
-    - Liquidations
-
-    Monitors:
-    - Total base asset supply (TVL)
-    - Total borrows
-    - Collateral supplies
-    - Supply, Withdraw, SupplyCollateral, WithdrawCollateral, Absorb events
-    """
 
     PROTOCOL_TYPE = "compound_v3"
 
@@ -301,13 +278,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         protocol_address: str | None = None,
         cache_ttl: int | None = None,
     ):
-        """Initialize Compound V3 adapter.
-
-        Args:
-            web3: Web3 instance
-            protocol_address: Optional Comet address override (defaults to USDC Comet)
-            cache_ttl: Cache TTL in seconds (default: 60)
-        """
         chain_id = web3.eth.chain_id
         addresses = COMPOUND_V3_ADDRESSES.get(chain_id, COMPOUND_V3_ADDRESSES.get(8453, {}))
 
@@ -325,7 +295,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
 
     @property
     def comet_contract(self) -> Contract:
-        """Get or create the Comet contract instance."""
         if self._comet_contract is None:
             self._comet_contract = self._web3.eth.contract(
                 address=self._protocol_address,
@@ -334,7 +303,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         return self._comet_contract
 
     async def _get_base_token_info(self) -> tuple[str, int, str]:
-        """Get base token address, decimals, and symbol."""
         if self._base_token_address is not None:
             return self._base_token_address, self._base_token_decimals, self._base_token_symbol
 
@@ -347,8 +315,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
                 None, self.comet_contract.functions.baseToken().call
             )
             base_token = self._web3.to_checksum_address(base_token)
-
-            # Get token info
             token_contract = self._web3.eth.contract(address=base_token, abi=ERC20_ABI)
 
             try:
@@ -356,7 +322,7 @@ class CompoundV3Adapter(BaseProtocolAdapter):
                 decimals = await loop.run_in_executor(None, token_contract.functions.decimals().call)
             except Exception:
                 symbol = "UNKNOWN"
-                decimals = 6  # Default for USDC
+                decimals = 6  # most comet markets use usdc
 
             return base_token, decimals, symbol
 
@@ -365,7 +331,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         return result
 
     async def _get_collateral_assets(self) -> list[dict[str, Any]]:
-        """Get all collateral asset info from the Comet contract."""
         cache_key = f"collateral_assets:{self._protocol_address}"
 
         async def fetch():
@@ -381,8 +346,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
                         None, self.comet_contract.functions.getAssetInfo(i).call
                     )
                     asset_address = self._web3.to_checksum_address(asset_info[1])
-
-                    # Get token info
                     token_contract = self._web3.eth.contract(address=asset_address, abi=ERC20_ABI)
                     try:
                         symbol = await loop.run_in_executor(
@@ -412,19 +375,11 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def _fetch_tvl(self) -> int:
-        """Fetch total TVL from Compound V3.
-
-        TVL = totalSupply (base asset supplied) + sum of all collateral values.
-        For simplicity, we return base asset supply in its native units.
-        """
+        # tvl = base supply + collateral, all in raw units (not usd-normalized)
         loop = asyncio.get_event_loop()
-
-        # Get base asset total supply
         total_supply = await loop.run_in_executor(
             None, self.comet_contract.functions.totalSupply().call
         )
-
-        # Get collateral totals
         collateral_assets = await self._get_collateral_assets()
         total_collateral_value = 0
 
@@ -434,7 +389,7 @@ class CompoundV3Adapter(BaseProtocolAdapter):
                     None,
                     self.comet_contract.functions.totalsCollateral(asset["address"]).call,
                 )
-                total_collateral_value += totals[0]  # totalSupplyAsset
+                total_collateral_value += totals[0]
             except Exception as e:
                 logger.debug("Failed to get collateral totals for %s: %s", asset["symbol"], e)
 
@@ -443,40 +398,31 @@ class CompoundV3Adapter(BaseProtocolAdapter):
             total_supply,
             total_collateral_value,
         )
-
-        # Return combined value (note: different decimals may apply)
-        # For accurate TVL, we'd normalize to USD using price feeds
+        # different decimals across assets, would need price feeds for true usd tvl
         return total_supply + total_collateral_value
 
     async def get_total_borrows(self) -> int:
-        """Get total borrows across the Comet market."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None, self.comet_contract.functions.totalBorrow().call
         )
 
     async def get_utilization_rate(self) -> float:
-        """Calculate protocol utilization rate.
-
-        Compound V3 provides this directly via getUtilization().
-        Returns value in basis points (scaled by 1e18).
-        """
         loop = asyncio.get_event_loop()
         utilization = await loop.run_in_executor(
             None, self.comet_contract.functions.getUtilization().call
         )
-        # Utilization is scaled by 1e18, convert to percentage
+        # comet returns utilization scaled by 1e18
         return utilization / 1e18
 
     async def get_reserves(self) -> int:
-        """Get protocol reserves (can be negative if in deficit)."""
+        # can be negative when protocol is in deficit
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None, self.comet_contract.functions.getReserves().call
         )
 
     async def is_account_liquidatable(self, account: str) -> bool:
-        """Check if an account is liquidatable."""
         loop = asyncio.get_event_loop()
         account = self._web3.to_checksum_address(account)
         return await loop.run_in_executor(
@@ -484,23 +430,11 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         )
 
     async def get_liquidation_risk(self, top_n: int = 10) -> list[dict[str, Any]]:
-        """Get accounts at risk of liquidation.
-
-        This is a simplified version - in production, we'd track
-        accounts with borrows and check their health factors.
-
-        Returns:
-            List of accounts with liquidation risk info
-        """
-        # This would require event indexing or an external data source
-        # For now, return empty list - would be populated by monitoring
+        # needs event indexing or external data source to track borrowers
         return []
 
     async def _fetch_token_balances(self) -> list[TokenBalance]:
-        """Fetch token balances for base asset and all collaterals."""
         balances: list[TokenBalance] = []
-
-        # Get base token info
         base_addr, base_decimals, base_symbol = await self._get_base_token_info()
 
         loop = asyncio.get_event_loop()
@@ -518,7 +452,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
             )
         )
 
-        # Get collateral balances
         collateral_assets = await self._get_collateral_assets()
         for asset in collateral_assets:
             try:
@@ -548,11 +481,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         from_block: int | None = None,
         limit: int = 100,
     ) -> list[ProtocolEvent]:
-        """Fetch recent Compound V3 events.
-
-        Supported events: Supply, Withdraw, SupplyCollateral, WithdrawCollateral,
-                         AbsorbCollateral, AbsorbDebt
-        """
         loop = asyncio.get_event_loop()
 
         current_block = await loop.run_in_executor(
@@ -595,7 +523,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
             except Exception as ex:
                 logger.warning("Failed to fetch %s events: %s", name, ex)
 
-        # Sort by block number descending
         events.sort(key=lambda x: x.block_number, reverse=True)
         return events[:limit]
 
@@ -604,21 +531,14 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         threshold_usd: float = 100_000,
         from_block: int | None = None,
     ) -> list[ProtocolEvent]:
-        """Get withdrawals above a USD threshold.
-
-        Note: For accurate USD values, we'd need price feeds.
-        This is a simplified version using raw amounts.
-        """
         events = await self._fetch_events(
             event_name="Withdraw",
             from_block=from_block,
             limit=500,
         )
 
-        # Get base token decimals
         _, base_decimals, _ = await self._get_base_token_info()
-
-        # Simplified threshold (assuming USDC with 6 decimals)
+        # raw threshold, assumes base token price ~$1 (usdc)
         threshold_raw = int(threshold_usd * (10 ** base_decimals))
 
         return [e for e in events if e.args.get("amount", 0) > threshold_raw]
@@ -628,10 +548,6 @@ class CompoundV3Adapter(BaseProtocolAdapter):
         from_block: int | None = None,
         limit: int = 50,
     ) -> list[ProtocolEvent]:
-        """Get recent liquidation/absorption events.
-
-        These indicate accounts that were liquidated.
-        """
         collateral_absorbs = await self._fetch_events(
             event_name="AbsorbCollateral",
             from_block=from_block,
@@ -652,5 +568,4 @@ def get_compound_v3_adapter(
     web3: Web3,
     comet_address: str | None = None,
 ) -> CompoundV3Adapter:
-    """Factory function to create a Compound V3 adapter."""
     return CompoundV3Adapter(web3, comet_address)

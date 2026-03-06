@@ -1,4 +1,4 @@
-"""Prompt templates for ChainSherlock forensic analysis."""
+"""Forensic analysis prompt templates."""
 
 FORENSIC_ANALYSIS_PROMPT = """You are ChainSherlock, an AI forensic analyst for blockchain exploits.
 

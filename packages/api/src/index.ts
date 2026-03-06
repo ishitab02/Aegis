@@ -19,18 +19,15 @@ import { getDb } from "./db/index.js";
 
 const app = new Hono();
 
-// ---- Initialise database on startup ----
 getDb();
 console.log("[db] SQLite database initialised");
 
-// ---- Global Middleware ----
 app.use("*", logger());
 app.use("*", corsMiddleware);
 app.use("*", rateLimitMiddleware);
 app.use("*", authMiddleware);
 app.use("*", x402PaymentMiddleware);
 
-// ---- Root ----
 app.get("/", (c) =>
   c.json({
     name: "AEGIS Protocol API",
@@ -51,7 +48,6 @@ app.get("/", (c) =>
   }),
 );
 
-// ---- API Routes ----
 app.route("/api/v1/health", health);
 app.route("/api/v1/sentinel", sentinel);
 app.route("/api/v1/forensics", forensics);
@@ -62,7 +58,6 @@ app.route("/api/v1/ws", ws);
 app.route("/api/v1/demo", demo);
 app.route("/api/v1", docs);
 
-// ---- Start Server ----
 console.log(`AEGIS API starting on port ${config.port}...`);
 console.log(`  Agent API: ${config.agentApiUrl}`);
 console.log(`  RPC: ${config.rpcUrl}`);

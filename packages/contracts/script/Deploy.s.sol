@@ -10,7 +10,6 @@ import "../src/mocks/MockProtocol.sol";
 
 /**
  * @title DeployAegis
- * @notice Deploy all AEGIS Protocol contracts
  *
  * Usage:
  *   forge script script/Deploy.s.sol:DeployAegis \
@@ -22,27 +21,22 @@ contract DeployAegis is Script {
     function run() external {
         vm.startBroadcast();
 
-        // 1. Deploy SentinelRegistry
         SentinelRegistry registry = new SentinelRegistry();
         console.log("SentinelRegistry deployed at:", address(registry));
 
-        // 2. Deploy CircuitBreaker
         CircuitBreaker breaker = new CircuitBreaker();
         console.log("CircuitBreaker deployed at:", address(breaker));
 
-        // 3. Deploy ThreatReport (with deployer as initial CRE workflow)
+        // deployer set as initial CRE workflow
         ThreatReport threatReport = new ThreatReport(msg.sender);
         console.log("ThreatReport deployed at:", address(threatReport));
 
-        // 4. Deploy ReputationTracker
         ReputationTracker reputation = new ReputationTracker();
         console.log("ReputationTracker deployed at:", address(reputation));
 
-        // 5. Deploy MockProtocol (for testing)
         MockProtocol mockProtocol = new MockProtocol();
         console.log("MockProtocol deployed at:", address(mockProtocol));
 
-        // 6. Register mock protocol in CircuitBreaker
         breaker.registerProtocol(address(mockProtocol));
         console.log("MockProtocol registered in CircuitBreaker");
 

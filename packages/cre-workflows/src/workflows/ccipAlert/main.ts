@@ -1,20 +1,5 @@
-/**
- * AEGIS CCIP Cross-Chain Alert Workflow
- *
- * Triggered by CircuitBreakerTriggered event on Base Sepolia.
- * Sends a CCIP message to destination chains (Arbitrum Sepolia, Ethereum Sepolia)
- * so protocols deployed on multiple chains can pause simultaneously.
- *
- * Chainlink services demonstrated:
- *  - CRE (this workflow)
- *  - CCIP (cross-chain message)
- *  - Automation (log trigger)
- *
- * CCIP message payload:
- *   abi.encode(address protocol, bytes32 threatId, uint8 threatLevel, uint256 timestamp)
- *
- * The destination receiver contract should decode and call its local CircuitBreaker.
- */
+// ccip cross-chain alert: log trigger -> encode threat data -> send CCIP message to destination chains
+// chainlink services: CRE, CCIP, Automation (log trigger)
 
 import {
   cre,
@@ -42,27 +27,21 @@ import {
 import { circuitBreakerAbi, ccipRouterAbi, linkTokenAbi } from "../../types/abis";
 import { configSchema, type Config, THREAT_LEVEL_UINT8 } from "../../types";
 
-// ============ Constants ============
-
-// CCIP extra args: V1 tag (0x97a657c9) + gasLimit (200_000)
-// Pre-encoded for efficiency — see https://docs.chain.link/ccip/best-practices
+// ccip extra args v1 tag (0x97a657c9) + gasLimit 200k, pre-encoded
+// see https://docs.chain.link/ccip/best-practices
 const CCIP_EXTRA_ARGS =
   "0x97a657c900000000000000000000000000000000000000000000000000000000000030d40" as `0x${string}`;
-
-// ============ Log Trigger Callback ============
 
 const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): string => {
   runtime.log("AEGIS CCIP: CircuitBreakerTriggered event detected!");
 
   const evm = runtime.config.evms[0];
 
-  // ---- Validate CCIP configuration ----
   if (!evm.ccipRouter || !evm.ccipDestinationChainSelector || !evm.ccipReceiverAddress) {
     runtime.log("  CCIP not configured — skipping cross-chain alert.");
     return JSON.stringify({ status: "SKIPPED", reason: "CCIP not configured" });
   }
 
-  // ---- Decode the CircuitBreakerTriggered event ----
   const topics = log.topics.map((t) => bytesToHex(t)) as [`0x${string}`, ...`0x${string}`[]];
   const data = bytesToHex(log.data);
 
@@ -82,7 +61,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
   runtime.log(`  ThreatId: ${threatId}`);
   runtime.log(`  ThreatLevel: ${threatLevel}`);
 
-  // ---- Build CCIP message payload ----
   runtime.log("Building CCIP cross-chain alert message...");
 
   const ccipPayload = encodeAbiParameters(
@@ -92,7 +70,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
 
   const destinationChainSelector = BigInt(evm.ccipDestinationChainSelector);
 
-  // ---- Get network and EVM client ----
   const network = getNetwork({
     chainFamily: "evm",
     chainSelectorName: evm.chainSelectorName,
@@ -102,7 +79,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
-  // ---- Step 1: Check LINK balance for CCIP fees ----
   runtime.log("Step 1: Checking LINK balance for CCIP fees...");
   if (evm.linkToken) {
     const balanceCallData = encodeFunctionData({
@@ -127,7 +103,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
     runtime.log(`  LINK balance: ${balance.toString()}`);
   }
 
-  // ---- Step 2: Estimate CCIP fee ----
   runtime.log("Step 2: Estimating CCIP fee...");
   const ccipMessage = {
     receiver: encodeAbiParameters(parseAbiParameters("address"), [
@@ -135,7 +110,7 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
     ]),
     data: ccipPayload,
     tokenAmounts: [] as { token: Address; amount: bigint }[],
-    feeToken: (evm.linkToken ?? zeroAddress) as Address, // Pay in LINK; zeroAddress = native
+    feeToken: (evm.linkToken ?? zeroAddress) as Address, // pay in LINK; zeroAddress = native
     extraArgs: CCIP_EXTRA_ARGS,
   };
 
@@ -162,7 +137,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
   }) as bigint;
   runtime.log(`  Estimated CCIP fee: ${fee.toString()} (LINK wei)`);
 
-  // ---- Step 3: Approve LINK spend for router ----
   if (evm.linkToken) {
     runtime.log("Step 3: Approving LINK for CCIP Router...");
     const approveCallData = encodeFunctionData({
@@ -200,7 +174,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
     }
   }
 
-  // ---- Step 4: Send CCIP message ----
   runtime.log("Step 4: Sending CCIP cross-chain alert...");
   const ccipSendCallData = encodeFunctionData({
     abi: ccipRouterAbi,
@@ -254,8 +227,6 @@ const onCircuitBreakerTriggered = (runtime: Runtime<Config>, log: EVMLog): strin
   }
 };
 
-// ============ Workflow Initialization ============
-
 const initWorkflow = (config: Config) => {
   const evm = config.evms[0];
   const network = getNetwork({
@@ -267,7 +238,6 @@ const initWorkflow = (config: Config) => {
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
 
-  // Listen for CircuitBreakerTriggered events
   const eventSignature = "CircuitBreakerTriggered(address,bytes32,uint8,string)";
   const eventHash = keccak256(toHex(eventSignature));
 
@@ -282,8 +252,6 @@ const initWorkflow = (config: Config) => {
     ),
   ];
 };
-
-// ============ Entry Point ============
 
 export async function main() {
   const runner = await Runner.newRunner<Config>({ configSchema });

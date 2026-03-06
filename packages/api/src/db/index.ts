@@ -1,12 +1,3 @@
-/**
- * SQLite database layer using better-sqlite3.
- *
- * Tables:
- *   alerts           – historical detection alerts
- *   protocols         – registered protocols + thresholds
- *   forensic_reports  – forensic analysis results
- */
-
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
@@ -15,11 +6,9 @@ const DB_PATH = process.env.DATABASE_PATH ?? "./data/aegis.db";
 
 let _db: Database.Database | null = null;
 
-/** Get (or lazily create) the singleton database connection. */
 export function getDb(): Database.Database {
   if (_db) return _db;
 
-  // Ensure the directory exists
   const dir = path.dirname(DB_PATH);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -32,10 +21,6 @@ export function getDb(): Database.Database {
   migrate(_db);
   return _db;
 }
-
-// ---------------------------------------------------------------------------
-// Schema / Migrations
-// ---------------------------------------------------------------------------
 
 function migrate(db: Database.Database): void {
   db.exec(`
@@ -72,16 +57,12 @@ function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_forensic_protocol   ON forensic_reports(protocol);
   `);
 
-  // Add protocol_name column if missing (for existing databases)
+  // add column if missing (migration for existing dbs)
   const cols = db.prepare("PRAGMA table_info(alerts)").all() as Array<{ name: string }>;
   if (!cols.some((c) => c.name === "protocol_name")) {
     db.exec("ALTER TABLE alerts ADD COLUMN protocol_name TEXT DEFAULT ''");
   }
 }
-
-// ---------------------------------------------------------------------------
-// Alert helpers
-// ---------------------------------------------------------------------------
 
 export interface AlertRow {
   id: string;
@@ -107,7 +88,6 @@ export function insertAlert(alert: Omit<AlertRow, "created_at">): AlertRow {
   return db.prepare("SELECT * FROM alerts WHERE id = ?").get(alert.id) as AlertRow;
 }
 
-/** Look up protocol name from the protocols table, falling back to the address. */
 function lookupProtocolName(db: Database.Database, address: string): string {
   const row = db.prepare("SELECT name FROM protocols WHERE address = ?").get(address) as
     | { name: string }
@@ -145,7 +125,7 @@ export function listAlerts(
     .prepare(`SELECT * FROM alerts ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
     .all(...params, limit, offset) as AlertRow[];
 
-  // Enrich items that have an empty protocol_name (legacy rows)
+  // enrich legacy rows missing protocol_name
   for (const item of items) {
     if (!item.protocol_name) {
       item.protocol_name = lookupProtocolName(db, item.protocol);
@@ -154,10 +134,6 @@ export function listAlerts(
 
   return { items, total, page, limit };
 }
-
-// ---------------------------------------------------------------------------
-// Protocol helpers
-// ---------------------------------------------------------------------------
 
 export interface ProtocolRow {
   address: string;
@@ -229,10 +205,6 @@ export function updateProtocol(
   db.prepare(`UPDATE protocols SET ${fields.join(", ")} WHERE address = ?`).run(...values);
   return getProtocol(address);
 }
-
-// ---------------------------------------------------------------------------
-// Forensic report helpers
-// ---------------------------------------------------------------------------
 
 export interface ForensicReportRow {
   id: string;

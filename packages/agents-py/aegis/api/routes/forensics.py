@@ -1,4 +1,4 @@
-"""Forensics endpoints — trigger and retrieve forensic reports."""
+"""Forensics routes."""
 
 import logging
 
@@ -12,16 +12,11 @@ from aegis.utils import now_seconds
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# In-memory store of forensic reports
 _reports: dict[str, ForensicReport] = {}
 
 
 @router.post("")
 async def request_forensic_analysis(request: ForensicsRequest) -> dict:
-    """Request a forensic analysis for a transaction.
-
-    Called by CRE forensic workflow or TypeScript API (with x402 payment).
-    """
     try:
         w3 = get_web3()
 
@@ -50,7 +45,6 @@ async def request_forensic_analysis(request: ForensicsRequest) -> dict:
 
 @router.get("/{report_id}")
 async def get_forensic_report(report_id: str) -> dict:
-    """Get a forensic report by ID."""
     report = _reports.get(report_id)
     if not report:
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
@@ -64,11 +58,10 @@ async def get_forensic_report(report_id: str) -> dict:
 
 @router.get("")
 async def list_forensic_reports() -> dict:
-    """List all forensic reports."""
     return {
         "reports": [
             {
-                "id": r.report_id,  # For frontend compatibility
+                "id": r.report_id,
                 "reportId": r.report_id,
                 "txHash": r.tx_hash,
                 "protocol": r.protocol,

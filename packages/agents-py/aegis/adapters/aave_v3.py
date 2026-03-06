@@ -1,8 +1,4 @@
-"""Aave V3 Protocol Adapter.
-
-Reads TVL, token balances, and events from Aave V3 Pool contracts.
-Supports Base, Ethereum, and other EVM chains where Aave V3 is deployed.
-"""
+"""Aave V3 adapter."""
 
 from __future__ import annotations
 
@@ -23,7 +19,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ============ Aave V3 Contract Addresses ============
 
 AAVE_V3_ADDRESSES = {
     # Base Mainnet
@@ -43,7 +38,6 @@ AAVE_V3_ADDRESSES = {
     },
 }
 
-# ============ Aave V3 ABIs (Minimal) ============
 
 AAVE_POOL_ABI = [
     {
@@ -149,7 +143,6 @@ ERC20_ABI = [
     },
 ]
 
-# Supply/Withdraw events on aTokens
 ATOKEN_EVENTS_ABI = [
     {
         "anonymous": False,
@@ -217,14 +210,6 @@ ATOKEN_EVENTS_ABI = [
 
 
 class AaveV3Adapter(BaseProtocolAdapter):
-    """Adapter for Aave V3 protocol.
-
-    Monitors:
-    - Total supply across all reserves (TVL)
-    - Total borrows (utilization)
-    - Supply, Withdraw, Borrow, Repay events
-    - ReserveDataUpdated events for rate changes
-    """
 
     PROTOCOL_TYPE = "aave_v3"
 
@@ -234,13 +219,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         protocol_address: str | None = None,
         cache_ttl: int | None = None,
     ):
-        """Initialize Aave V3 adapter.
-
-        Args:
-            web3: Web3 instance
-            protocol_address: Optional Pool address override
-            cache_ttl: Cache TTL in seconds (default: 60)
-        """
         chain_id = web3.eth.chain_id
         addresses = AAVE_V3_ADDRESSES.get(chain_id, AAVE_V3_ADDRESSES[84532])
 
@@ -254,7 +232,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
 
     @property
     def pool_contract(self) -> Contract:
-        """Get or create the Pool contract instance."""
         if self._pool_contract is None:
             self._pool_contract = self._web3.eth.contract(
                 address=self._protocol_address,
@@ -264,7 +241,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
 
     @property
     def data_provider(self) -> Contract:
-        """Get or create the PoolDataProvider contract instance."""
         if self._data_provider_contract is None:
             self._data_provider_contract = self._web3.eth.contract(
                 address=self._web3.to_checksum_address(self._data_provider_address),
@@ -273,7 +249,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         return self._data_provider_contract
 
     async def _get_reserves_list(self) -> list[str]:
-        """Get list of all reserve token addresses."""
         cache_key = f"reserves:{self._protocol_address}"
 
         async def fetch():
@@ -286,7 +261,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def _get_token_info(self, token_address: str) -> dict[str, Any]:
-        """Get token symbol and decimals."""
         cache_key = f"token_info:{token_address}"
 
         async def fetch():
@@ -303,7 +277,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
                     None, token.functions.decimals().call
                 )
             except Exception:
-                # Some tokens don't implement symbol/decimals
                 symbol = "UNKNOWN"
                 decimals = 18
 
@@ -312,18 +285,12 @@ class AaveV3Adapter(BaseProtocolAdapter):
         return await self._cache.get_or_fetch(cache_key, fetch)
 
     async def _fetch_tvl(self) -> int:
-        """Fetch total TVL across all Aave V3 reserves.
-
-        TVL = Sum of all aToken total supplies (underlying supplied).
-        This represents the total value locked in the protocol.
-        """
         reserves = await self._get_reserves_list()
         loop = asyncio.get_event_loop()
 
         total_tvl = 0
         for reserve in reserves:
             try:
-                # Get aToken total supply (this represents supplied assets)
                 supply = await loop.run_in_executor(
                     None,
                     self.data_provider.functions.getATokenTotalSupply(reserve).call,
@@ -337,7 +304,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         return total_tvl
 
     async def get_total_borrows(self) -> int:
-        """Get total borrows across all reserves."""
         reserves = await self._get_reserves_list()
         loop = asyncio.get_event_loop()
 
@@ -355,10 +321,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         return total_debt
 
     async def get_utilization_rate(self) -> float:
-        """Calculate protocol utilization rate.
-
-        Utilization = Total Borrows / Total Supplied
-        """
         tvl, borrows = await asyncio.gather(
             self.get_tvl(),
             self.get_total_borrows(),
@@ -370,7 +332,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         return borrows / tvl
 
     async def _fetch_token_balances(self) -> list[TokenBalance]:
-        """Fetch token balances for all reserves."""
         reserves = await self._get_reserves_list()
         balances: list[TokenBalance] = []
 
@@ -405,10 +366,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
         from_block: int | None = None,
         limit: int = 100,
     ) -> list[ProtocolEvent]:
-        """Fetch recent Aave V3 events.
-
-        Supported events: Supply, Withdraw, Borrow, Repay, ReserveDataUpdated
-        """
         loop = asyncio.get_event_loop()
 
         current_block = await loop.run_in_executor(
@@ -450,7 +407,6 @@ class AaveV3Adapter(BaseProtocolAdapter):
             except Exception as ex:
                 logger.warning("Failed to fetch %s events: %s", name, ex)
 
-        # Sort by block number descending
         events.sort(key=lambda x: x.block_number, reverse=True)
         return events[:limit]
 
@@ -459,20 +415,14 @@ class AaveV3Adapter(BaseProtocolAdapter):
         threshold_usd: float = 100_000,
         from_block: int | None = None,
     ) -> list[ProtocolEvent]:
-        """Get withdrawals above a USD threshold.
-
-        Note: For accurate USD values, we'd need price feeds.
-        This is a simplified version that just returns large raw withdrawals.
-        """
         events = await self._fetch_events(
             event_name="Withdraw",
             from_block=from_block,
             limit=500,
         )
 
-        # Filter for large amounts (simplified: >$100k worth assuming 18 decimals)
-        # In production, multiply by token price from Chainlink
-        threshold_raw = int(threshold_usd * 10**18 / 2000)  # Rough ETH price estimate
+        # rough estimate assuming ~$2000/ETH, needs chainlink feeds for accuracy
+        threshold_raw = int(threshold_usd * 10**18 / 2000)
 
         return [e for e in events if e.args.get("amount", 0) > threshold_raw]
 
@@ -481,5 +431,4 @@ def get_aave_v3_adapter(
     web3: Web3,
     pool_address: str | None = None,
 ) -> AaveV3Adapter:
-    """Factory function to create an Aave V3 adapter."""
     return AaveV3Adapter(web3, pool_address)

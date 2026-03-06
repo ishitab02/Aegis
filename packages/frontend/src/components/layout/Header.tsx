@@ -52,9 +52,7 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-border-subtle bg-bg-base/90 backdrop-blur-md">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
-        {/* Left section */}
         <div className="flex items-center gap-4">
-          {/* Mobile menu toggle */}
           <button
             type="button"
             onClick={onToggleSidebar}
@@ -64,7 +62,6 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
 
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-gradient-to-br from-bg-surface to-bg-elevated">
               <Shield className="h-5 w-5 text-accent" />
@@ -76,9 +73,7 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
           </Link>
         </div>
 
-        {/* Right section */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
           <div className="relative" ref={notificationRef}>
             <button
               type="button"
@@ -179,7 +174,6 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
             </AnimatePresence>
           </div>
 
-          {/* Wallet */}
           <ConnectButton />
         </div>
       </div>

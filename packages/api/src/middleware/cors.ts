@@ -1,8 +1,10 @@
 import { cors } from "hono/cors";
 
+// Build allowed origins from environment + defaults
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
+  // Add production origins from env (comma-separated)
   ...(process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()) || []),
 ].filter(Boolean);
 

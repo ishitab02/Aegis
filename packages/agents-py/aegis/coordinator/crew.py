@@ -1,14 +1,4 @@
-"""AEGIS Detection Crew — orchestrates sentinel agents for threat detection.
-
-This module runs the full detection cycle:
-1. Each sentinel analyzes its domain (liquidity, oracle, governance)
-2. Assessments are aggregated
-3. Consensus is reached via 2/3 majority rule
-
-Supports two modes:
-- Simulation mode: Use simulate_* parameters for testing threat detection
-- Real mode: Use protocol adapters to fetch real on-chain data
-"""
+"""Detection crew -- orchestrates sentinels for threat detection."""
 
 from __future__ import annotations
 
@@ -48,42 +38,16 @@ def run_detection_cycle(
     # Adapter parameter
     adapter: "BaseProtocolAdapter | None" = None,
 ) -> DetectionResponse:
-    """Run a full threat detection cycle across all 3 sentinels.
-
-    This is the primary entry point called by the CRE workflow via
-    POST /api/v1/detect.
-
-    Args:
-        protocol_address: Address of the protocol to monitor
-        protocol_name: Human-readable protocol name
-        previous_tvl: Previous TVL for comparison (optional)
-        protocol_price: Protocol's internal price (optional)
-        governance_proposal: Active governance proposal (optional)
-        simulate_tvl_drop_percent: Simulate TVL drop (for testing)
-        simulate_price_deviation_percent: Simulate price deviation (for testing)
-        simulate_short_voting_period: Simulate short voting period (for testing)
-        adapter: Protocol adapter for fetching real on-chain data
-
-    Returns:
-        DetectionResponse with all individual assessments and consensus result.
-
-    Notes:
-        - If simulate_* parameters are provided, they take precedence
-        - If adapter is provided and no simulation, real data is fetched
-        - If neither simulation nor adapter, falls back to mock/chain data
-    """
     w3 = get_web3()
     aggregator = SentinelAggregator()
     assessments: list[ThreatAssessment] = []
 
-    # Determine if we're in simulation mode or real mode
     is_simulation = any([
         simulate_tvl_drop_percent is not None,
         simulate_price_deviation_percent is not None,
         simulate_short_voting_period,
     ])
 
-    # Auto-detect adapter if not provided and not in simulation mode
     if adapter is None and not is_simulation:
         try:
             from aegis.adapters import get_adapter
@@ -93,17 +57,14 @@ def run_detection_cycle(
             logger.debug("Could not auto-detect adapter: %s", e)
             adapter = None
 
-    # --- 1. Liquidity Sentinel ---
+    # liquidity sentinel
     try:
-        # Use simulation if provided
         if simulate_tvl_drop_percent is not None:
-            # Simulate a TVL drop scenario
-            base_tvl = 1_000_000 * 10**18  # 1M ETH baseline
+            base_tvl = 1_000_000 * 10**18
             current_tvl = int(base_tvl * (1 - simulate_tvl_drop_percent / 100))
             prev_tvl = base_tvl
             logger.info("SIMULATION: TVL drop %.1f%% (from %d to %d)", simulate_tvl_drop_percent, prev_tvl, current_tvl)
         elif adapter is not None:
-            # Use real adapter to fetch TVL
             try:
                 current_tvl = adapter.get_tvl_sync()
                 prev_tvl = previous_tvl if previous_tvl > 0 else None
@@ -117,7 +78,7 @@ def run_detection_cycle(
                 current_tvl = get_protocol_tvl(w3, protocol_address)
                 prev_tvl = previous_tvl if previous_tvl > 0 else None
             except Exception:
-                # Fallback: use mock data if chain read fails
+                # fallback to mock data if chain read fails
                 current_tvl = 1_000_000 * 10**18
                 prev_tvl = None
                 logger.warning("Could not read TVL from chain, using mock data")
@@ -137,11 +98,10 @@ def run_detection_cycle(
     except Exception as e:
         logger.error("Liquidity Sentinel failed: %s", e)
 
-    # --- 2. Oracle Sentinel ---
+    # oracle sentinel
     try:
         chainlink_data = get_eth_usd_price(w3)
 
-        # Simulate price deviation if requested
         if simulate_price_deviation_percent is not None:
             p_price = chainlink_data.price * (1 + simulate_price_deviation_percent / 100)
             logger.info("SIMULATION: Price deviation %.1f%% (Chainlink: $%.2f, Protocol: $%.2f)",
@@ -165,16 +125,15 @@ def run_detection_cycle(
     except Exception as e:
         logger.error("Oracle Sentinel failed: %s", e)
 
-    # --- 3. Governance Sentinel ---
+    # governance sentinel
     try:
         if simulate_short_voting_period:
-            # Create a suspicious proposal with short voting period
             simulated_proposal = GovernanceProposal(
                 proposal_id="sim-001",
                 proposer="0xAttacker",
                 targets=["0xProtocol"],
                 calldatas=["0x" + "a9059cbb" + "0" * 56],  # transfer signature
-                voting_period_blocks=50,  # Very short!
+                voting_period_blocks=50,
                 description="Emergency fund transfer",
             )
             logger.info("SIMULATION: Short voting period proposal (50 blocks)")
@@ -182,7 +141,7 @@ def run_detection_cycle(
         elif governance_proposal is not None:
             gov_assessment = analyze_proposal(governance_proposal)
         else:
-            # No active proposal — default to NONE
+            # no active proposal, default to none
             gov_assessment = ThreatAssessment(
                 threat_level="NONE",
                 confidence=0.9,
@@ -203,7 +162,7 @@ def run_detection_cycle(
     except Exception as e:
         logger.error("Governance Sentinel failed: %s", e)
 
-    # --- 4. Consensus ---
+    # consensus
     consensus = aggregator.aggregate()
     logger.info(
         "Consensus: reached=%s, level=%s, ratio=%.2f, action=%s",
