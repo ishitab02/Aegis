@@ -20,7 +20,6 @@ import "../src/ccip/AlertReceiver.sol";
  *      npx tsx scripts/test-ccip-alert.ts --send --receiver=<deployed-address>
  */
 contract DeployCCIPReceiver is Script {
-
     // Chainlink CCIP Router on Arbitrum Sepolia
     // See: https://docs.chain.link/ccip/directory/testnet/chain/arbitrum-testnet-sepolia
     address constant CCIP_ROUTER_ARBITRUM_SEPOLIA = 0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165;
