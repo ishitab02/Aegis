@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -22,6 +23,85 @@ if TYPE_CHECKING:
     from web3.types import TxReceipt
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Archive node helpers
+# ---------------------------------------------------------------------------
+
+# Well-known Euler Finance addresses for the March 2023 exploit
+EULER_ADDRESSES: dict[str, str] = {
+    "0x27182842E098f60e3D576794A5bFFb0777E025d3": "Euler Protocol (eUSDC)",
+    "0xe025E3ca2bE02316033184551D4d3Aa22c1E9eeE": "Euler Protocol (Main)",
+    "0xeB91861f8A4e1C12333F42DCE8fBc24085E7a1Ee": "Euler dToken (dUSDC)",
+    "0xd4de9D2Fc1607d1dF63E1c95ECBfA8d5946F5c98": "Euler Sub-Account 1",
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": "USDC Token",
+    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": "WETH Token",
+    "0x6B175474E89094C44Da98b954EescdeCB5B42d03": "DAI Token",
+    "0xdAC17F958D2ee523a2206206994597C13D831ec7": "USDT Token",
+    "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599": "WBTC Token",
+    "0x83F20F44975D03b1b09e64809B757c47f942BEeA": "sDAI Token",
+}
+
+# Euler-specific attacker addresses
+EULER_ATTACKER_ADDRESSES: dict[str, str] = {
+    "0x9799b475dEc92Bd99bbdD943013325C36157f383": "Euler Exploiter (primary EOA)",
+    "0xb66cd966670d962C227B3EABA30a872DbFb995db": "Euler Exploiter Contract 2",
+    "0xc66dFA84BC1B93dF194Bd22336D4C71CFB5Cfe9f": "Euler Return Address (returned funds)",
+    "0xeBC29199C817Dc47BA12E3F86102564D640539d5": "Euler Exploiter Contract (attack entry)",
+}
+
+
+def get_archive_web3(network: str = "mainnet") -> Web3:
+    """Get a Web3 instance connected to an archive node.
+
+    Checks for ALCHEMY_API_KEY, QUICKNODE_API_KEY, or ETHEREUM_RPC env vars.
+    Falls back to a public RPC if none are configured.
+
+    Args:
+        network: 'mainnet' or 'goerli' (default: mainnet)
+
+    Returns:
+        Web3 instance connected to an archive-capable RPC.
+    """
+    alchemy_key = os.getenv("ALCHEMY_API_KEY", "")
+    quicknode_url = os.getenv("QUICKNODE_RPC_URL", "")
+    ethereum_rpc = os.getenv("ETHEREUM_RPC", "")
+
+    if alchemy_key:
+        subdomain = "eth-mainnet" if network == "mainnet" else f"eth-{network}"
+        rpc_url = f"https://{subdomain}.g.alchemy.com/v2/{alchemy_key}"
+        logger.info("Using Alchemy archive node for %s", network)
+    elif quicknode_url:
+        rpc_url = quicknode_url
+        logger.info("Using QuickNode archive node")
+    elif ethereum_rpc:
+        rpc_url = ethereum_rpc
+        logger.info("Using custom Ethereum RPC: %s", ethereum_rpc[:40])
+    else:
+        # Public fallback — no debug_trace support but can read receipts/txs
+        rpc_url = "https://eth.llamarpc.com"
+        logger.warning(
+            "No archive node API key found. Using public RPC (no debug_trace support). "
+            "Set ALCHEMY_API_KEY or ETHEREUM_RPC for full tracing."
+        )
+
+    w3 = Web3(Web3.HTTPProvider(rpc_url, request_kwargs={"timeout": 60}))
+    if not w3.is_connected():
+        logger.error("Failed to connect to %s", rpc_url[:50])
+    else:
+        logger.info("Connected to archive node: %s", rpc_url[:50])
+
+    return w3
+
+
+def has_archive_node() -> bool:
+    """Check if an archive node API key is configured."""
+    return bool(
+        os.getenv("ALCHEMY_API_KEY")
+        or os.getenv("QUICKNODE_RPC_URL")
+        or os.getenv("ETHEREUM_RPC")
+    )
 
 
 

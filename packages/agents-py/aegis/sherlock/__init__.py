@@ -5,6 +5,8 @@ from aegis.sherlock.chain_sherlock import (
 )
 from aegis.sherlock.prompts import FORENSIC_ANALYSIS_PROMPT, REPORT_GENERATION_PROMPT
 from aegis.sherlock.tracer import (
+    EULER_ADDRESSES,
+    EULER_ATTACKER_ADDRESSES,
     KNOWN_ADDRESSES,
     KNOWN_ATTACKERS,
     AddressLabel,
@@ -15,7 +17,9 @@ from aegis.sherlock.tracer import (
     TraceResult,
     TransactionGraph,
     get_address_label,
+    get_archive_web3,
     get_forensic_tracer,
+    has_archive_node,
     identify_address,
     is_known_attacker,
 )
@@ -28,6 +32,8 @@ __all__ = [
     "REPORT_GENERATION_PROMPT",
     "AddressLabel",
     "ArchiveNodeClient",
+    "EULER_ADDRESSES",
+    "EULER_ATTACKER_ADDRESSES",
     "ForensicTracer",
     "GraphEdge",
     "GraphNode",
@@ -36,7 +42,9 @@ __all__ = [
     "TraceResult",
     "TransactionGraph",
     "get_address_label",
+    "get_archive_web3",
     "get_forensic_tracer",
+    "has_archive_node",
     "identify_address",
     "is_known_attacker",
 ]

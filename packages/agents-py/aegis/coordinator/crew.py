@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING
 
 from aegis.blockchain.chainlink_feeds import get_eth_usd_price
@@ -25,6 +26,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# Module-level live monitoring state
+_live_monitor_data: dict[str, object] = {}
+
+
 def run_detection_cycle(
     protocol_address: str,
     protocol_name: str = "MockProtocol",
@@ -37,6 +42,10 @@ def run_detection_cycle(
     simulate_short_voting_period: bool = False,
     # Adapter parameter
     adapter: "BaseProtocolAdapter | None" = None,
+    # Live mode: fetch real data from adapter + historical comparison
+    live_mode: bool = False,
+    # VRF tie-breaker: trigger VRF when no 2/3 consensus
+    use_vrf_on_tie: bool = False,
 ) -> DetectionResponse:
     w3 = get_web3()
     aggregator = SentinelAggregator()
@@ -48,7 +57,17 @@ def run_detection_cycle(
         simulate_short_voting_period,
     ])
 
-    if adapter is None and not is_simulation:
+    # In live_mode, always try to get a real adapter
+    if live_mode and adapter is None:
+        try:
+            from aegis.adapters import get_adapter
+            adapter = get_adapter(w3, protocol_address)
+            logger.info("LIVE MODE: Auto-detected adapter: %s", adapter.protocol_type)
+        except Exception as e:
+            logger.warning("LIVE MODE: Could not auto-detect adapter: %s", e)
+            adapter = None
+
+    if adapter is None and not is_simulation and not live_mode:
         try:
             from aegis.adapters import get_adapter
             adapter = get_adapter(w3, protocol_address)
@@ -57,6 +76,77 @@ def run_detection_cycle(
             logger.debug("Could not auto-detect adapter: %s", e)
             adapter = None
 
+    # --- Live mode: fetch real TVL and record history ---
+    live_tvl_usd: float | None = None
+    live_chainlink_price: float | None = None
+    live_previous_tvl: int | None = None
+    live_tvl_change_percent: float | None = None
+    live_anomalies: list[dict] = []
+
+    if live_mode and adapter is not None:
+        try:
+            from aegis.adapters.history import get_tvl_tracker
+
+            tracker = get_tvl_tracker()
+            current_tvl = adapter.get_tvl_sync()
+
+            # Record the snapshot
+            tracker.record_snapshot_sync(
+                protocol_address=protocol_address,
+                tvl_wei=current_tvl,
+                protocol_type=adapter.protocol_type,
+            )
+
+            # Get previous TVL from history
+            prev_snap = tracker._memory_store.get_previous_snapshot(protocol_address)
+            if prev_snap:
+                live_previous_tvl = prev_snap.tvl_wei
+            else:
+                live_previous_tvl = previous_tvl if previous_tvl > 0 else None
+
+            # Detect anomalies
+            anomalies = tracker.detect_anomalies(protocol_address)
+            live_anomalies = [a.model_dump() for a in anomalies]
+
+            # Calculate change percent
+            if live_previous_tvl and live_previous_tvl > 0:
+                live_tvl_change_percent = ((current_tvl - live_previous_tvl) / live_previous_tvl) * 100
+            else:
+                live_tvl_change_percent = 0.0
+
+            # Get ETH price for USD conversion
+            try:
+                chainlink_data = get_eth_usd_price(w3)
+                live_chainlink_price = chainlink_data.price
+                live_tvl_usd = (current_tvl / 10**18) * chainlink_data.price
+            except Exception:
+                live_tvl_usd = None
+                live_chainlink_price = None
+
+            # Store live monitor data for the /monitor endpoint
+            _live_monitor_data[protocol_address.lower()] = {
+                "protocol_address": protocol_address,
+                "protocol_name": protocol_name,
+                "tvl_wei": current_tvl,
+                "tvl_usd": live_tvl_usd,
+                "previous_tvl_wei": live_previous_tvl,
+                "tvl_change_percent": live_tvl_change_percent,
+                "eth_usd_price": live_chainlink_price,
+                "anomalies": live_anomalies,
+                "adapter_type": adapter.protocol_type,
+                "timestamp": int(time.time()),
+            }
+
+            logger.info(
+                "LIVE MODE: TVL=%d (%.2f USD), change=%.2f%%, anomalies=%d",
+                current_tvl,
+                live_tvl_usd or 0,
+                live_tvl_change_percent or 0,
+                len(live_anomalies),
+            )
+        except Exception as e:
+            logger.warning("LIVE MODE: History tracking failed: %s", e)
+
     # liquidity sentinel
     try:
         if simulate_tvl_drop_percent is not None:
@@ -64,6 +154,15 @@ def run_detection_cycle(
             current_tvl = int(base_tvl * (1 - simulate_tvl_drop_percent / 100))
             prev_tvl = base_tvl
             logger.info("SIMULATION: TVL drop %.1f%% (from %d to %d)", simulate_tvl_drop_percent, prev_tvl, current_tvl)
+        elif live_mode and adapter is not None:
+            try:
+                current_tvl = adapter.get_tvl_sync()
+                prev_tvl = live_previous_tvl
+                logger.info("LIVE: Fetched TVL %d from %s", current_tvl, adapter.protocol_type)
+            except Exception as e:
+                logger.warning("LIVE: Adapter TVL fetch failed: %s, falling back", e)
+                current_tvl = 1_000_000 * 10**18
+                prev_tvl = None
         elif adapter is not None:
             try:
                 current_tvl = adapter.get_tvl_sync()
@@ -163,13 +262,14 @@ def run_detection_cycle(
         logger.error("Governance Sentinel failed: %s", e)
 
     # consensus
-    consensus = aggregator.aggregate()
+    consensus = aggregator.aggregate(use_vrf_on_tie=use_vrf_on_tie)
     logger.info(
-        "Consensus: reached=%s, level=%s, ratio=%.2f, action=%s",
+        "Consensus: reached=%s, level=%s, ratio=%.2f, action=%s, vrf_used=%s",
         consensus.consensus_reached,
         consensus.final_threat_level.value,
         consensus.agreement_ratio,
         consensus.action_recommended.value,
+        consensus.tie_breaker_used,
     )
 
     return DetectionResponse(
@@ -177,3 +277,13 @@ def run_detection_cycle(
         assessments=assessments,
         timestamp=now_seconds(),
     )
+
+
+def get_live_monitor_data(protocol_address: str) -> dict | None:
+    """Return cached live monitoring data for a protocol address."""
+    return _live_monitor_data.get(protocol_address.lower())
+
+
+def get_all_live_monitor_data() -> dict[str, object]:
+    """Return all cached live monitoring data."""
+    return dict(_live_monitor_data)

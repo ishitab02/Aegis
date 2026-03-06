@@ -48,6 +48,24 @@ CHAINLINK_FEEDS_BASE: dict[str, str] = {
 
 CHAINLINK_LINK_TOKEN = "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
 
+# VRF Configuration (Base Sepolia)
+VRF_COORDINATOR_ADDRESS = os.getenv(
+    "CHAINLINK_VRF_COORDINATOR",
+    "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE"
+)
+VRF_KEY_HASH = os.getenv(
+    "CHAINLINK_VRF_KEY_HASH",
+    "0x9e9e46732b32662b9adc6f3abdf6c5e926a666d174a4d6b8e39c4cca76a38897"
+)
+VRF_SUBSCRIPTION_ID = os.getenv(
+    "CHAINLINK_VRF_SUBSCRIPTION_ID",
+    "11253994545520594848914204579213158096888562024819407235781468224794237415058"
+)
+AEGIS_VRF_CONSUMER_ADDRESS = os.getenv(
+    "AEGIS_VRF_CONSUMER_ADDRESS",
+    "0x51bAC1448E5beC0E78B0408473296039A207255e"
+)
+
 
 X402_FACILITATOR_URL = "https://x402.org/facilitator"
 USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
@@ -101,6 +119,99 @@ AGGREGATOR_V3_ABI = [
         "inputs": [],
         "name": "decimals",
         "outputs": [{"name": "", "type": "uint8"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+]
+
+VRF_CONSUMER_ABI = [
+    {
+        "inputs": [{"name": "sentinelIds", "type": "uint256[]"}],
+        "name": "requestTieBreaker",
+        "outputs": [
+            {"name": "requestId", "type": "uint256"},
+            {"name": "tieBreakerId", "type": "uint256"},
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [{"name": "requestId", "type": "uint256"}],
+        "name": "getRequest",
+        "outputs": [
+            {
+                "components": [
+                    {"name": "tieBreakerId", "type": "uint256"},
+                    {"name": "sentinelIds", "type": "uint256[]"},
+                    {"name": "selectedSentinelId", "type": "uint256"},
+                    {"name": "randomWord", "type": "uint256"},
+                    {"name": "fulfilled", "type": "bool"},
+                ],
+                "name": "",
+                "type": "tuple",
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [{"name": "tieBreakerId", "type": "uint256"}],
+        "name": "getTieBreakResult",
+        "outputs": [
+            {
+                "components": [
+                    {"name": "tieBreakerId", "type": "uint256"},
+                    {"name": "sentinelIds", "type": "uint256[]"},
+                    {"name": "selectedSentinelId", "type": "uint256"},
+                    {"name": "randomWord", "type": "uint256"},
+                    {"name": "fulfilled", "type": "bool"},
+                ],
+                "name": "",
+                "type": "tuple",
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "getLastSelectedSentinel",
+        "outputs": [{"name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "s_lastRequestId",
+        "outputs": [{"name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "s_lastRandomWord",
+        "outputs": [{"name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [{"name": "requestId", "type": "uint256"}],
+        "name": "isRequestFulfilled",
+        "outputs": [{"name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "s_subscriptionId",
+        "outputs": [{"name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "s_tieBreakCounter",
+        "outputs": [{"name": "", "type": "uint256"}],
         "stateMutability": "view",
         "type": "function",
     },

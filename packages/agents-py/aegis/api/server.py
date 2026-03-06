@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from aegis.api.routes import demo, detect, forensics, health, monitor, sentinel
+from aegis.api.routes import demo, detect, forensics, health, sentinel, vrf
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,7 +47,7 @@ app.include_router(sentinel.router, prefix="/api/v1/sentinel", tags=["Sentinels"
 app.include_router(forensics.router, prefix="/api/v1/forensics", tags=["Forensics"])
 app.include_router(health.router, prefix="/api/v1/health", tags=["Health"])
 app.include_router(demo.router, prefix="/api/v1/demo", tags=["Demo"])
-app.include_router(monitor.router, prefix="/api/v1/monitor", tags=["Monitor"])
+app.include_router(vrf.router, prefix="/api/v1/vrf", tags=["VRF Tie-Breaker"])
 
 
 @app.get("/")

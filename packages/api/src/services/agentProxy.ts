@@ -20,6 +20,7 @@ export interface DetectionParams {
   simulate_tvl_drop_percent?: number;
   simulate_price_deviation_percent?: number;
   simulate_short_voting_period?: boolean;
+  live_mode?: boolean;
 }
 
 export async function runDetection(params: DetectionParams) {
@@ -84,5 +85,15 @@ export async function startEulerReplay() {
 export async function getEulerReplayStep(stepNumber: number) {
   const res = await agentFetch(`/api/v1/demo/euler-replay/step/${stepNumber}`);
   if (!res.ok) return null;
+  return res.json();
+}
+
+export async function getLiveAaveMonitor() {
+  const res = await agentFetch("/api/v1/detect/monitor/aave");
+  return res.json();
+}
+
+export async function getLiveProtocolMonitor(address: string) {
+  const res = await agentFetch(`/api/v1/detect/monitor/${address}`);
   return res.json();
 }

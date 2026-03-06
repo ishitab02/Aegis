@@ -12,7 +12,16 @@ class SentinelAggregator:
     def submit_assessment(self, assessment: ThreatAssessment) -> None:
         self._assessments[assessment.sentinel_id] = assessment
 
-    def aggregate(self) -> ConsensusResult:
+    def aggregate(self, use_vrf_on_tie: bool = False) -> ConsensusResult:
+        """
+        Aggregate all sentinel assessments and reach consensus.
+
+        Args:
+            use_vrf_on_tie: If True, trigger VRF tie-breaker when no 2/3 majority
+
+        Returns:
+            ConsensusResult with voting outcome
+        """
         votes: list[SentinelVote] = []
 
         for sentinel_id, assessment in self._assessments.items():
@@ -26,7 +35,7 @@ class SentinelAggregator:
                 )
             )
 
-        return reach_consensus(votes)
+        return reach_consensus(votes, use_vrf_on_tie=use_vrf_on_tie)
 
     def clear(self) -> None:
         self._assessments.clear()
