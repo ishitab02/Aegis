@@ -3,12 +3,6 @@
 > **The Immune System for DeFi**
 
 AI-powered threat detection. Chainlink-verified consensus. Instant automated response.
-
-[![Chainlink Convergence Hackathon](https://img.shields.io/badge/Chainlink-Convergence%20Hackathon-375BD2?style=flat&logo=chainlink)](https://convergence.chainlink.com)
-[![Track](https://img.shields.io/badge/Track-Risk%20%26%20Compliance-orange)]()
-[![Tests](https://img.shields.io/badge/Tests-117%20passing-brightgreen)]()
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
 ---
 
 ## The Problem
