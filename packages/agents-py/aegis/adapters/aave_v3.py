@@ -289,7 +289,7 @@ class AaveV3Adapter(BaseProtocolAdapter):
         loop = asyncio.get_event_loop()
 
         total_tvl = 0
-        for reserve in reserves:
+        for i, reserve in enumerate(reserves):
             try:
                 supply = await loop.run_in_executor(
                     None,
@@ -297,6 +297,9 @@ class AaveV3Adapter(BaseProtocolAdapter):
                 )
                 total_tvl += supply
                 logger.debug("Reserve %s supply: %d", reserve, supply)
+                # Small delay to avoid rate limiting on public RPCs
+                if i < len(reserves) - 1:
+                    await asyncio.sleep(0.1)
             except Exception as e:
                 logger.warning("Failed to get supply for reserve %s: %s", reserve, e)
 

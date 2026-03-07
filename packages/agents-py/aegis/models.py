@@ -89,12 +89,36 @@ class SentinelVote(BaseModel):
     signature: str = ""
 
 
+class VRFTieBreakRequest(BaseModel):
+    """VRF tie-breaker request for sentinel vote resolution."""
+    request_id: int
+    tie_breaker_id: int
+    sentinel_ids: list[int]
+    status: Literal["pending", "fulfilled", "failed"] = "pending"
+    selected_sentinel_id: Optional[int] = None
+    random_word: Optional[int] = None
+    tx_hash: Optional[str] = None
+
+
+class VRFTieBreakResult(BaseModel):
+    """Result of a VRF tie-breaker."""
+    tie_breaker_id: int
+    sentinel_ids: list[int]
+    selected_sentinel_id: int
+    random_word: int
+    fulfilled: bool
+
+
 class ConsensusResult(BaseModel):
     consensus_reached: bool
     final_threat_level: ThreatLevel
     agreement_ratio: float
     votes: list[SentinelVote]
     action_recommended: ActionRecommendation
+    # VRF tie-breaker fields
+    tie_breaker_used: bool = False
+    vrf_request_id: Optional[int] = None
+    vrf_selected_sentinel: Optional[str] = None
 
 
 
@@ -218,6 +242,8 @@ class DetectionRequest(BaseModel):
     simulate_tvl_drop_percent: Optional[float] = None
     simulate_price_deviation_percent: Optional[float] = None
     simulate_short_voting_period: bool = False
+    live_mode: bool = False
+    use_vrf_on_tie: bool = False  # Trigger VRF tie-breaker when no 2/3 consensus
 
 
 class DetectionResponse(BaseModel):
