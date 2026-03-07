@@ -88,6 +88,19 @@ AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in **30 seconds
 
 ---
 
+## Deployed Smart Contracts (Base Sepolia)
+
+| Contract | Address | Verified |
+|----------|---------|----------|
+| SentinelRegistry | `0xd34FC1ee378F342EFb92C0D334362B9E577b489f` | Yes |
+| CircuitBreaker | `0xa0eE49660252B353830ADe5de0Ca9385647F85b5` | Yes |
+| ThreatReport | `0x3f01beefA5b7F5931B5545BbCFCF0a72c7131499` | Yes |
+| ReputationTracker | `0x7970433B694f7fa6f8D511c7B20110ECd28db100` | Yes |
+| TestVault | `0xB85d57374c18902855FA85d6C36080737Fb7509c` | Yes |
+| AegisVRFConsumer | `0x51bAC1448E5beC0E78B0408473296039A207255e` | Yes |
+
+---
+
 ## Quick Start
 
 ### 1. Clone and Install
