@@ -1,6 +1,6 @@
 # AEGIS Protocol
 
-> **The Immune System for DeFi**
+> The Immune System for DeFi
 
 AI-powered threat detection. Chainlink-verified consensus. Instant automated response.
 
@@ -8,7 +8,7 @@ AI-powered threat detection. Chainlink-verified consensus. Instant automated res
 
 ## Hackathon Submission
 
-**Chainlink Convergence Hackathon** | Feb 6 - Mar 8, 2026 | **Track: Risk & Compliance**
+Chainlink Convergence Hackathon | Feb 6 - Mar 8, 2026 | Track: Risk & Compliance
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
@@ -22,7 +22,7 @@ AI-powered threat detection. Chainlink-verified consensus. Instant automated res
 
 ## The Problem
 
-In 2024, DeFi protocols lost **$3 billion** to exploits. The pattern is always the same:
+In 2024, DeFi protocols lost $3 billion to exploits. The pattern is always the same:
 
 ```
 Attack begins (Block N)
@@ -36,13 +36,13 @@ Security team investigates (2-6 hours)
 Funds: UNRECOVERABLE
 ```
 
-**The problem isn't detection algorithms. The problem is TIME.**
+The problem isn't detection algorithms. The problem is TIME.
 
 ---
 
 ## The Solution
 
-AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in **30 seconds** and responds **automatically**.
+AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in 30 seconds and responds automatically.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -75,13 +75,13 @@ AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in **30 seconds
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**How it works:**
+How it works:
 
-1. **Three AI sentinels** monitor a protocol in real-time
+1. Three AI sentinels monitor a protocol in real-time
 2. Each sentinel votes on threat level: NONE → LOW → MEDIUM → HIGH → CRITICAL
-3. When **2 of 3** agree on HIGH/CRITICAL → **consensus reached**
-4. **Circuit Breaker** triggers automatically → protocol pauses
-5. **ChainSherlock** traces the attack and generates a forensic report
+3. When 2 of 3 agree on HIGH/CRITICAL → consensus reached
+4. Circuit Breaker triggers automatically → protocol pauses
+5. ChainSherlock traces the attack and generates a forensic report
 
 ---
 
@@ -89,15 +89,15 @@ AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in **30 seconds
 
 | Service | Purpose | On-Chain Proof |
 |---------|---------|----------------|
-| **CRE** | Workflow orchestration | Simulation passed ([docs](docs/CRE_DEPLOYMENT.md)) |
-| **Data Feeds** | ETH/USD price verification | Used in every detection cycle |
-| **Automation** | 30-second monitoring cycles | Cron trigger in CRE workflow |
-| **VRF** | Fair tie-breaker selection | [BaseScan TX](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
-| **CCIP** | Cross-chain alerts | [CCIP Explorer](https://ccip.chain.link/msg/0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238) |
+| CRE | Workflow orchestration | Simulation passed ([docs](docs/CRE_DEPLOYMENT.md)) |
+| Data Feeds | ETH/USD price verification | Used in every detection cycle |
+| Automation | 30-second monitoring cycles | Cron trigger in CRE workflow |
+| VRF | Fair tie-breaker selection | [BaseScan TX](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
+| CCIP | Cross-chain alerts | [CCIP Explorer](https://ccip.chain.link/msg/0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238) |
 
 ### All Files Using Chainlink (Required for Submission)
 
-**CRE Workflows** (`packages/cre-workflows/`):
+CRE Workflows (`packages/cre-workflows/`):
 - [`src/workflows/threatDetection/main.ts`](packages/cre-workflows/src/workflows/threatDetection/main.ts) — Main detection workflow (Cron trigger → HTTP → EVM Read/Write)
 - [`src/workflows/forensicAnalysis/main.ts`](packages/cre-workflows/src/workflows/forensicAnalysis/main.ts) — Forensic analysis workflow
 - [`src/workflows/healthCheck/main.ts`](packages/cre-workflows/src/workflows/healthCheck/main.ts) — System health monitoring
@@ -106,11 +106,11 @@ AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in **30 seconds
 - [`src/types/abis.ts`](packages/cre-workflows/src/types/abis.ts) — CCIP Router, VRF Coordinator, Data Feed ABIs
 - [`project.yaml`](packages/cre-workflows/project.yaml) — CRE project configuration
 
-**Data Feeds** (`packages/agents-py/`):
+Data Feeds (`packages/agents-py/`):
 - [`aegis/blockchain/chainlink_feeds.py`](packages/agents-py/aegis/blockchain/chainlink_feeds.py) — ETH/USD, USDC/USD price reads
 - [`aegis/config.py`](packages/agents-py/aegis/config.py) — Chainlink feed addresses (Base, Ethereum, multi-chain)
 
-**Smart Contracts** (`packages/contracts/`):
+Smart Contracts (`packages/contracts/`):
 - [`src/vrf/AegisVRFConsumer.sol`](packages/contracts/src/vrf/AegisVRFConsumer.sol) — VRF v2.5 consumer contract
 - [`src/ccip/AlertReceiver.sol`](packages/contracts/src/ccip/AlertReceiver.sol) — CCIP message receiver
 - [`script/DeployVRFConsumer.s.sol`](packages/contracts/script/DeployVRFConsumer.s.sol) — VRF deployment script
@@ -166,7 +166,7 @@ bash scripts/run-demo.sh
 
 ### 5. Open Dashboard
 
-Navigate to **http://localhost:5173**
+Navigate to http://localhost:5173
 
 ---
 
@@ -202,7 +202,7 @@ pnpm exec tsx scripts/simulate-exploit.ts --all
 pnpm exec tsx scripts/simulate-exploit.ts --scenario=euler --live
 ```
 
-**Supported Protocols**: MockProtocol, Aave V3, Uniswap V3, Compound V3, Curve 3pool, Balancer V2, Stargate Bridge, Euler Finance
+Supported Protocols: MockProtocol, Aave V3, Uniswap V3, Compound V3, Curve 3pool, Balancer V2, Stargate Bridge, Euler Finance
 
 ### Option 2: Direct API Call
 
@@ -215,9 +215,9 @@ curl -X POST http://localhost:3000/api/v1/sentinel/detect \
 
 ### Option 3: Interactive Euler Replay (Frontend)
 
-Navigate to **http://localhost:5173/demo** for a step-by-step visualization of the Euler Finance hack.
+Navigate to http://localhost:5173/demo for a step-by-step visualization of the Euler Finance hack.
 
-**Expected result:**
+Expected result:
 - Liquidity Sentinel → CRITICAL
 - Oracle Sentinel → CRITICAL
 - Consensus reached (2/3) → Circuit Breaker triggers
@@ -327,9 +327,9 @@ Full API documentation: http://localhost:3000/api/v1/docs
 
 | Without AEGIS | With AEGIS |
 |---------------|------------|
-| Attack detected: 30+ min | Attack detected: **30 sec** |
-| Response: Manual | Response: **Automatic** |
-| Funds lost: Millions | Funds lost: **Zero** |
+| Attack detected: 30+ min | Attack detected: 30 sec |
+| Response: Manual | Response: Automatic |
+| Funds lost: Millions | Funds lost: Zero |
 
 ---
 
@@ -341,9 +341,9 @@ MIT
 
 ## Hackathon Submission Details
 
-**Event**: Chainlink Convergence Hackathon (February 6 - March 8, 2026)
+Event: Chainlink Convergence Hackathon (February 6 - March 8, 2026)
 
-**Track**: Risk & Compliance ($6,000 prize)
+Track: Risk & Compliance ($6,000 prize)
 
 ### Requirements Checklist
 
@@ -360,17 +360,68 @@ MIT
 
 | Service | Transaction/Proof | Explorer Link |
 |---------|-------------------|---------------|
-| **CCIP** | Alert sent Base → Arbitrum | [TX 0x6339...](https://sepolia.basescan.org/tx/0x6339132295e793680a642008138ab1ab9194e986682327d3d1ccf93c15ab2303) |
-| **CCIP** | Message delivered | [CCIP Explorer](https://ccip.chain.link/msg/0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238) |
-| **VRF** | Randomness requested | [TX 0x761c...](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
-| **Data Feeds** | ETH/USD: $1965.14 | Live in every detection cycle |
-| **CRE** | Workflow simulated | [Simulation output](docs/CRE_DEPLOYMENT.md) |
-| **Automation** | Cron trigger | 30-second intervals in CRE workflow |
+| CCIP | Alert sent Base → Arbitrum | [TX 0x6339...](https://sepolia.basescan.org/tx/0x6339132295e793680a642008138ab1ab9194e986682327d3d1ccf93c15ab2303) |
+| CCIP | Message delivered | [CCIP Explorer](https://ccip.chain.link/msg/0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238) |
+| VRF | Randomness requested | [TX 0x761c...](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
+| Data Feeds | ETH/USD: $1965.14 | Live in every detection cycle |
+| CRE | Workflow simulated | [Simulation output](docs/CRE_DEPLOYMENT.md) |
+| Automation | Cron trigger | 30-second intervals in CRE workflow |
 
 ### Chainlink Services Used (5 = +4 Bonus Points)
 
-1. **CRE** — Workflow orchestration, consensus verification
-2. **Data Feeds** — Real-time ETH/USD price for oracle manipulation detection
-3. **Automation** — Scheduled 30-second monitoring cycles
-4. **VRF** — Verifiable random tie-breaker when sentinels disagree
-5. **CCIP** — Cross-chain alert propagation (Base → Arbitrum)
+1. CRE — Workflow orchestration, consensus verification
+2. Data Feeds — Real-time ETH/USD price for oracle manipulation detection
+3. Automation — Scheduled 30-second monitoring cycles
+4. VRF — Verifiable random tie-breaker when sentinels disagree
+5. CCIP — Cross-chain alert propagation (Base → Arbitrum)
+
+---
+
+## Chainlink Documentation References
+
+This project uses the following Chainlink services. Official documentation links for each:
+
+| Service | Documentation | How AEGIS Uses It |
+|---------|---------------|-------------------|
+| Chainlink Runtime Environment (CRE) | [CRE Docs](https://docs.chain.link/cre) | Orchestrates threat detection workflows, connects AI agents to on-chain actions |
+| Data Feeds | [Data Feeds Docs](https://docs.chain.link/data-feeds) | ETH/USD price verification for oracle manipulation detection ([Base Sepolia Feeds](https://docs.chain.link/data-feeds/price-feeds/addresses?network=base&page=1)) |
+| Automation | [Automation Docs](https://docs.chain.link/chainlink-automation) | Cron-triggered 30-second monitoring cycles via CRE |
+| VRF v2.5 | [VRF Docs](https://docs.chain.link/vrf) | Verifiable random tie-breaker when sentinel votes are split ([Base Sepolia VRF](https://docs.chain.link/vrf/v2-5/supported-networks#base-sepolia-testnet)) |
+| CCIP | [CCIP Docs](https://docs.chain.link/ccip) | Cross-chain alert propagation from Base to other chains ([CCIP Directory](https://docs.chain.link/ccip/directory/testnet)) |
+
+### CRE Workflow Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    CRE WORKFLOW: threatDetection                     │
+│                                                                      │
+│  ┌──────────┐    ┌──────────────┐    ┌───────────────┐             │
+│  │  CRON    │───▶│  HTTP FETCH  │───▶│  AI AGENTS    │             │
+│  │ (30 sec) │    │ (Price Data) │    │ (Python API)  │             │
+│  └──────────┘    └──────────────┘    └───────┬───────┘             │
+│                                              │                       │
+│                                              ▼                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                    CONSENSUS CHECK                            │   │
+│  │           (2/3 sentinels agree on threat level)               │   │
+│  └──────────────────────────────┬───────────────────────────────┘   │
+│                                 │                                    │
+│               ┌─────────────────┼─────────────────┐                 │
+│               ▼                 ▼                 ▼                 │
+│        ┌────────────┐   ┌────────────┐   ┌────────────┐            │
+│        │ EVM WRITE  │   │   CCIP     │   │   VRF      │            │
+│        │ (Circuit   │   │ (Cross-    │   │ (Tie-      │            │
+│        │  Breaker)  │   │  chain)    │   │  breaker)  │            │
+│        └────────────┘   └────────────┘   └────────────┘            │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Chainlink Contract Addresses Used (Base Sepolia)
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| ETH/USD Data Feed | `0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1` | Price oracle for manipulation detection |
+| VRF Coordinator | `0xDA3b641D438362C440Ac5458c57e00a712b66700` | VRF v2.5 on Base Sepolia |
+| CCIP Router | `0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93` | Cross-chain messaging |
+| LINK Token | `0xE4aB69C077896252FAFBD49EFD26B5D171A32410` | Payment for Chainlink services |
