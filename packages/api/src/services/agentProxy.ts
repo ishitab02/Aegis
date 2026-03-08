@@ -89,11 +89,11 @@ export async function getEulerReplayStep(stepNumber: number) {
 }
 
 export async function getLiveAaveMonitor() {
-  const res = await agentFetch("/api/v1/detect/monitor/aave");
+  const res = await agentFetch("/api/v1/monitor/aave");
   return res.json();
 }
 
 export async function getLiveProtocolMonitor(address: string) {
-  const res = await agentFetch(`/api/v1/detect/monitor/${address}`);
+  const res = await agentFetch(`/api/v1/monitor/${address}`);
   return res.json();
 }

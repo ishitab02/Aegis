@@ -15,9 +15,17 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any
 
-from crewai import Agent, Task
+from crewai import Agent, LLM, Task
 
 from aegis.models import AttackType, ThreatLevel
+
+
+def _get_anthropic_llm() -> LLM:
+    """Get Anthropic Claude LLM for CrewAI agents."""
+    return LLM(
+        model="anthropic/claude-3-5-sonnet-20241022",
+        api_key=os.getenv("ANTHROPIC_API_KEY"),
+    )
 
 if TYPE_CHECKING:
     from aegis.adapters.base import ProtocolEvent
@@ -252,6 +260,7 @@ def _get_liquidity_ai_agent() -> Agent:
                 "can be exploits OR legitimate withdrawals, and you carefully examine "
                 "the evidence before making a determination."
             ),
+            llm=_get_anthropic_llm(),
             verbose=False,
             allow_delegation=False,
         )
@@ -277,6 +286,7 @@ def _get_oracle_ai_agent() -> Agent:
                 "understand how attackers manipulate AMM spot prices to trigger "
                 "liquidations or extract value from lending protocols."
             ),
+            llm=_get_anthropic_llm(),
             verbose=False,
             allow_delegation=False,
         )

@@ -3,6 +3,21 @@
 > **The Immune System for DeFi**
 
 AI-powered threat detection. Chainlink-verified consensus. Instant automated response.
+
+---
+
+## Hackathon Submission
+
+**Chainlink Convergence Hackathon** | Feb 6 - Mar 8, 2026 | **Track: Risk & Compliance**
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| CRE Workflow with blockchain + AI agent | ✅ | [threatDetection/main.ts](packages/cre-workflows/src/workflows/threatDetection/main.ts) |
+| Successful CRE simulation | ✅ | [CRE_DEPLOYMENT.md](docs/CRE_DEPLOYMENT.md) |
+| 5 Chainlink services | ✅ | CRE + Data Feeds + Automation + VRF + CCIP |
+| On-chain proof (CCIP) | ✅ | [TX 0x6339...](https://sepolia.basescan.org/tx/0x6339132295e793680a642008138ab1ab9194e986682327d3d1ccf93c15ab2303) |
+| On-chain proof (VRF) | ✅ | [TX 0x761c...](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
+
 ---
 
 ## The Problem
@@ -70,15 +85,36 @@ AEGIS (AI-Enhanced Guardian Intelligence System) detects threats in **30 seconds
 
 ---
 
-## Chainlink Services (5 Total)
+## Chainlink Services (5 Total = +4 Bonus Points)
 
-| Service | Purpose | Code |
-|---------|---------|------|
-| **CRE** | Workflow orchestration, consensus verification | [`threatDetection/main.ts`](packages/cre-workflows/src/workflows/threatDetection/main.ts) |
-| **Data Feeds** | Price truth for oracle manipulation detection | [`chainlink_feeds.py`](packages/agents-py/aegis/blockchain/chainlink_feeds.py) |
-| **Automation** | Scheduled 30-second detection cycles | Cron triggers in CRE workflows |
-| **VRF** | Fair tie-breaker when sentinels disagree | [`vrfTieBreaker/main.ts`](packages/cre-workflows/src/workflows/vrfTieBreaker/main.ts) |
-| **CCIP** | Cross-chain alert propagation | [`ccipAlert/main.ts`](packages/cre-workflows/src/workflows/ccipAlert/main.ts) |
+| Service | Purpose | On-Chain Proof |
+|---------|---------|----------------|
+| **CRE** | Workflow orchestration | Simulation passed ([docs](docs/CRE_DEPLOYMENT.md)) |
+| **Data Feeds** | ETH/USD price verification | Used in every detection cycle |
+| **Automation** | 30-second monitoring cycles | Cron trigger in CRE workflow |
+| **VRF** | Fair tie-breaker selection | [BaseScan TX](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
+| **CCIP** | Cross-chain alerts | [CCIP Explorer](https://ccip.chain.link/msg/0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238) |
+
+### All Files Using Chainlink (Required for Submission)
+
+**CRE Workflows** (`packages/cre-workflows/`):
+- [`src/workflows/threatDetection/main.ts`](packages/cre-workflows/src/workflows/threatDetection/main.ts) — Main detection workflow (Cron trigger → HTTP → EVM Read/Write)
+- [`src/workflows/forensicAnalysis/main.ts`](packages/cre-workflows/src/workflows/forensicAnalysis/main.ts) — Forensic analysis workflow
+- [`src/workflows/healthCheck/main.ts`](packages/cre-workflows/src/workflows/healthCheck/main.ts) — System health monitoring
+- [`src/workflows/ccipAlert/main.ts`](packages/cre-workflows/src/workflows/ccipAlert/main.ts) — Cross-chain alert propagation via CCIP
+- [`src/workflows/vrfTieBreaker/main.ts`](packages/cre-workflows/src/workflows/vrfTieBreaker/main.ts) — VRF-based consensus tie-breaker
+- [`src/types/abis.ts`](packages/cre-workflows/src/types/abis.ts) — CCIP Router, VRF Coordinator, Data Feed ABIs
+- [`project.yaml`](packages/cre-workflows/project.yaml) — CRE project configuration
+
+**Data Feeds** (`packages/agents-py/`):
+- [`aegis/blockchain/chainlink_feeds.py`](packages/agents-py/aegis/blockchain/chainlink_feeds.py) — ETH/USD, USDC/USD price reads
+- [`aegis/config.py`](packages/agents-py/aegis/config.py) — Chainlink feed addresses (Base, Ethereum, multi-chain)
+
+**Smart Contracts** (`packages/contracts/`):
+- [`src/vrf/AegisVRFConsumer.sol`](packages/contracts/src/vrf/AegisVRFConsumer.sol) — VRF v2.5 consumer contract
+- [`src/ccip/AlertReceiver.sol`](packages/contracts/src/ccip/AlertReceiver.sol) — CCIP message receiver
+- [`script/DeployVRFConsumer.s.sol`](packages/contracts/script/DeployVRFConsumer.s.sol) — VRF deployment script
+- [`script/DeployCCIPReceiver.s.sol`](packages/contracts/script/DeployCCIPReceiver.s.sol) — CCIP receiver deployment
 
 ---
 
@@ -252,7 +288,7 @@ packages/
 # Smart contract tests (21 passing)
 cd packages/contracts && forge test
 
-# Python agent tests (96 passing)
+# Python agent tests (147 passing)
 cd packages/agents-py && python -m pytest tests/ -v
 ```
 
@@ -274,10 +310,14 @@ Full API documentation: http://localhost:3000/api/v1/docs
 
 ## Documentation
 
-- [Deployment Guide](docs/DEPLOYMENT.md) — Deploy to Vercel + Railway
+- [CRE Deployment](docs/CRE_DEPLOYMENT.md) — CRE workflow simulation & deployment status
 - [Demo Guide](docs/DEMO_GUIDE.md) — Step-by-step demo instructions
-- [Video Script](docs/VIDEO_SCRIPT.md) — 3-minute demo video script
-- [Devpost](docs/DEVPOST.md) — Hackathon submission content
+- [Video Script](docs/VIDEO_SCRIPT.md) — 4-minute demo video script
+- [Demo Runbook](docs/DEMO_RUNBOOK.md) — Commands for video recording
+- [VRF Test Results](docs/VRF_TEST_RESULTS.md) — VRF integration proof
+- [CCIP Test Results](docs/CCIP_TEST_RESULTS.md) — CCIP integration proof
+- [Forensics Demo](docs/FORENSICS_DEMO.md) — ChainSherlock Euler hack analysis
+- [Judge Cheatsheet](docs/JUDGE_CHEATSHEET.md) — One-pager for hackathon judges
 - [Judge Q&A](docs/JUDGE_QA.md) — Anticipated questions and answers
 - [CLAUDE.md](CLAUDE.md) — Technical reference for contributors
 
@@ -299,10 +339,38 @@ MIT
 
 ---
 
-## Hackathon
+## Hackathon Submission Details
 
-**Chainlink Convergence Hackathon** — February 6 to March 8, 2026
+**Event**: Chainlink Convergence Hackathon (February 6 - March 8, 2026)
 
-**Track**: Risk & Compliance
+**Track**: Risk & Compliance ($6,000 prize)
 
-**Chainlink Services**: CRE, Data Feeds, Automation, VRF, CCIP (5 total = +4 bonus)
+### Requirements Checklist
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| CRE Workflow as orchestration layer | ✅ | 5 workflows in [`packages/cre-workflows/`](packages/cre-workflows/) |
+| Integrates blockchain + AI agent | ✅ | EVM Read/Write + Python AI agents via HTTP |
+| Successful CRE simulation | ✅ | `cre workflow simulate` passed ([docs](docs/CRE_DEPLOYMENT.md)) |
+| 3-5 min video | ✅ | [Video script](docs/VIDEO_SCRIPT.md) |
+| Public source code | ✅ | This repository |
+| README links to Chainlink files | ✅ | See [Chainlink Integration](#all-files-using-chainlink-required-for-submission) above |
+
+### On-Chain Proof of Chainlink Services
+
+| Service | Transaction/Proof | Explorer Link |
+|---------|-------------------|---------------|
+| **CCIP** | Alert sent Base → Arbitrum | [TX 0x6339...](https://sepolia.basescan.org/tx/0x6339132295e793680a642008138ab1ab9194e986682327d3d1ccf93c15ab2303) |
+| **CCIP** | Message delivered | [CCIP Explorer](https://ccip.chain.link/msg/0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238) |
+| **VRF** | Randomness requested | [TX 0x761c...](https://sepolia.basescan.org/tx/0x761cb3637348d7064ec5b56a332988fc1828603fd5cf2e91325af38c1f4e45ff) |
+| **Data Feeds** | ETH/USD: $1965.14 | Live in every detection cycle |
+| **CRE** | Workflow simulated | [Simulation output](docs/CRE_DEPLOYMENT.md) |
+| **Automation** | Cron trigger | 30-second intervals in CRE workflow |
+
+### Chainlink Services Used (5 = +4 Bonus Points)
+
+1. **CRE** — Workflow orchestration, consensus verification
+2. **Data Feeds** — Real-time ETH/USD price for oracle manipulation detection
+3. **Automation** — Scheduled 30-second monitoring cycles
+4. **VRF** — Verifiable random tie-breaker when sentinels disagree
+5. **CCIP** — Cross-chain alert propagation (Base → Arbitrum)

@@ -46,13 +46,18 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export type LiveMonitorData = {
-  protocol_address: string;
+  protocol_address?: string;
+  pool_address?: string;
   protocol_name?: string;
-  tvl_wei?: number;
-  tvl_usd?: number | null;
+  protocol?: string;
+  chain?: string;
+  tvl_wei?: string;
+  tvl_eth?: number;
+  tvl_usd_estimate?: number | null;
   previous_tvl_wei?: number | null;
   tvl_change_percent?: number | null;
-  eth_usd_price?: number | null;
+  chainlink_eth_usd?: number | null;
+  chainlink_updated_at?: number | null;
   anomalies?: Array<{
     anomaly_type: string;
     severity: string;

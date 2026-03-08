@@ -1,13 +1,14 @@
+# AI generated
 # AEGIS Protocol - CRE Workflow Deployment
 
-> **Status**: CRE Ready - Simulation Successful, Awaiting Deploy Access
-> **Last Updated**: March 6, 2026
+> Status: CRE Ready - Simulation Successful, Awaiting Deploy Access
+> Last Updated: March 6, 2026
 
 ---
 
 ## Summary
 
-The AEGIS Protocol CRE workflows are **fully functional and validated**. Local simulation completes successfully, demonstrating all 5 Chainlink services integration. Production deployment is pending Chainlink deploy access approval.
+The AEGIS Protocol CRE workflows are fully functional and validated. Local simulation completes successfully, demonstrating all 5 Chainlink services integration. Production deployment is pending Chainlink deploy access approval.
 
 ## CRE CLI Status
 
@@ -66,35 +67,35 @@ Workflow Simulation Result:
 
 ## Chainlink Services Integration
 
-The AEGIS CRE workflows use **5 Chainlink services** for +4 bonus points:
+The AEGIS CRE workflows use 5 Chainlink services for +4 bonus points:
 
 ### 1. CRE (Chainlink Runtime Environment)
-- **Workflow**: `aegis-threat-detection`
-- **Purpose**: Orchestrates detection cycle with BFT consensus
-- **Evidence**: Simulation output above
+- Workflow: `aegis-threat-detection`
+- Purpose: Orchestrates detection cycle with BFT consensus
+- Evidence: Simulation output above
 
 ### 2. Data Feeds
-- **Feed**: ETH/USD on Base Sepolia (`0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1`)
-- **Purpose**: Real-time price verification for anomaly detection
-- **Evidence**: `[USER LOG] ETH/USD: $1965.14`
+- Feed: ETH/USD on Base Sepolia (`0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1`)
+- Purpose: Real-time price verification for anomaly detection
+- Evidence: `[USER LOG] ETH/USD: $1965.14`
 
 ### 3. Automation (Cron Trigger)
-- **Schedule**: `0 */1 * * * *` (every minute for testing, production: 30s)
-- **Purpose**: Scheduled detection cycles
-- **Evidence**: `[SIMULATION] Running trigger trigger=cron-trigger@1.0.0`
+- Schedule: `0 */1 * * * *` (every minute for testing, production: 30s)
+- Purpose: Scheduled detection cycles
+- Evidence: `[SIMULATION] Running trigger trigger=cron-trigger@1.0.0`
 
 ### 4. VRF (Verifiable Random Function)
-- **Workflow**: `vrfTieBreaker/main.ts`
-- **Purpose**: Fair tie-breaker selection when sentinels disagree
-- **Code**: `packages/cre-workflows/src/workflows/vrfTieBreaker/main.ts`
+- Workflow: `vrfTieBreaker/main.ts`
+- Purpose: Fair tie-breaker selection when sentinels disagree
+- Code: `packages/cre-workflows/src/workflows/vrfTieBreaker/main.ts`
 
 ### 5. CCIP (Cross-Chain Interoperability Protocol)
-- **Workflow**: `ccipAlert/main.ts`
-- **Purpose**: Cross-chain alert propagation
-- **Live Test TX**: `0x6339132295e793680a642008138ab1ab9194e986682327d3d1ccf93c15ab2303`
-- **Message ID**: `0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238`
-- **Route**: Base Sepolia -> Arbitrum Sepolia
-- **Full Details**: [CCIP_TEST_RESULTS.md](./CCIP_TEST_RESULTS.md)
+- Workflow: `ccipAlert/main.ts`
+- Purpose: Cross-chain alert propagation
+- Live Test TX: `0x6339132295e793680a642008138ab1ab9194e986682327d3d1ccf93c15ab2303`
+- Message ID: `0x0cc38b26d79e55f7fca889d381522d0efd3a6499a3acd4201abf3331795d8238`
+- Route: Base Sepolia -> Arbitrum Sepolia
+- Full Details: [CCIP_TEST_RESULTS.md](./CCIP_TEST_RESULTS.md)
 
 ---
 
@@ -165,7 +166,7 @@ $ cre whoami
 Deploy Access: Not enabled
 ```
 
-**Resolution**: Request access via `cre account access` (requires Chainlink approval)
+Resolution: Request access via `cre account access` (requires Chainlink approval)
 
 ### 2. Ethereum Mainnet RPC Required
 
@@ -175,7 +176,7 @@ CRE workflow registration requires Ethereum mainnet RPC (workflows are registere
 ✗ failed to load settings: missing RPC URL for ethereum-mainnet - required to deploy CRE workflows
 ```
 
-**Resolution**: Add Ethereum mainnet RPC to `project.yaml` once deploy access is granted
+Resolution: Add Ethereum mainnet RPC to `project.yaml` once deploy access is granted
 
 ---
 
@@ -183,15 +184,15 @@ CRE workflow registration requires Ethereum mainnet RPC (workflows are registere
 
 Once CRE deploy access is granted:
 
-1. **Workflow Registration**: Workflow is registered on the CRE DON
-2. **Cron Activation**: Every 30 seconds, the workflow executes:
+1. Workflow Registration: Workflow is registered on the CRE DON
+2. Cron Activation: Every 30 seconds, the workflow executes:
    - Reads TVL from MockProtocol
    - Reads ETH/USD from Chainlink Data Feed
    - Calls AI Agent API for threat detection
    - If CRITICAL consensus: triggers CircuitBreaker on-chain
    - Submits ThreatReport to ThreatReport contract
-3. **Cross-Chain Alerts**: CCIP workflow propagates alerts to other chains
-4. **VRF Tie-Breaking**: VRF provides fair randomness when sentinels disagree
+3. Cross-Chain Alerts: CCIP workflow propagates alerts to other chains
+4. VRF Tie-Breaking: VRF provides fair randomness when sentinels disagree
 
 ---
 
@@ -203,20 +204,20 @@ For the Chainlink Convergence Hackathon judges:
 
 | Service | How We Use It | Proof |
 |---------|---------------|-------|
-| **CRE** | Workflow orchestration, consensus | Simulation output above |
-| **Data Feeds** | ETH/USD price verification | `$1965.14` real-time read |
-| **Automation** | 30s cron-triggered detection | `cron-trigger@1.0.0` |
-| **VRF** | Fair sentinel tie-breaker | `vrfTieBreaker/main.ts` |
-| **CCIP** | Cross-chain alerts | TX `0x6339...03` |
+| CRE | Workflow orchestration, consensus | Simulation output above |
+| Data Feeds | ETH/USD price verification | `$1965.14` real-time read |
+| Automation | 30s cron-triggered detection | `cron-trigger@1.0.0` |
+| VRF | Fair sentinel tie-breaker | `vrfTieBreaker/main.ts` |
+| CCIP | Cross-chain alerts | TX `0x6339...03` |
 
 ### Why CRE Is Central
 
-AEGIS uses CRE as the **central orchestration layer** because:
+AEGIS uses CRE as the central orchestration layer because:
 
-1. **Verifiable Execution**: All detection runs through CRE's BFT consensus
-2. **Trustless On-Chain Actions**: Circuit breaker triggers are consensus-verified
-3. **Signed Reports**: ThreatReports are signed by the DON
-4. **Multi-Capability Workflow**: Combines HTTP, EVM Read, EVM Write, Data Feeds in one atomic execution
+1. Verifiable Execution: All detection runs through CRE's BFT consensus
+2. Trustless On-Chain Actions: Circuit breaker triggers are consensus-verified
+3. Signed Reports: ThreatReports are signed by the DON
+4. Multi-Capability Workflow: Combines HTTP, EVM Read, EVM Write, Data Feeds in one atomic execution
 
 ### Demo Commands
 

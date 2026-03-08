@@ -1,17 +1,9 @@
 # AEGIS CCIP Cross-Chain Alert Test Results
 
-## Summary
-
-AEGIS successfully sent a real Chainlink CCIP message propagating a CRITICAL threat alert
-from **Base Sepolia** → **Arbitrum Sepolia**, proving cross-chain security alerts work end-to-end.
-
----
-
 ## Test Date
 
-**2026-03-06** (March 6, 2026)
+March 6, 2026
 
----
 
 ## Transaction Details
 
@@ -53,20 +45,6 @@ The cross-chain message encodes a full AEGIS threat alert:
 | Timestamp | 2026-03-06T16:30:05.000Z |
 | Description | Flash loan attack detected — TVL dropped 25% in 30 seconds. AEGIS circuit breaker activated. |
 
-The payload is ABI-encoded as:
-```solidity
-abi.encode(
-    string  alertType,
-    address protocol,
-    bytes32 threatId,
-    uint8   threatLevel,
-    uint256 timestamp,
-    string  description
-)
-```
-
----
-
 ## Links
 
 | Resource | URL |
@@ -77,7 +55,7 @@ abi.encode(
 
 ---
 
-## How It Works (For Judges)
+## How It Works
 
 ```
 AEGIS Detection Cycle (every 30s)
@@ -104,57 +82,13 @@ AEGIS Detection Cycle (every 30s)
               ── stores threat data on-chain
 ```
 
-**Key Chainlink properties used:**
-- **Immutability**: Message cannot be tampered with in transit
-- **Delivery guarantee**: CCIP ensures exactly-once delivery
-- **Multi-chain security**: Protocol protected simultaneously on all chains
-
----
-
-## Files Created
-
-| File | Purpose |
-|---|---|
-| `scripts/test-ccip-alert.ts` | TypeScript script to send a real CCIP alert |
-| `packages/contracts/src/ccip/AlertReceiver.sol` | Solidity receiver contract (Arbitrum Sepolia) |
-| `packages/contracts/script/DeployCCIPReceiver.s.sol` | Foundry deploy script for the receiver |
-
----
-
-## Reproducing the Test
-
-### 1. Dry run (no ETH needed)
 ```bash
 npx tsx scripts/test-ccip-alert.ts
-```
-
-### 2. Send real CCIP message
-```bash
-# Requires DEPLOYER_PRIVATE_KEY with Base Sepolia ETH
 npx tsx scripts/test-ccip-alert.ts --send
-```
-
-### 3. Send to specific AlertReceiver contract
-```bash
-# Deploy receiver first (optional)
 cd packages/contracts
 forge script script/DeployCCIPReceiver.s.sol \
   --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
   --private-key $DEPLOYER_PRIVATE_KEY \
   --broadcast
-
-# Then send to it
 npx tsx scripts/test-ccip-alert.ts --send --receiver=<deployed-address>
 ```
-
----
-
-## Timeline
-
-| Event | Time |
-|---|---|
-| Script started | 2026-03-06 16:30:04 UTC |
-| Fee estimated: 0.000063 ETH | 16:30:05 UTC |
-| Transaction sent | 16:30:07 UTC |
-| Confirmed (block 38523160) | 16:30:07 UTC |
-| Expected Arbitrum delivery | ~16:35–16:45 UTC |

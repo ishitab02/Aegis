@@ -142,7 +142,7 @@ export function LiveMonitor() {
                   </span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-text-primary">
-                  {formatUsd(data.tvl_usd)}
+                  {formatUsd(data.tvl_usd_estimate)}
                 </p>
                 <div className="mt-1 flex items-center gap-1 text-xs">
                   {changePct != null && changePct > 0 && (
@@ -176,7 +176,7 @@ export function LiveMonitor() {
                   </span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-text-primary">
-                  {formatEthPrice(data.eth_usd_price)}
+                  {formatEthPrice(data.chainlink_eth_usd)}
                 </p>
                 <p className="mt-1 text-xs text-text-muted">Chainlink Data Feeds</p>
               </div>
@@ -214,7 +214,7 @@ export function LiveMonitor() {
 
             {/* Footer */}
             <div className="mt-4 flex items-center justify-between text-xs text-text-muted">
-              <span>Adapter: {data.adapter_type ?? "unknown"}</span>
+              <span>Protocol: {data.protocol ?? data.adapter_type ?? "Aave V3"}</span>
               <span>Updated: {lastUpdate}</span>
             </div>
           </>
